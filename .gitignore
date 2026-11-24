@@ -1,0 +1,11 @@
+# secrets and runtime data
+config.env
+data/
+*.log
+*.db
+*.db-*
+
+__pycache__/
+*.pyc
+.DS_Store
+.env

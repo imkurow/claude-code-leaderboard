@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="__LB_LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__LB_TITLE__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141413'/%3E%3Crect x='5' y='15' width='6' height='12' rx='1' fill='%23B0AEA5'/%3E%3Crect x='13' y='8' width='6' height='19' rx='1' fill='%23D97757'/%3E%3Crect x='21' y='18' width='6' height='9' rx='1' fill='%23D4A27F'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..600&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem("lb_theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<style>
+  :root {
+    --fog: #F0EEE6;
+    --paper: #FAF9F5;
+    --ink: #141413;
+    --ink-2: #3D3D3A;
+    --ink-3: #76746C;
+    --rule: #DEDCD1;
+    --signal: #3E6E9F;
+    --gold: #D97757;
+    --silver: #9C9A91;
+    --bronze: #C4925F;
+    --av-bg: 0.89;
+    --av-fg: 0.36;
+    --err: #B5482B;
+    --shadow: rgba(20, 20, 19, .28);
+    --stage: #ECE9E0;
+    --glow: #FFFFFF;
+    --stone-top: #FCFBF8;
+    --stone-1: #E6E2D7;
+    --stone-2: #D3CEC1;
+    --stone-edge: rgba(255, 255, 255, .8);
+    --rank-gold: linear-gradient(180deg, #D3A443 0%, #9A6E1C 100%);
+    --rank-silver: linear-gradient(180deg, #A7AEB7 0%, #5F6770 100%);
+    --rank-bronze: linear-gradient(180deg, #CF8A52 0%, #84481F 100%);
+    --m-gold: linear-gradient(145deg, #F7E7AE 0%, #D9AE4C 36%, #A87B22 68%, #E9CB78 100%);
+    --m-silver: linear-gradient(145deg, #FCFCFD 0%, #CDD1D6 38%, #8F969F 70%, #DDE0E4 100%);
+    --m-bronze: linear-gradient(145deg, #F6D3AE 0%, #CB8954 38%, #8D522A 70%, #DDA77A 100%);
+    --ease-enter: cubic-bezier(.22, 1, .36, 1);
+    --display: "Source Serif 4", "Tiempos Headline", Georgia, serif;
+    --text: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  /* Theme: follows the system unless the toggle picked one (html[data-theme]). */
+  :root[data-theme="dark"] {
+      --fog: #1F1E1D;
+      --paper: #262624;
+      --ink: #FAF9F5;
+      --ink-2: #C9C7BD;
+      --ink-3: #96948B;
+      --rule: #3A3935;
+      --signal: #8DB4DC;
+      --gold: #D97757;
+      --silver: #AEACA3;
+      --bronze: #D4A27F;
+      --av-bg: 0.38;
+      --av-fg: 0.9;
+      --err: #F09A7C;
+      --shadow: rgba(0, 0, 0, .55);
+      --stage: #232321;
+      --glow: rgba(255, 238, 220, .075);
+      --stone-top: #3B3A36;
+      --stone-1: #31302D;
+      --stone-2: #292826;
+      --stone-edge: rgba(255, 255, 255, .07);
+      --rank-gold: var(--m-gold);
+      --rank-silver: var(--m-silver);
+      --rank-bronze: var(--m-bronze);
+      color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --fog: #1F1E1D;
+        --paper: #262624;
+        --ink: #FAF9F5;
+        --ink-2: #C9C7BD;
+        --ink-3: #96948B;
+        --rule: #3A3935;
+        --signal: #8DB4DC;
+        --gold: #D97757;
+        --silver: #AEACA3;
+        --bronze: #D4A27F;
+        --av-bg: 0.38;
+        --av-fg: 0.9;
+        --err: #F09A7C;
+        --shadow: rgba(0, 0, 0, .55);
+      --stage: #232321;
+      --glow: rgba(255, 238, 220, .075);
+      --stone-top: #3B3A36;
+      --stone-1: #31302D;
+      --stone-2: #292826;
+      --stone-edge: rgba(255, 255, 255, .07);
+      --rank-gold: var(--m-gold);
+      --rank-silver: var(--m-silver);
+      --rank-bronze: var(--m-bronze);
+        color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fog);
+    color: var(--ink);
+    font: 400 16px/1.55 var(--text);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 6px; }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 16px 56px; }
+
+  /* ---------- header ---------- */
+  .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; align-items: start; }
+  .top .controls { grid-column: 1 / -1; }
+  .top h1 {
+    margin: 0;
+    font: 500 clamp(32px, 5.6vw, 52px)/1.04 var(--display);
+    font-variation-settings: "opsz" 60;
+    letter-spacing: -0.018em;
+    max-width: 13ch;
+  }
+  .lede { margin: 14px 0 0; max-width: 54ch; color: var(--ink-2); font-size: 17px; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  .lede .fine { display: block; font-size: 14px; color: var(--ink-3); margin-top: 2px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 6px; }
+
+  .periods { position: relative; display: flex; gap: 2px; padding: 4px; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; }
+  .periods button {
+    position: relative; z-index: 1; border: 0; background: none; cursor: pointer;
+    padding: 7px 12px; border-radius: 8px; font-size: 14px; color: var(--ink-2);
+    transition: color .2s;
+  }
+  .periods button[aria-pressed="true"] { color: var(--fog); }
+  .periods .thumb {
+    position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 0; width: 0;
+    background: var(--ink); border-radius: 8px;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), width .35s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .me-chip {
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    padding: 4px 14px 4px 4px; border-radius: 999px;
+    background: var(--paper); border: 1px solid var(--rule); font-size: 14px; font-weight: 500;
+  }
+  .me-chip:hover, .theme-btn:hover { border-color: var(--ink-3); }
+  .me-chip.admin-link { height: 40px; padding: 0 16px; text-decoration: none; color: var(--ink-2); }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .theme-btn {
+    width: 42px; height: 42px; display: grid; place-items: center; cursor: pointer; padding: 0;
+    border-radius: 50%; background: var(--paper); border: 1px solid var(--rule); color: var(--ink-2);
+  }
+  .theme-btn svg { width: 19px; height: 19px; transition: transform .45s cubic-bezier(.2,.8,.25,1); }
+  .theme-btn[data-mode="dark"] svg { transform: rotate(-35deg); }
+  .theme-btn .sun { display: none; }
+  .theme-btn[data-mode="dark"] .sun { display: block; }
+  .theme-btn[data-mode="dark"] .moon { display: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; }
+  .me-chip .av { width: 32px; height: 32px; font-size: 12px; }
+
+  /* ---------- avatar ---------- */
+  .av {
+    --size: 40px;
+    width: var(--size); height: var(--size); border-radius: 50%; flex: none;
+    display: grid; place-items: center; overflow: hidden;
+    font: 600 calc(var(--size) * .34)/1 var(--text); letter-spacing: 0.01em;
+    background: oklch(var(--av-bg) 0.04 var(--h, 60)); color: oklch(var(--av-fg) 0.05 var(--h, 60));
+  }
+  .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .av.empty { background: transparent; border: 1.5px dashed var(--ink-3); color: var(--ink-3); }
+
+  /* ---------- podium: a lit stage, three stone plinths, metal for the medals ---------- */
+  .stage {
+    --sx: 50%; --sy: 16%;
+    position: relative; isolation: isolate; overflow: hidden;
+    margin-top: 40px; padding: 60px 32px 0;
+    background: var(--stage);
+    border: 1px solid var(--rule); border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+  }
+  /* the light rests above first place and follows a fine pointer (cursor-spotlight) */
+  .stage::before, .stage::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .stage::before { background: radial-gradient(560px circle at var(--sx) var(--sy), var(--glow), transparent 72%); }
+  .stage::after {
+    background-image: radial-gradient(circle, color-mix(in oklab, var(--ink) 20%, transparent) 1px, transparent 1.6px);
+    background-size: 22px 22px; background-position: 11px 11px; opacity: .6;
+    -webkit-mask-image: radial-gradient(400px circle at var(--sx) var(--sy), #000, transparent 72%);
+    mask-image: radial-gradient(400px circle at var(--sx) var(--sy), #000, transparent 72%);
+  }
+  .podium {
+    display: grid; grid-template-columns: 1fr 1.16fr 1fr; align-items: end; gap: 0 16px;
+    max-width: 840px; margin: 0 auto;
+  }
+  .seat { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+  .seat[data-pos="1"] { order: 2; --metal: var(--m-gold); --rank: var(--rank-gold); --plinth: 188px; }
+  .seat[data-pos="2"] { order: 1; --metal: var(--m-silver); --rank: var(--rank-silver); --plinth: 138px; }
+  .seat[data-pos="3"] { order: 3; --metal: var(--m-bronze); --rank: var(--rank-bronze); --plinth: 104px; }
+
+  .who { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 4px 26px; min-width: 0; transition: transform .18s var(--ease-enter); }
+  .ring {
+    --size: 76px;
+    display: block; flex: none; box-sizing: border-box;
+    width: calc(var(--size) + 12px); height: calc(var(--size) + 12px); padding: 3px; border-radius: 50%;
+    background: var(--metal); margin-bottom: 16px;
+    box-shadow: 0 14px 28px -16px var(--shadow);
+  }
+  .seat[data-pos="1"] .ring { --size: 98px; }
+  .ring .av { --size: inherit; width: 100%; height: 100%; border: 3px solid var(--stage); }
+  .ring .av img { transition: transform .6s var(--ease-enter); }
+  .ring.vacant { background: none; border: 1.5px dashed var(--rule); padding: 0; box-shadow: none; }
+  .ring.vacant .av { border: 0; }
+  .who .name {
+    font: 500 19px/1.2 var(--display); letter-spacing: -0.005em;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .seat[data-pos="1"] .who .name { font-size: 23px; }
+  .who .team { font-size: 13px; color: var(--ink-3); margin-top: 2px; min-height: 1.3em; }
+  .who .num {
+    margin-top: 12px;
+    font: 500 clamp(24px, 3.6vw, 34px)/1 var(--display);
+    font-variation-settings: "opsz" 60;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    letter-spacing: -0.01em;
+  }
+  .seat[data-pos="1"] .who .num { font-size: clamp(30px, 4.8vw, 46px); }
+  .who .unit { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; letter-spacing: .01em; }
+  .badge {
+    display: inline-block; vertical-align: 2px; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+    font: 600 11.5px/1.5 var(--text); color: var(--signal);
+    background: color-mix(in oklab, var(--signal) 12%, transparent);
+  }
+  .who .badge { margin: 6px 0 0; }
+
+  .plinth {
+    position: relative; height: var(--plinth); margin-top: 14px;
+    display: flex; justify-content: center; padding-top: 18px;
+    background: linear-gradient(180deg, var(--stone-1), var(--stone-2));
+    box-shadow: inset 0 1px 0 var(--stone-edge), inset 0 14px 18px -14px rgba(0, 0, 0, .14), 0 -1px 0 rgba(0, 0, 0, .04);
+    transform-origin: 50% 100%;
+  }
+  .plinth::before {        /* the top face, seen from a little above */
+    content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 14px;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--stone-top) 82%, var(--stage)), var(--stone-top));
+    clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
+  }
+  .plinth::after {         /* a metal inlay along the front edge */
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--metal);
+  }
+  .plinth .rank {
+    font: 500 60px/1 var(--display);
+    font-variation-settings: "opsz" 60;
+    background: var(--rank); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .seat[data-pos="1"] .plinth .rank { font-size: 78px; }
+  .seat.vacant .plinth { opacity: .55; }
+  .seat.vacant .plinth::after { background: var(--rule); }
+  .seat.vacant .plinth .rank { background: none; color: var(--ink-3); }
+  .seat.vacant .who .name { color: var(--ink-3); font-weight: 400; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .seat:not(.vacant):hover .who { transform: translateY(-2px); }
+    .seat:not(.vacant):hover .ring .av img { transform: scale(1.03); }
+  }
+
+  /* Entrance, once: plinths rise 3 -> 2 -> 1, the people settle on them, then the figures roll. */
+  .play .plinth { animation: rise .8s var(--ease-enter) both; animation-delay: var(--d); }
+  .play .who { animation: arrive .7s var(--ease-enter) both; animation-delay: calc(var(--d) + .38s); }
+  .seat[data-pos="3"] { --d: 0s; }
+  .seat[data-pos="2"] { --d: .12s; }
+  .seat[data-pos="1"] { --d: .26s; }
+  @keyframes rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+  /* odometer figures (counter-rolls): one clipped column per digit, moved by transform only */
+  .roll { display: inline-flex; align-items: baseline; white-space: pre; }
+  .roll .col { display: inline-block; height: 1em; overflow: hidden; vertical-align: top; }
+  .roll .strip { display: block; will-change: transform; }
+  .roll .strip span { display: block; height: 1em; line-height: 1; }
+  .roll .ch { display: inline-block; height: 1em; line-height: 1; }
+
+  /* ---------- the rest ---------- */
+  .rest { margin-top: 0; background: var(--paper); border: 1px solid var(--rule); border-radius: 0 0 18px 18px; position: relative; }
+  .rest:empty { display: none; }
+  .row {
+    display: grid; grid-template-columns: 2.2ch 40px minmax(0, 1fr) auto; gap: 4px 14px; align-items: center;
+    padding: 14px 20px; border-top: 1px solid var(--rule);
+  }
+  .row:first-child { border-top: 0; }
+  .row .pos { color: var(--ink-3); font: 500 16px/1 var(--display); text-align: right; }
+  .row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .team { font-weight: 400; color: var(--ink-3); margin-left: 8px; font-size: 14px; }
+  .row .meta { display: flex; flex-wrap: wrap; column-gap: 16px; font-size: 13px; color: var(--ink-3); margin-top: 1px; }
+  .row .num { font: 500 19px/1 var(--display); text-align: right; }
+  .row .track { grid-column: 3 / 5; height: 3px; border-radius: 2px; background: color-mix(in oklab, var(--rule) 70%, transparent); overflow: hidden; }
+  .row .track b { display: block; height: 100%; width: var(--p); background: var(--ink-3); border-radius: 2px; }
+  .row.me { background: color-mix(in oklab, var(--signal) 7%, var(--paper)); box-shadow: inset 3px 0 0 var(--signal); }
+  .row.me .track b { background: var(--signal); }
+  .row.idle .name, .row.idle .num { color: var(--ink-3); font-weight: 500; }
+
+
+  .note { margin: 22px 2px 0; display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; font-size: 13px; color: var(--ink-3); }
+  .note a { color: var(--ink-2); }
+
+  /* ---------- profile dialog ---------- */
+  dialog {
+    width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--rule); border-radius: 18px;
+    background: var(--paper); color: var(--ink);
+    box-shadow: 0 30px 80px -20px var(--shadow);
+  }
+  dialog::backdrop { background: rgba(20, 20, 19, .42); }
+  dialog[open] { animation: pop .28s cubic-bezier(.2,.8,.25,1); }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+  .dlg { padding: 24px; }
+  .dlg h2 { margin: 0 0 6px; font: 500 24px/1.2 var(--display); letter-spacing: -0.01em; }
+  .dlg p { margin: 0 0 16px; color: var(--ink-2); font-size: 15px; }
+  .dlg .field { display: flex; gap: 8px; }
+  .dlg input[type="text"] {
+    flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--rule); background: var(--fog);
+  }
+  .btn {
+    border: 1px solid var(--ink); background: var(--ink); color: var(--fog); padding: 10px 16px; border-radius: 10px;
+    cursor: pointer; font-weight: 600; font-size: 15px;
+  }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+  .btn.quiet { background: transparent; color: var(--ink-2); border-color: transparent; padding-left: 8px; padding-right: 8px; }
+  .btn[disabled] { opacity: .5; cursor: default; }
+  .err { color: var(--err); font-size: 14px; margin-top: 10px; }
+  .err:empty { display: none; }
+
+  .crop { display: grid; place-items: center; margin: 6px 0 18px; }
+  .crop canvas, .crop .av { width: 168px; height: 168px; border-radius: 50%; }
+  .crop canvas { touch-action: none; cursor: grab; box-shadow: 0 0 0 1px var(--rule); background: var(--fog); }
+  .crop canvas:active { cursor: grabbing; }
+  .crop .av { --size: 168px; }
+  .zoom { display: flex; align-items: center; gap: 10px; margin: -4px 0 16px; font-size: 13px; color: var(--ink-3); }
+  .zoom input { flex: 1; accent-color: var(--ink); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+  .actions .right { display: flex; gap: 8px; }
+  .who-line { font-size: 14px; color: var(--ink-3); margin-top: 14px; }
+  [hidden] { display: none !important; }
+
+
+  /* ---------- participant detail ---------- */
+  [data-id] { cursor: pointer; }
+  .row[data-id] { transition: background-color .15s ease; }
+  .row[data-id]:focus-visible, .who[data-id]:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; border-radius: 10px; }
+  @media (hover: hover) and (pointer: fine) {
+    .row[data-id]:hover { background: color-mix(in oklab, var(--ink) 3.5%, var(--paper)); }
+    .row.me[data-id]:hover { background: color-mix(in oklab, var(--signal) 11%, var(--paper)); }
+  }
+  dialog.detail { width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; overscroll-behavior: contain; }
+  .dt { padding: 24px 24px 22px; }
+  .dt-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+  .dt-head .av { --size: 56px; }
+  .dt-head h2 { margin: 0; font: 500 24px/1.15 var(--display); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .dt-head .sub { margin-top: 3px; font-size: 14px; color: var(--ink-3); }
+  .dt-head .badge { vertical-align: 3px; }
+  .x {
+    align-self: start; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--rule);
+    background: transparent; color: var(--ink-2); cursor: pointer; display: grid; place-items: center;
+  }
+  .x:hover { background: var(--fog); }
+  .x svg { width: 14px; height: 14px; }
+  .dt-figure { margin: 22px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .dt-figure .big { font: 500 46px/1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .dt-figure .cap { font-size: 14px; color: var(--ink-3); }
+
+  .chart { margin: 20px 0 0; }
+  .plot { position: relative; height: 132px; border-bottom: 1px solid var(--rule); }
+  .plot .max {
+    position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed color-mix(in oklab, var(--rule) 80%, transparent);
+    font-size: 11.5px; color: var(--ink-3); padding-top: 3px; pointer-events: none;
+  }
+  .bars { position: absolute; inset: 18px 0 0; display: flex; align-items: flex-end; gap: var(--gap, 2px); }
+  .bar { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+  .bar b {
+    display: block; width: 100%; height: var(--v); min-height: var(--min, 0); background: var(--ink-3);
+    border-radius: min(4px, 30%) min(4px, 30%) 0 0; transform-origin: bottom;
+    transition: background-color .12s ease;
+  }
+  .bar.zero b { min-height: 0; }
+  .bar.today b { background: var(--ink-2); }
+  .bar.on b { background: var(--gold); }
+  .play-bars .bar b { animation: grow .6s var(--ease-enter) both; animation-delay: calc(var(--i) * 12ms); }
+  @keyframes grow { from { transform: scaleY(0); } }
+  .axis { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: var(--ink-3); }
+  .tip {
+    position: absolute; top: 0; transform: translateX(-50%); pointer-events: none; white-space: nowrap;
+    background: var(--ink); color: var(--paper); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; line-height: 1.3;
+    box-shadow: 0 8px 24px -10px var(--shadow); z-index: 2;
+  }
+  .tip b { font-weight: 600; }
+  .tip[hidden] { display: none; }
+
+  .facts { margin: 22px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 16px; }
+  .facts div { min-width: 0; }
+  .facts dt { font-size: 12.5px; color: var(--ink-3); }
+  .facts dd { margin: 2px 0 0; font: 500 19px/1.2 var(--display); font-variant-numeric: tabular-nums; }
+  .models { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--rule); }
+  .models h3 { margin: 0 0 10px; font: 600 14px/1.3 var(--text); color: var(--ink-2); }
+  .model { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr) 3.6em; gap: 12px; align-items: center; padding: 5px 0; font-size: 14px; }
+  .model .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .model .pc { text-align: right; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .model .track { height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--rule) 70%, transparent); overflow: hidden; }
+  .model .track b { display: block; height: 100%; width: var(--p); min-width: 3px; border-radius: 3px; background: var(--ink-3); }
+  .model:first-of-type .track b { background: var(--ink-2); }
+  .dt-foot { margin: 18px 0 0; font-size: 13.5px; color: var(--ink-3); }
+  .dt-empty { margin: 22px 0 4px; color: var(--ink-3); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (max-width: 640px) {
+    .dt { padding: 20px 18px 18px; }
+    .dt-head .av { --size: 48px; }
+    .dt-figure .big { font-size: 38px; }
+    .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .facts dd { font-size: 17px; }
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding-top: 28px; }
+    .me-chip { padding-right: 4px; }
+    .me-chip .label { display: none; }
+    .stage { margin-top: 28px; padding: 40px 10px 0; border-radius: 18px 18px 0 0; }
+    .podium { gap: 0 8px; grid-template-columns: 1fr 1.1fr 1fr; }
+    .seat[data-pos="1"] { --plinth: 150px; }
+    .seat[data-pos="2"] { --plinth: 110px; }
+    .seat[data-pos="3"] { --plinth: 84px; }
+    .who { padding-bottom: 18px; }
+    .ring { --size: 54px; margin-bottom: 10px; }
+    .seat[data-pos="1"] .ring { --size: 70px; }
+    .who .name, .seat[data-pos="1"] .who .name {
+      font-size: 15px; line-height: 1.15; white-space: normal;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    .who .team { font-size: 12px; }
+    .who .num { font-size: 22px; }
+    .seat[data-pos="1"] .who .num { font-size: 28px; }
+    .plinth { padding-top: 12px; }
+    .plinth .rank { font-size: 40px; }
+    .seat[data-pos="1"] .plinth .rank { font-size: 52px; }
+    .row { grid-template-columns: 2ch 34px minmax(0, 1fr) auto; padding: 12px 14px; gap: 4px 10px; }
+    .row .av { --size: 34px; }
+    .row .num { font-size: 16px; }
+    .row .team { display: block; margin-left: 0; font-size: 13px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>__LB_TITLE__</h1>
+      <p class="lede" id="lede">⟦Loading the leaderboard…‖Memuat peringkat…⟧</p>
+    </div>
+    <div class="tools">
+      <a class="me-chip admin-link" id="adminLink" href="/admin" hidden>Admin</a>
+      <button type="button" class="me-chip" id="meChip" hidden></button>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="⟦Switch to dark mode‖Ganti ke mode gelap⟧">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+      </button>
+    </div>
+    <div class="controls">
+      <div class="periods" role="group" aria-label="⟦Period‖Periode⟧">
+        <span class="thumb" aria-hidden="true"></span>
+        <button type="button" data-p="today">⟦Today‖Hari ini⟧</button>
+        <button type="button" data-p="7d">⟦7 days‖7 hari⟧</button>
+        <button type="button" data-p="30d">⟦30 days‖30 hari⟧</button>
+        <button type="button" data-p="month">⟦This month‖Bulan ini⟧</button>
+        <button type="button" data-p="all">⟦All time‖Semua⟧</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="stage" id="stage" aria-label="⟦Top three‖Tiga teratas⟧"><div class="podium" id="podium"></div></section>
+  <ol class="rest" id="rest" aria-label="⟦Everyone else‖Peringkat berikutnya⟧" style="list-style:none;margin:0;padding:0"></ol>
+
+  <p class="note">
+    <span id="updated"></span>
+    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
+  </p>
+</div>
+
+<dialog id="meDialog" aria-labelledby="dlgTitle">
+  <div class="dlg">
+    <!-- not linked yet -->
+    <form id="linkView" hidden>
+      <h2 id="dlgTitle">⟦Link your name‖Hubungkan nama kamu⟧</h2>
+      <p>⟦Paste the token from your install command, the part that starts with <b>lb_</b>. You only do this once; after that you can add a photo.‖Tempel token dari perintah install kamu, yaitu bagian yang diawali <b>lb_</b>. Cukup sekali; setelah itu kamu bisa pasang foto.⟧</p>
+      <div class="field">
+        <input type="text" id="tokenInput" autocomplete="off" spellcheck="false" placeholder="lb_…" aria-label="Token">
+        <button class="btn" type="submit">⟦Link‖Hubungkan⟧</button>
+      </div>
+      <div class="err" id="linkErr" role="alert"></div>
+      <div class="actions"><span></span><button class="btn quiet" type="button" data-close>⟦Close‖Tutup⟧</button></div>
+    </form>
+
+    <!-- linked: photo -->
+    <div id="photoView" hidden>
+      <h2>⟦Your photo‖Foto kamu⟧</h2>
+      <p id="photoHint"></p>
+      <div class="crop">
+        <span class="av" id="currentAv"></span>
+        <canvas id="cropCanvas" width="336" height="336" hidden aria-label="⟦Photo preview, drag to position‖Pratinjau foto, geser untuk mengatur posisi⟧"></canvas>
+      </div>
+      <label class="zoom" id="zoomRow" hidden>⟦Zoom‖Perbesar⟧ <input type="range" id="zoomInput" min="1" max="3" step="0.01" value="1"></label>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/heic" hidden>
+      <div class="actions" id="idleActions">
+        <button class="btn quiet" type="button" id="removeBtn">⟦Remove photo‖Hapus foto⟧</button>
+        <div class="right">
+          <button class="btn ghost" type="button" data-close>⟦Close‖Tutup⟧</button>
+          <button class="btn" type="button" id="pickBtn">⟦Choose photo‖Pilih foto⟧</button>
+        </div>
+      </div>
+      <div class="actions" id="cropActions" hidden>
+        <button class="btn quiet" type="button" id="cancelCrop">⟦Cancel‖Batal⟧</button>
+        <div class="right">
+          <button class="btn ghost" type="button" id="pickAgain">⟦Change‖Ganti⟧</button>
+          <button class="btn" type="button" id="saveBtn">⟦Save photo‖Simpan foto⟧</button>
+        </div>
+      </div>
+      <div class="err" id="photoErr" role="alert"></div>
+      <div class="who-line" id="whoLine"></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="detail" class="detail" aria-labelledby="dtName">
+  <div class="dt" id="dtBody"></div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  var LANG = "__LB_LANG__" === "id" ? "id" : "en";
+  var LOCALE = LANG === "id" ? "id-ID" : "en-US";
+  function T(en, id) { return LANG === "id" ? id : en; }
+  var HM = T(":", ".");   // hour/minute separator
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var period = "7d";
+  try { period = localStorage.getItem("lb_period") || "7d"; } catch (e) {}
+  var me = null;          // { email, participant }
+  var lastData = null;
+  var shownNums = {};     // name -> figure last shown on the podium (rolls again only when it changes)
+
+  var PERIOD_LEAD = {
+    today: T("Today", "Hari ini"), "7d": T("In the last 7 days", "Dalam 7 hari terakhir"),
+    "30d": T("In the last 30 days", "Dalam 30 hari terakhir"), month: T("This month", "Bulan ini"), all: T("Since the start", "Sejak awal")
+  };
+
+  // ---------- helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function num(n) { return Math.round(Number(n) || 0).toLocaleString(LOCALE); }
+  // Compact token counts: 980, 12.4K, 248K, 4.21M, 1.3B. Full value goes in the tooltip.
+  function compact(n) {
+    n = Math.round(Number(n) || 0);
+    var units = [[1e9, "B"], [1e6, "M"], [1e3, "K"]];
+    for (var i = 0; i < units.length; i++) {
+      var v = n / units[i][0];
+      if (v >= 1) {
+        var digits = v >= 100 ? 0 : v >= 10 ? 1 : 2;
+        var t = v.toFixed(digits);
+        if (Number(t) >= 1000 && i > 0) { i--; t = (n / units[i][0]).toFixed(2); }  // 999,999 -> 1M, not 1000K
+        if (t.indexOf(".") >= 0) t = t.replace(/0+$/, "").replace(/\.$/, "");
+        return t + units[i][1];
+      }
+    }
+    return String(n);
+  }
+  function usd(n) { return "$" + (Number(n) || 0).toLocaleString(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function initials(name) {
+    var p = String(name).trim().split(/\s+/);
+    return ((p[0] || "")[0] || "?").toUpperCase() + (p.length > 1 ? (p[p.length - 1][0] || "").toUpperCase() : "");
+  }
+  function avatar(name, url, size) {
+    var a = el("span", "av");
+    if (size) a.style.setProperty("--size", size + "px");
+    a.style.setProperty("--h", String(hash(name) % 360));
+    if (url) {
+      var img = new Image();
+      img.alt = "";
+      img.decoding = "async";
+      img.src = url;
+      img.onerror = function () { a.textContent = initials(name); };
+      a.appendChild(img);
+    } else {
+      a.textContent = initials(name);
+    }
+    return a;
+  }
+  function modelName(m) {
+    if (!m) return "";
+    m = m.replace(/^claude-/, "").replace(/\[.*\]$/, "").replace(/-\d{8}$/, "");
+    var parts = m.split("-"), fam = parts.shift() || "";
+    return fam.charAt(0).toUpperCase() + fam.slice(1) + (parts.length ? " " + parts.join(".") : "");
+  }
+  function ago(ts) {
+    if (!ts) return T("never sent data", "belum pernah kirim data");
+    var s = Math.max(0, Date.now() / 1000 - ts);
+    if (s < 120) return T("active just now", "aktif barusan");
+    if (s < 3600) return T("active " + Math.round(s / 60) + " min ago", "aktif " + Math.round(s / 60) + " menit lalu");
+    if (s < 86400) return T("active " + Math.round(s / 3600) + " h ago", "aktif " + Math.round(s / 3600) + " jam lalu");
+    return T("active " + Math.round(s / 86400) + " days ago", "aktif " + Math.round(s / 86400) + " hari lalu");
+  }
+  function countUp(node, from, to, ms, delay) {
+    var fmt = compact;
+    node.title = num(to) + " token";
+    if (reduceMotion || from === to) { node.textContent = fmt(to); return; }
+    node.textContent = fmt(from);
+    var start = null;
+    function step(t) {
+      if (start === null) start = t + (delay || 0);
+      var k = Math.min(1, Math.max(0, (t - start) / ms));
+      var e = 1 - Math.pow(1 - k, 4);
+      node.textContent = fmt(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---------- podium ----------
+  // counter-rolls: every digit column turns whole rounds and stops on its own digit, so the figure
+  // reads right before, during the settle and after; the right-most digit turns the most.
+  function roll(node, text, delay) {
+    node.textContent = "";
+    node.classList.add("roll");
+    var cols = [];
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (/\d/.test(ch)) {
+        var col = el("span", "col"), strip = el("span", "strip");
+        var turns = 1 + cols.length;
+        for (var d = 0; d <= turns * 10; d++) strip.appendChild(el("span", "", String((+ch + d) % 10)));
+        col.appendChild(strip);
+        node.appendChild(col);
+        cols.push({ strip: strip, turns: turns });
+      } else {
+        node.appendChild(el("span", "ch", ch));
+      }
+    }
+    Array.prototype.forEach.call(node.children, function (c) { c.setAttribute("aria-hidden", "true"); });
+    if (reduceMotion || !node.animate) return;
+    cols.forEach(function (c, i) {
+      var a = c.strip.animate(
+        [{ transform: "translateY(0)" }, { transform: "translateY(" + (-c.turns * 10) + "em)" }],
+        { duration: 1100 + i * 150, delay: delay, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" });
+      a.onfinish = function () { try { a.cancel(); } catch (e) {} };
+    });
+  }
+
+  function seat(row, pos, animate) {
+    var s = el("div", "seat" + (row ? "" : " vacant"));
+    s.dataset.pos = String(pos);
+    var who = el("div", "who");
+    if (row) {
+      clickable(who, row);
+      var ring = el("span", "ring");
+      ring.appendChild(avatar(row.name, row.avatar));
+      who.appendChild(ring);
+      who.appendChild(el("div", "name", row.name));
+      who.appendChild(el("div", "team", row.team || ""));
+      if (row.me) who.appendChild(el("span", "badge", T("You", "Kamu")));
+      var n = el("div", "num");
+      n.setAttribute("role", "text");
+      n.setAttribute("aria-label", num(row.output) + T(" output tokens", " output token"));
+      n.title = num(row.output) + " token";
+      who.appendChild(n);
+      who.appendChild(el("div", "unit", T("output tokens", "output token")));
+      var changed = shownNums[row.name] !== undefined && shownNums[row.name] !== row.output;
+      if (animate || changed) roll(n, compact(row.output), animate ? 620 + (3 - pos) * 120 : 0);
+      else n.textContent = compact(row.output);
+      shownNums[row.name] = row.output;
+    } else {
+      var empty = el("span", "ring vacant");
+      empty.appendChild(el("span", "av empty", ""));
+      who.appendChild(empty);
+      who.appendChild(el("div", "name", T("Open spot", "Belum terisi")));
+      who.appendChild(el("div", "team", ""));
+    }
+    s.appendChild(who);
+    var plinth = el("div", "plinth");
+    plinth.appendChild(el("div", "rank", String(row ? row.rank : pos)));
+    s.appendChild(plinth);
+    return s;
+  }
+
+  function renderPodium(rows, animate) {
+    var podium = $("podium");
+    var top = rows.filter(function (r) { return r.output > 0; }).slice(0, 3);
+    podium.classList.remove("play");
+    podium.replaceChildren(seat(top[0], 1, animate), seat(top[1], 2, animate), seat(top[2], 3, animate));
+    if (animate && !reduceMotion) {
+      void podium.offsetWidth;
+      podium.classList.add("play");
+    }
+  }
+
+  // cursor-spotlight on the stage: a short lag toward the pointer, back to rest above first place.
+  (function spotlight() {
+    var stage = $("stage");
+    var fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!stage || reduceMotion || !fine) return;
+    var rest = [0.5, 0.16], tx = rest[0], ty = rest[1], cx = tx, cy = ty, raf = 0;
+    function set(x, y) {
+      stage.style.setProperty("--sx", (x * 100).toFixed(2) + "%");
+      stage.style.setProperty("--sy", (y * 100).toFixed(2) + "%");
+    }
+    function tick() {
+      raf = 0;
+      cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12; set(cx, cy);
+      if (Math.abs(tx - cx) + Math.abs(ty - cy) > 0.001) raf = requestAnimationFrame(tick);
+    }
+    function req() { if (!raf) raf = requestAnimationFrame(tick); }
+    stage.addEventListener("pointermove", function (e) {
+      var r = stage.getBoundingClientRect();
+      tx = (e.clientX - r.left) / r.width; ty = (e.clientY - r.top) / r.height; req();
+    }, { passive: true });
+    stage.addEventListener("pointerleave", function () { tx = rest[0]; ty = rest[1]; req(); });
+  })();
+
+  // ---------- list ----------
+  function renderRest(rows) {
+    var active = rows.filter(function (r) { return r.output > 0; });
+    var rest = active.slice(3).concat(rows.filter(function (r) { return !r.output; }));
+    var lead = active.length ? active[0].output : 0;
+    var list = $("rest");
+    list.replaceChildren();
+    rest.forEach(function (r) {
+      var li = el("li", "row" + (r.output ? "" : " idle") + (r.me ? " me" : ""));
+      clickable(li, r);
+      li.appendChild(el("span", "pos", r.output ? String(r.rank) : ""));
+      li.appendChild(avatar(r.name, r.avatar));
+      var mid = el("div", "");
+      var nm = el("div", "name", r.name);
+      if (r.team) nm.appendChild(el("span", "team", r.team));
+      if (r.me) nm.appendChild(el("span", "badge", T("You", "Kamu")));
+      mid.appendChild(nm);
+      var meta = el("div", "meta");
+      if (r.output) {
+        if (r.top_model) meta.appendChild(el("span", "", modelName(r.top_model)));
+        meta.appendChild(el("span", "", r.sessions + T(r.sessions === 1 ? " session" : " sessions", " sesi")));
+        if (r.cost) meta.appendChild(el("span", "", usd(r.cost)));
+      } else {
+        meta.appendChild(el("span", "", T("No usage in this period", "Belum ada pemakaian di periode ini")));
+      }
+      meta.appendChild(el("span", "", ago(r.last_seen)));
+      mid.appendChild(meta);
+      li.appendChild(mid);
+      var n = el("span", "num", compact(r.output));
+      n.title = num(r.output) + " token";
+      li.appendChild(n);
+      var track = el("span", "track");
+      var fill = el("b");
+      fill.style.setProperty("--p", (lead ? Math.max(r.output ? 1 : 0, 100 * r.output / lead) : 0) + "%");
+      track.appendChild(fill);
+      li.appendChild(track);
+      list.appendChild(li);
+    });
+  }
+
+  function renderLede(data) {
+    var lede = $("lede");
+    var people = data.rows.filter(function (r) { return r.output > 0; }).length;
+    lede.replaceChildren();
+    if (!people) {
+      lede.textContent = PERIOD_LEAD[data.period] + T(", no Claude Code usage has been recorded yet.", " belum ada pemakaian Claude Code yang tercatat.");
+      return;
+    }
+    var total = el("strong");
+    lede.appendChild(document.createTextNode(PERIOD_LEAD[data.period] + T(", Claude wrote ", ", Claude menulis ")));
+    lede.appendChild(total);
+    lede.appendChild(document.createTextNode(T(" tokens for " + people + (people === 1 ? " person." : " people."), " token untuk " + people + " orang.")));
+    countUp(total, lastData && lastData.period === data.period ? lastData.totals.output : 0, data.totals.output, 900, 0);
+    var fine = el("span", "fine",
+      num(data.totals.sessions) + T(" sessions", " sesi") + (data.totals.cost ? T(", about " + usd(data.totals.cost) + " at API prices", ", estimasi " + usd(data.totals.cost) + " dengan harga API") : "") + ".");
+    lede.appendChild(fine);
+  }
+
+  function render(data, animate) {
+    renderLede(data);
+    renderPodium(data.rows, animate);
+    renderRest(data.rows);
+    lastData = data;
+    var d = new Date(data.generated_at * 1000);
+    $("updated").textContent = T("Live, checked every second. Last change ", "Live, dicek tiap detik. Terakhir berubah ") +
+      d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) +
+      " (" + data.tz.replace("Asia/", "") + ").";
+  }
+
+  // Polled every second; the page only re-renders when the numbers change (or once a minute, so
+  // "aktif x menit lalu" stays fresh), which keeps hover states and animations from restarting.
+  var lastSig = "", lastPaint = 0, inflight = false, failures = 0;
+  function load(animate) {
+    var want = period;
+    inflight = true;
+    return fetch("/api/leaderboard?period=" + encodeURIComponent(want), { cache: "no-store", credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) {
+        failures = 0;
+        if (want !== period) return;
+        var sig = JSON.stringify([data.period, data.totals, data.rows]);
+        if (animate || sig !== lastSig || Date.now() - lastPaint > 60000) {
+          var changed = sig !== lastSig;
+          lastSig = sig; lastPaint = Date.now();
+          render(data, animate);
+          if (changed && detailId != null && detail.open) loadDetail(false);
+        }
+      })
+      .catch(function () {
+        failures++;
+        $("updated").textContent = T("Lost the connection to the server. Retrying automatically.", "Koneksi ke server terputus. Mencoba lagi otomatis.");
+      })
+      .then(function () { inflight = false; });
+  }
+  function poll() {
+    if (!document.hidden && !inflight) load(false);
+    // back off to 10 s while the server is unreachable
+    setTimeout(poll, failures ? Math.min(10000, 1000 * Math.pow(2, failures)) : 1000);
+  }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && !inflight) load(false); });
+
+  // ---------- period switch ----------
+  function moveThumb() {
+    var btn = document.querySelector('.periods button[aria-pressed="true"]');
+    var thumb = document.querySelector(".periods .thumb");
+    if (!btn || !thumb) return;
+    thumb.style.width = btn.offsetWidth + "px";
+    thumb.style.transform = "translateX(" + btn.offsetLeft + "px)";
+  }
+  function select(p, animate) {
+    period = p;
+    try { localStorage.setItem("lb_period", p); } catch (e) {}
+    document.querySelectorAll(".periods button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.p === p));
+    });
+    moveThumb();
+    load(animate);
+  }
+  document.querySelectorAll(".periods button").forEach(function (b) {
+    b.addEventListener("click", function () { if (b.dataset.p !== period) select(b.dataset.p, true); });
+  });
+  window.addEventListener("resize", moveThumb);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveThumb);
+
+  // ---------- theme toggle ----------
+  var themeBtn = $("themeBtn");
+  var systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+  function currentTheme() {
+    var t = document.documentElement.getAttribute("data-theme");
+    return t === "light" || t === "dark" ? t : (systemDark.matches ? "dark" : "light");
+  }
+  function syncThemeBtn() {
+    var mode = currentTheme();
+    themeBtn.dataset.mode = mode;
+    themeBtn.setAttribute("aria-label", mode === "dark" ? T("Switch to light mode", "Ganti ke mode terang") : T("Switch to dark mode", "Ganti ke mode gelap"));
+    themeBtn.title = themeBtn.getAttribute("aria-label");
+  }
+  themeBtn.addEventListener("click", function () {
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    function apply() {
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("lb_theme", next); } catch (e) {}
+      syncThemeBtn();
+    }
+    if (document.startViewTransition && !reduceMotion) document.startViewTransition(apply); else apply();
+  });
+  if (systemDark.addEventListener) systemDark.addEventListener("change", syncThemeBtn);
+  syncThemeBtn();
+
+  // ---------- me / photo ----------
+  var dlg = $("meDialog");
+  function api(method, url, body, type) {
+    var opts = { method: method, credentials: "same-origin", headers: { "X-LB-Request": "1" } };
+    if (body !== undefined) { opts.body = body; opts.headers["Content-Type"] = type || "application/json"; }
+    return fetch(url, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || ("Gagal (" + r.status + ")."));
+        return j;
+      });
+    });
+  }
+  function renderChip() {
+    var chip = $("meChip");
+    if (!me) { chip.hidden = true; return; }
+    chip.hidden = false;
+    chip.replaceChildren();
+    if (me.participant) {
+      chip.appendChild(avatar(me.participant.name, me.participant.avatar, 32));
+      chip.appendChild(el("span", "label", me.participant.avatar ? T("Your photo", "Foto kamu") : T("Add photo", "Pasang foto")));
+    } else {
+      chip.appendChild(el("span", "av empty", ""));
+      chip.appendChild(el("span", "label", T("Add photo", "Pasang foto")));
+    }
+    chip.setAttribute("aria-label", me.participant && me.participant.avatar ? T("Your photo", "Foto kamu") : T("Add photo", "Pasang foto"));
+  }
+  function openDialog() {
+    $("linkErr").textContent = ""; $("photoErr").textContent = "";
+    $("linkView").hidden = !!me.participant;
+    $("photoView").hidden = !me.participant;
+    if (me.participant) showIdle();
+    if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+    if (!me.participant) setTimeout(function () { $("tokenInput").focus(); }, 30);
+  }
+  function closeDialog() { if (dlg.open) dlg.close(); }
+  $("meChip").addEventListener("click", openDialog);
+  dlg.addEventListener("click", function (e) {
+    if (e.target === dlg || (e.target.closest && e.target.closest("[data-close]"))) closeDialog();
+  });
+
+  $("linkView").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var token = $("tokenInput").value.trim();
+    var m = token.match(/lb_[A-Za-z0-9_-]+/);
+    if (!m) { $("linkErr").textContent = T("The token starts with lb_. Copy it from your install command.", "Token diawali lb_. Salin dari perintah install kamu."); return; }
+    var btn = e.submitter || this.querySelector("button[type=submit]");
+    btn.disabled = true;
+    api("POST", "/api/me/link", JSON.stringify({ token: m[0] }))
+      .then(function (j) { me = j; $("tokenInput").value = ""; renderChip(); openDialog(); load(false); })
+      .catch(function (err) { $("linkErr").textContent = err.message; })
+      .then(function () { btn.disabled = false; });
+  });
+
+  // crop state
+  var crop = { img: null, zoom: 1, x: 0, y: 0 };
+  var canvas = $("cropCanvas"), ctx = canvas.getContext("2d");
+  function showIdle() {
+    var p = me.participant;
+    var cur = $("currentAv");
+    var fresh = avatar(p.name, p.avatar, 168);
+    fresh.id = "currentAv";
+    cur.replaceWith(fresh);
+    canvas.hidden = true; $("zoomRow").hidden = true;
+    $("cropActions").hidden = true; $("idleActions").hidden = false;
+    $("removeBtn").hidden = !p.avatar;
+    $("pickBtn").textContent = p.avatar ? T("Change photo", "Ganti foto") : T("Choose photo", "Pilih foto");
+    $("photoHint").textContent = T("This photo appears on the leaderboard for everyone who can open it.", "Foto ini muncul di leaderboard untuk semua yang bisa membukanya.");
+    $("whoLine").textContent = T("Linked as ", "Terhubung sebagai ") + p.name + (me.email ? " (" + me.email + ")" : "") + ".";
+    crop.img = null;
+  }
+  function draw() {
+    var S = canvas.width, img = crop.img;
+    var base = Math.max(S / img.width, S / img.height) * crop.zoom;
+    var w = img.width * base, h = img.height * base;
+    crop.x = Math.min(0, Math.max(S - w, crop.x));
+    crop.y = Math.min(0, Math.max(S - h, crop.y));
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, S, S);
+    ctx.drawImage(img, crop.x, crop.y, w, h);
+  }
+  function startCrop(img) {
+    crop.img = img; crop.zoom = 1;
+    var S = canvas.width, base = Math.max(S / img.width, S / img.height);
+    crop.x = (S - img.width * base) / 2; crop.y = (S - img.height * base) / 2;
+    $("zoomInput").value = "1";
+    $("currentAv").hidden = true; canvas.hidden = false; $("zoomRow").hidden = false;
+    $("idleActions").hidden = true; $("cropActions").hidden = false;
+    $("photoHint").textContent = T("Drag the photo to position it, then save.", "Geser foto untuk mengatur posisi, lalu simpan.");
+    draw();
+  }
+  function pick() { $("photoErr").textContent = ""; $("fileInput").value = ""; $("fileInput").click(); }
+  $("pickBtn").addEventListener("click", pick);
+  $("pickAgain").addEventListener("click", pick);
+  $("cancelCrop").addEventListener("click", showIdle);
+  $("fileInput").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    if (f.size > 25 * 1024 * 1024) { $("photoErr").textContent = T("That file is too big. Pick a photo under 25 MB.", "File terlalu besar. Pilih foto di bawah 25 MB."); return; }
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onload = function () { URL.revokeObjectURL(url); startCrop(img); };
+    img.onerror = function () { URL.revokeObjectURL(url); $("photoErr").textContent = T("The browser cannot read this file. Use a JPG or PNG.", "Browser tidak bisa membaca file ini. Pakai JPG atau PNG."); };
+    img.src = url;
+  });
+  $("zoomInput").addEventListener("input", function () {
+    if (!crop.img) return;
+    var S = canvas.width, old = crop.zoom, z = Number(this.value);
+    var c = S / 2;  // zoom around the centre
+    crop.x = c - (c - crop.x) * (z / old); crop.y = c - (c - crop.y) * (z / old);
+    crop.zoom = z; draw();
+  });
+  var drag = null;
+  canvas.addEventListener("pointerdown", function (e) {
+    if (!crop.img) return;
+    drag = { x: e.clientX, y: e.clientY, ox: crop.x, oy: crop.y };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    var k = canvas.width / canvas.getBoundingClientRect().width;
+    crop.x = drag.ox + (e.clientX - drag.x) * k; crop.y = drag.oy + (e.clientY - drag.y) * k; draw();
+  });
+  canvas.addEventListener("pointerup", function () { drag = null; });
+  canvas.addEventListener("pointercancel", function () { drag = null; });
+
+  $("saveBtn").addEventListener("click", function () {
+    var btn = this; btn.disabled = true; $("photoErr").textContent = "";
+    function send(blob) {
+      return api("POST", "/api/me/avatar", blob, blob.type)
+        .then(function (j) { me = j; renderChip(); showIdle(); load(false); })
+        .catch(function (err) { $("photoErr").textContent = err.message; });
+    }
+    canvas.toBlob(function (blob) {
+      if (blob && blob.type === "image/webp" && blob.size < 550 * 1024) {
+        send(blob).then(function () { btn.disabled = false; });
+      } else {
+        canvas.toBlob(function (jpg) {
+          if (!jpg) { $("photoErr").textContent = T("Could not process the photo.", "Gagal memproses foto."); btn.disabled = false; return; }
+          send(jpg).then(function () { btn.disabled = false; });
+        }, "image/jpeg", 0.86);
+      }
+    }, "image/webp", 0.86);
+  });
+  $("removeBtn").addEventListener("click", function () {
+    var btn = this; btn.disabled = true;
+    api("DELETE", "/api/me/avatar")
+      .then(function (j) { me = j; renderChip(); showIdle(); load(false); })
+      .catch(function (err) { $("photoErr").textContent = err.message; })
+      .then(function () { btn.disabled = false; });
+  });
+
+  fetch("/api/me", { cache: "no-store", credentials: "same-origin" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) { me = j; renderChip(); if (j && j.admin) $("adminLink").hidden = false; })
+    .catch(function () {});
+
+
+  // ---------- participant detail ----------
+  var detail = $("detail"), detailId = null, detailSig = "";
+  var PERIOD_CAP = {
+    today: T("today", "hari ini"), "7d": T("in the last 7 days", "dalam 7 hari terakhir"),
+    "30d": T("in the last 30 days", "dalam 30 hari terakhir"), month: T("this month", "bulan ini"), all: T("since the start", "sejak awal")
+  };
+  function clickable(node, row) {
+    node.dataset.id = String(row.id);
+    node.tabIndex = 0;
+    node.setAttribute("role", "button");
+    node.setAttribute("aria-label", T("Show details for ", "Lihat detail ") + row.name);
+  }
+  function onPick(e) {
+    var t = e.target.closest && e.target.closest("[data-id]");
+    if (!t) return;
+    if (e.type === "keydown") {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+    }
+    openDetail(Number(t.dataset.id), t);
+  }
+  ["podium", "rest"].forEach(function (id) {
+    $(id).addEventListener("click", onPick);
+    $(id).addEventListener("keydown", onPick);
+  });
+  var opener = null;
+  function openDetail(id, from) {
+    detailId = id; detailSig = ""; opener = from || null;
+    var body = $("dtBody");
+    body.replaceChildren(el("p", "dt-empty", T("Loading details…", "Memuat detail…")));
+    if (typeof detail.showModal === "function") detail.showModal(); else detail.setAttribute("open", "");
+    loadDetail(true);
+  }
+  function closeDetail() { if (detail.open) detail.close(); }
+  detail.addEventListener("close", function () {
+    detailId = null;
+    var again = opener && document.querySelector('[data-id="' + opener.dataset.id + '"]');
+    if (again) again.focus();
+  });
+  detail.addEventListener("click", function (e) {
+    if (e.target === detail || (e.target.closest && e.target.closest("[data-close]"))) closeDetail();
+  });
+  function loadDetail(first) {
+    var id = detailId;
+    if (id == null) return;
+    fetch("/api/participant?id=" + id + "&period=" + encodeURIComponent(period), { cache: "no-store", credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        if (id !== detailId) return;
+        var sig = JSON.stringify([d.period, d.output, d.input, d.cache_read, d.sessions, d.rank, d.series, d.models, d.avatar]);
+        if (sig === detailSig) return;
+        detailSig = sig;
+        renderDetail(d, first);
+      })
+      .catch(function () {
+        if (first) $("dtBody").replaceChildren(el("p", "dt-empty", T("Could not load the details. Close this and try again.", "Detail tidak bisa dimuat. Tutup lalu coba lagi.")));
+      });
+  }
+
+  function fmtDate(ts, tz, opts) {
+    try { return new Date(ts * 1000).toLocaleDateString(LOCALE, Object.assign({ timeZone: tz }, opts)); }
+    catch (e) { return new Date(ts * 1000).toLocaleDateString(LOCALE, opts); }
+  }
+  function bucketLabel(d, ts) {
+    if (d.unit === "hour") {
+      var h = Number(fmtHour(ts, d.tz));
+      return pad(h) + HM + "00–" + pad((h + 1) % 24) + HM + "00";
+    }
+    if (d.unit === "week") return T("Week of ", "Minggu ") + fmtDate(ts, d.tz, { day: "numeric", month: "short" });
+    return fmtDate(ts, d.tz, { weekday: "short", day: "numeric", month: "short" });
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function fmtHour(ts, tz) {
+    try { return new Date(ts * 1000).toLocaleString("en-GB", { hour: "2-digit", hour12: false, timeZone: tz }); }
+    catch (e) { return String(new Date(ts * 1000).getHours()); }
+  }
+  function duration(sec) {
+    sec = Math.round(sec || 0);
+    if (sec < 60) return sec + T(" s", " dtk");
+    var m = Math.round(sec / 60);
+    if (m < 60) return m + T(" min", " mnt");
+    var h = Math.floor(m / 60), r = m % 60;
+    return h + T(" h", " jam") + (r ? " " + r + T(" min", " mnt") : "");
+  }
+
+  function renderChart(d, animate) {
+    var wrap = el("figure", "chart");
+    wrap.style.margin = "20px 0 0";
+    var pts = d.series, max = 0, peak = null;
+    pts.forEach(function (p) { if (p[1] > max) { max = p[1]; peak = p; } });
+    var unitWord = d.unit === "hour" ? T("hour", "jam") : d.unit === "week" ? T("week", "minggu") : T("day", "hari");
+    var plot = el("div", "plot");
+    plot.setAttribute("role", "img");
+    plot.setAttribute("aria-label", T("Output tokens per ", "Output token per ") + unitWord + (peak ? T(", highest ", ", tertinggi ") + compact(peak[1]) + T(" on ", " pada ") + bucketLabel(d, peak[0]) : T(", none yet", ", belum ada")));
+    if (max) {
+      var mx = el("div", "max", compact(max));
+      plot.appendChild(mx);
+    }
+    var bars = el("div", "bars" + (animate ? " play-bars" : ""));
+    bars.style.setProperty("--gap", pts.length > 60 ? "1px" : pts.length > 30 ? "2px" : "3px");
+    var nowTs = Date.now() / 1000;
+    pts.forEach(function (p, i) {
+      var bar = el("div", "bar" + (p[1] ? "" : " zero"));
+      var next = i + 1 < pts.length ? pts[i + 1][0] : Infinity;
+      if (nowTs >= p[0] && nowTs < next) bar.classList.add("today");
+      var b = el("b");
+      b.style.setProperty("--v", (max ? 100 * p[1] / max : 0) + "%");
+      if (p[1]) b.style.setProperty("--min", "2px");
+      b.style.setProperty("--i", String(i));
+      bar.appendChild(b);
+      bar.dataset.i = String(i);
+      bars.appendChild(bar);
+    });
+    plot.appendChild(bars);
+    var tip = el("div", "tip"); tip.hidden = true;
+    plot.appendChild(tip);
+    function show(i) {
+      var p = pts[i];
+      if (!p) return;
+      Array.prototype.forEach.call(bars.children, function (c, j) { c.classList.toggle("on", j === i); });
+      tip.replaceChildren(el("div", "", bucketLabel(d, p[0])));
+      var v = el("b", "", p[1] ? compact(p[1]) + T(" tokens", " token") : T("No usage", "Tidak ada pemakaian"));
+      tip.appendChild(v);
+      tip.hidden = false;
+      var bar = bars.children[i];
+      var x = bar.offsetLeft + bar.offsetWidth / 2;
+      var half = tip.offsetWidth / 2, w = plot.offsetWidth;
+      tip.style.left = Math.max(half, Math.min(w - half, x)) + "px";
+      // sit just above the bar, never above the plot
+      var barTop = bars.offsetTop + bar.offsetHeight - bar.firstChild.offsetHeight;
+      tip.style.top = Math.max(0, barTop - tip.offsetHeight - 6) + "px";
+    }
+    function hide() { tip.hidden = true; Array.prototype.forEach.call(bars.children, function (c) { c.classList.remove("on"); }); }
+    function pick(clientX) {
+      var r = bars.getBoundingClientRect();
+      var i = Math.floor((clientX - r.left) / r.width * pts.length);
+      show(Math.max(0, Math.min(pts.length - 1, i)));
+    }
+    plot.addEventListener("pointermove", function (e) { pick(e.clientX); });
+    plot.addEventListener("pointerdown", function (e) { pick(e.clientX); });
+    plot.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") hide(); });
+    wrap.appendChild(plot);
+    var axis = el("div", "axis");
+    if (d.unit === "hour") {
+      ["00", "06", "12", "18", "23"].forEach(function (t) { axis.appendChild(el("span", "", t + HM + "00")); });
+    } else {
+      axis.appendChild(el("span", "", fmtDate(pts[0][0], d.tz, { day: "numeric", month: "short" })));
+      if (pts.length > 4) axis.appendChild(el("span", "", fmtDate(pts[Math.floor(pts.length / 2)][0], d.tz, { day: "numeric", month: "short" })));
+      axis.appendChild(el("span", "", d.unit === "week" ? T("This week", "Minggu ini") : T("Today", "Hari ini")));
+    }
+    wrap.appendChild(axis);
+    // the same numbers as a table, for screen readers
+    var tbl = el("table", "sr");
+    var cap = el("caption", "", T("Output tokens per ", "Output token per ") + unitWord);
+    tbl.appendChild(cap);
+    pts.forEach(function (p) {
+      if (!p[1]) return;
+      var tr = el("tr");
+      tr.appendChild(el("th", "", bucketLabel(d, p[0])));
+      tr.appendChild(el("td", "", num(p[1])));
+      tbl.appendChild(tr);
+    });
+    wrap.appendChild(tbl);
+    return wrap;
+  }
+
+  function renderDetail(d, animate) {
+    var body = $("dtBody");
+    var frag = document.createDocumentFragment();
+
+    var head = el("div", "dt-head");
+    head.appendChild(avatar(d.name, d.avatar, 56));
+    var idt = el("div");
+    var h = el("h2", "", d.name);
+    h.id = "dtName";
+    if (d.me) h.appendChild(el("span", "badge", T("You", "Kamu")));
+    idt.appendChild(h);
+    var subTxt = d.output
+      ? T("Rank ", "Peringkat ") + d.rank + T(" of ", " dari ") + d.of + " " + PERIOD_CAP[d.period]
+      : T("No usage ", "Belum ada pemakaian ") + PERIOD_CAP[d.period];
+    idt.appendChild(el("div", "sub", (d.team ? d.team + ". " : "") + subTxt));
+    head.appendChild(idt);
+    var x = el("button", "x");
+    x.type = "button";
+    x.setAttribute("data-close", "");
+    x.setAttribute("aria-label", "Tutup");
+    x.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>';
+    head.appendChild(x);
+    frag.appendChild(head);
+
+    var fig = el("div", "dt-figure");
+    var big = el("span", "big");
+    big.title = num(d.output) + " token";
+    fig.appendChild(big);
+    var share = d.share ? ", " + Math.round(d.share * 100) + T("% of all team output", "% dari semua output tim") : "";
+    fig.appendChild(el("span", "cap", T("output tokens ", "output token ") + PERIOD_CAP[d.period] + share));
+    frag.appendChild(fig);
+
+    frag.appendChild(renderChart(d, animate && !reduceMotion));
+
+    var facts = el("dl", "facts");
+    function fact(label, value, title) {
+      var w = el("div");
+      w.appendChild(el("dt", "", label));
+      var dd = el("dd", "", value);
+      if (title) dd.title = title;
+      w.appendChild(dd);
+      facts.appendChild(w);
+    }
+    fact("Input", compact(d.input), num(d.input) + T(" tokens", " token"));
+    fact(T("Cache read", "Cache dibaca"), compact(d.cache_read), num(d.cache_read) + " token");
+    fact(T("Cache written", "Cache ditulis"), compact(d.cache_creation), num(d.cache_creation) + " token");
+    fact(T("Sessions", "Sesi"), num(d.sessions));
+    fact(d.period === "today" ? T("Active hours", "Jam aktif") : T("Active days", "Hari aktif"), d.period === "today"
+      ? String(d.series.filter(function (p) { return p[1] > 0; }).length)
+      : String(d.active_days));
+    fact(T("Estimated cost", "Estimasi biaya"), usd(d.cost), T("API prices, not subscription bills", "Harga API, bukan tagihan langganan"));
+    frag.appendChild(facts);
+
+    if (d.models.length) {
+      var ms = el("section", "models");
+      ms.appendChild(el("h3", "", T("Models used", "Model yang dipakai")));
+      d.models.slice(0, 5).forEach(function (m) {
+        var r = el("div", "model");
+        var nm = el("span", "nm", modelName(m.model) || T("Unknown", "Tidak diketahui"));
+        nm.title = m.model;
+        r.appendChild(nm);
+        var tr = el("span", "track"), b = el("b");
+        b.style.setProperty("--p", (100 * m.share).toFixed(1) + "%");
+        tr.appendChild(b);
+        r.appendChild(tr);
+        var pc = m.share >= 0.995 ? "100%" : m.share < 0.01 ? "<1%" : Math.round(m.share * 100) + "%";
+        var pcs = el("span", "pc", pc);
+        pcs.title = num(m.output) + " token";
+        r.appendChild(pcs);
+        ms.appendChild(r);
+      });
+      frag.appendChild(ms);
+    }
+
+    var foot = [];
+    if (d.peak_hour != null && d.output) foot.push(T("Most active around ", "Paling sering pakai Claude sekitar jam ") + pad(d.peak_hour) + HM + "00–" + pad((d.peak_hour + 1) % 24) + HM + "00");
+    if (d.active_seconds) foot.push(T("Recorded active time ", "Waktu aktif tercatat ") + duration(d.active_seconds));
+    foot.push(ago(d.last_seen).replace(/^a/, "A"));
+    if (d.created_at) foot.push(T("Joined ", "Ikut sejak ") + fmtDate(d.created_at, d.tz, { day: "numeric", month: "long", year: "numeric" }));
+    frag.appendChild(el("p", "dt-foot", foot.join(". ") + "."));
+
+    if (!d.output) frag.insertBefore(el("p", "dt-empty", T("No output tokens ", "Belum ada output token ") + PERIOD_CAP[d.period] + T(". Try a longer period.", ". Coba pilih periode yang lebih panjang.")), facts);
+
+    var hadFocus = body.contains(document.activeElement) && document.activeElement.classList.contains("x");
+    body.replaceChildren(frag);
+    if (animate) countUp(big, 0, d.output, 700, 0); else big.textContent = compact(d.output);
+    if (animate || hadFocus) x.focus();
+  }
+
+  // ---------- start ----------
+  if (!document.querySelector('.periods button[data-p="' + period + '"]')) period = "7d";
+  select(period, true);
+  setTimeout(poll, 1000);
+})();
+</script>
+</body>
+</html>

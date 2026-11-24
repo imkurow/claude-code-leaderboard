@@ -1,0 +1,23 @@
+# systemd unit. Install:
+#   sudo cp deploy/claude-leaderboard.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now claude-leaderboard
+# Adjust User and WorkingDirectory to where you cloned the repo.
+[Unit]
+Description=Claude Code Leaderboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=leaderboard
+WorkingDirectory=/opt/claude-leaderboard
+ExecStart=/usr/bin/python3 server.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/claude-leaderboard/data
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

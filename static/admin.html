@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="__LB_LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin - __LB_TITLE__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141413'/%3E%3Crect x='5' y='15' width='6' height='12' rx='1' fill='%23B0AEA5'/%3E%3Crect x='13' y='8' width='6' height='19' rx='1' fill='%23D97757'/%3E%3Crect x='21' y='18' width='6' height='9' rx='1' fill='%23D4A27F'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..600&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem("lb_theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<style>
+  :root {
+    --fog: #F0EEE6;
+    --paper: #FAF9F5;
+    --ink: #141413;
+    --ink-2: #3D3D3A;
+    --ink-3: #76746C;
+    --rule: #DEDCD1;
+    --signal: #3E6E9F;
+    --gold: #D97757;
+    --silver: #9C9A91;
+    --bronze: #C4925F;
+    --av-bg: 0.89;
+    --av-fg: 0.36;
+    --err: #B5482B;
+    --shadow: rgba(20, 20, 19, .28);
+    --stage: #ECE9E0;
+    --glow: #FFFFFF;
+    --stone-top: #FCFBF8;
+    --stone-1: #E6E2D7;
+    --stone-2: #D3CEC1;
+    --stone-edge: rgba(255, 255, 255, .8);
+    --rank-gold: linear-gradient(180deg, #D3A443 0%, #9A6E1C 100%);
+    --rank-silver: linear-gradient(180deg, #A7AEB7 0%, #5F6770 100%);
+    --rank-bronze: linear-gradient(180deg, #CF8A52 0%, #84481F 100%);
+    --m-gold: linear-gradient(145deg, #F7E7AE 0%, #D9AE4C 36%, #A87B22 68%, #E9CB78 100%);
+    --m-silver: linear-gradient(145deg, #FCFCFD 0%, #CDD1D6 38%, #8F969F 70%, #DDE0E4 100%);
+    --m-bronze: linear-gradient(145deg, #F6D3AE 0%, #CB8954 38%, #8D522A 70%, #DDA77A 100%);
+    --ease-enter: cubic-bezier(.22, 1, .36, 1);
+    --display: "Source Serif 4", "Tiempos Headline", Georgia, serif;
+    --text: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  /* Theme: follows the system unless the toggle picked one (html[data-theme]). */
+  :root[data-theme="dark"] {
+      --fog: #1F1E1D;
+      --paper: #262624;
+      --ink: #FAF9F5;
+      --ink-2: #C9C7BD;
+      --ink-3: #96948B;
+      --rule: #3A3935;
+      --signal: #8DB4DC;
+      --gold: #D97757;
+      --silver: #AEACA3;
+      --bronze: #D4A27F;
+      --av-bg: 0.38;
+      --av-fg: 0.9;
+      --err: #F09A7C;
+      --shadow: rgba(0, 0, 0, .55);
+      --stage: #232321;
+      --glow: rgba(255, 238, 220, .075);
+      --stone-top: #3B3A36;
+      --stone-1: #31302D;
+      --stone-2: #292826;
+      --stone-edge: rgba(255, 255, 255, .07);
+      --rank-gold: var(--m-gold);
+      --rank-silver: var(--m-silver);
+      --rank-bronze: var(--m-bronze);
+      color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --fog: #1F1E1D;
+        --paper: #262624;
+        --ink: #FAF9F5;
+        --ink-2: #C9C7BD;
+        --ink-3: #96948B;
+        --rule: #3A3935;
+        --signal: #8DB4DC;
+        --gold: #D97757;
+        --silver: #AEACA3;
+        --bronze: #D4A27F;
+        --av-bg: 0.38;
+        --av-fg: 0.9;
+        --err: #F09A7C;
+        --shadow: rgba(0, 0, 0, .55);
+      --stage: #232321;
+      --glow: rgba(255, 238, 220, .075);
+      --stone-top: #3B3A36;
+      --stone-1: #31302D;
+      --stone-2: #292826;
+      --stone-edge: rgba(255, 255, 255, .07);
+      --rank-gold: var(--m-gold);
+      --rank-silver: var(--m-silver);
+      --rank-bronze: var(--m-bronze);
+        color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--fog); color: var(--ink); font: 400 16px/1.55 var(--text); font-variant-numeric: lining-nums tabular-nums; }
+  button, input { font: inherit; color: inherit; }
+  a { color: inherit; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 36px 16px 64px; }
+  .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: start; }
+  .back { font-size: 14px; color: var(--ink-3); text-decoration: none; }
+  .back:hover { color: var(--ink); text-decoration: underline; }
+  h1 { margin: 6px 0 4px; font: 500 clamp(30px, 4.4vw, 42px)/1.08 var(--display); letter-spacing: -0.02em; }
+  .lede { margin: 0; color: var(--ink-2); max-width: 62ch; }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .theme-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--rule); background: var(--paper);
+    display: grid; place-items: center; cursor: pointer; color: var(--ink-2);
+  }
+  .theme-btn:hover { border-color: var(--ink-3); }
+  .theme-btn svg { width: 19px; height: 19px; }
+  .theme-btn .sun { display: none; }
+  .theme-btn[data-mode="dark"] .sun { display: block; }
+  .theme-btn[data-mode="dark"] .moon { display: none; }
+
+  .card { margin-top: 28px; background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; }
+  .card > h2, .list-head h2 { margin: 0; font: 500 21px/1.2 var(--display); letter-spacing: -0.01em; }
+  .add { padding: 20px 22px 22px; }
+  .add-grid { margin-top: 14px; display: grid; grid-template-columns: 1.2fr 1fr 1.4fr auto; gap: 12px; align-items: end; }
+  label.f { display: grid; gap: 5px; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
+  label.f .opt { font-weight: 400; color: var(--ink-3); }
+  input[type="text"], input[type="email"], input[type="search"] {
+    width: 100%; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--rule); background: var(--fog);
+  }
+  input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .btn {
+    border: 1px solid var(--ink); background: var(--ink); color: var(--fog); padding: 10px 16px; border-radius: 10px;
+    cursor: pointer; font-weight: 600; font-size: 15px; white-space: nowrap;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+  .btn.ghost:hover { border-color: var(--ink-3); }
+  .btn.small { padding: 6px 11px; font-size: 13.5px; border-radius: 8px; }
+  .btn.danger { background: transparent; color: var(--err); border-color: color-mix(in oklab, var(--err) 45%, var(--rule)); }
+  .btn.danger.armed, .btn.danger.solid { background: var(--err); border-color: var(--err); color: var(--paper); }
+  .btn[disabled] { opacity: .45; cursor: default; }
+  .err { color: var(--err); font-size: 14px; margin-top: 10px; }
+  .err:empty { display: none; }
+  .ok { color: var(--ink-2); font-size: 14px; margin-top: 10px; }
+  .ok:empty { display: none; }
+
+  .list-head { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--rule); }
+  .list-head input { max-width: 300px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 13px; font-weight: 500; color: var(--ink-3); padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+  th:first-child, td:first-child { padding-left: 22px; }
+  th:last-child, td:last-child { padding-right: 22px; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: middle; font-size: 14.5px; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr { cursor: pointer; transition: background-color .15s ease; }
+  tbody tr:hover { background: color-mix(in oklab, var(--ink) 3.5%, var(--paper)); }
+  tr.off td { color: var(--ink-3); }
+  .who { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .who .nm { font-weight: 600; }
+  .who .em { font-size: 13px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 28ch; }
+  .num { text-align: right; font: 500 16px/1 var(--display); white-space: nowrap; }
+  th.num { font: 500 13px/1.3 var(--text); }
+  .muted { color: var(--ink-3); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .pill.on { color: var(--signal); background: color-mix(in oklab, var(--signal) 12%, transparent); }
+  .pill.offp { color: var(--ink-3); background: color-mix(in oklab, var(--ink-3) 14%, transparent); }
+  .pill.wait { color: var(--bronze); background: color-mix(in oklab, var(--bronze) 15%, transparent); }
+  .empty { padding: 28px 22px; color: var(--ink-3); }
+
+  .av {
+    --size: 36px; width: var(--size); height: var(--size); border-radius: 50%; flex: none; display: grid; place-items: center; overflow: hidden;
+    font: 600 calc(var(--size) * .34)/1 var(--text);
+    background: oklch(var(--av-bg) 0.04 var(--h, 60)); color: oklch(var(--av-fg) 0.05 var(--h, 60));
+  }
+  .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  dialog {
+    width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 0;
+    border: 1px solid var(--rule); border-radius: 18px; background: var(--paper); color: var(--ink);
+    box-shadow: 0 30px 80px -20px var(--shadow);
+  }
+  dialog::backdrop { background: rgba(20, 20, 19, .42); }
+  dialog[open] { animation: pop .26s cubic-bezier(.2,.8,.25,1); }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+  .dlg { padding: 22px 24px 24px; }
+  .dlg-head { display: flex; gap: 14px; align-items: center; }
+  .dlg-head .av { --size: 48px; }
+  .dlg-head h2 { margin: 0; font: 500 23px/1.2 var(--display); letter-spacing: -0.01em; overflow-wrap: anywhere; flex: 1; }
+  .x { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--rule); background: transparent; color: var(--ink-2); cursor: pointer; display: grid; place-items: center; flex: none; }
+  .x:hover { background: var(--fog); }
+  .x svg { width: 14px; height: 14px; }
+  .dlg p { color: var(--ink-2); font-size: 15px; margin: 10px 0 0; }
+  .sec { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--rule); }
+  .sec h3 { margin: 0 0 4px; font: 600 15px/1.3 var(--text); }
+  .sec .hint { margin: 0 0 12px; font-size: 14px; color: var(--ink-3); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  .check { display: flex; gap: 10px; align-items: center; font-size: 14.5px; cursor: pointer; }
+  .check input { width: 18px; height: 18px; accent-color: var(--ink); }
+  .row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; }
+  .row-actions .status { margin-right: auto; font-size: 14px; color: var(--ink-3); }
+  .machines { list-style: none; margin: 0; padding: 0; }
+  .machines li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--rule); }
+  .machines li:first-child { border-top: 0; padding-top: 2px; }
+  .machines .code { font-weight: 600; font-size: 14.5px; }
+  .machines .meta { font-size: 13px; color: var(--ink-3); }
+  .confirm-del { display: flex; gap: 8px; margin-top: 4px; }
+  .confirm-del input { flex: 1; }
+
+  .cmd { margin-top: 16px; }
+  .cmd-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+  pre {
+    margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--fog); border: 1px solid var(--rule);
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow: auto;
+  }
+  .warn { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: var(--ink-2);
+    background: color-mix(in oklab, var(--gold) 12%, var(--paper)); border: 1px solid color-mix(in oklab, var(--gold) 30%, var(--rule)); }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--paper);
+    padding: 9px 16px; border-radius: 999px; font-size: 14px; box-shadow: 0 10px 30px -10px var(--shadow); z-index: 10; }
+  .toast[hidden] { display: none; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 760px) {
+    .add-grid { grid-template-columns: 1fr 1fr; }
+    .add-grid .f-email { grid-column: 1 / -1; }
+    .add-grid .btn { grid-column: 1 / -1; }
+    .col-team, .col-seen { display: none; }
+    .list-head input { max-width: none; }
+  }
+  @media (max-width: 480px) {
+    .add-grid, .form-grid { grid-template-columns: 1fr; }
+    .col-out { display: none; }
+    .who .em { max-width: 18ch; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <a class="back" href="/">⟦Back to the leaderboard‖Kembali ke leaderboard⟧</a>
+      <h1>⟦Manage participants‖Kelola peserta⟧</h1>
+      <p class="lede" id="lede">⟦Loading…‖Memuat…⟧</p>
+    </div>
+    <div class="tools">
+      <button type="button" class="btn ghost small" id="logoutBtn" hidden>⟦Sign out‖Keluar⟧</button>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="⟦Switch to dark mode‖Ganti ke mode gelap⟧">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="card add" aria-labelledby="addTitle">
+    <h2 id="addTitle">⟦Add a participant‖Tambah peserta⟧</h2>
+    <form id="addForm" class="add-grid" autocomplete="off">
+      <label class="f">⟦Name‖Nama⟧ <input type="text" name="name" required maxlength="60" placeholder="⟦Name on the leaderboard‖Nama di leaderboard⟧"></label>
+      <label class="f">⟦Team‖Tim⟧ <input type="text" name="team" maxlength="40" list="teams" placeholder="⟦For example Engineering‖Misalnya Developer⟧"></label>
+      <label class="f f-email"><span>⟦Login email‖Email login⟧ <span class="opt">⟦(optional)‖(opsional)⟧</span></span>
+        <input type="email" name="email" maxlength="120" placeholder="name@example.com" title="⟦The email they sign in with, so they can add a photo‖Email login peserta, supaya dia bisa pasang foto⟧"></label>
+      <button class="btn" type="submit">⟦Add participant‖Tambah peserta⟧</button>
+    </form>
+    <datalist id="teams"></datalist>
+    <div class="err" id="addErr" role="alert"></div>
+  </section>
+
+  <section class="card" aria-labelledby="listTitle">
+    <div class="list-head">
+      <h2 id="listTitle">⟦Participants‖Peserta⟧</h2>
+      <input type="search" id="q" placeholder="⟦Search name, team or email‖Cari nama, tim, atau email⟧" aria-label="⟦Search participants‖Cari peserta⟧">
+    </div>
+    <table>
+      <thead><tr>
+        <th>⟦Participant‖Peserta⟧</th><th class="col-team">⟦Team‖Tim⟧</th><th class="col-seen">⟦Last data‖Terakhir kirim data⟧</th>
+        <th class="num col-out">⟦Total output‖Total output⟧</th><th>Status</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden></div>
+  </section>
+</div>
+
+<!-- install commands, shown once after add / new token -->
+<dialog id="tokenDlg" aria-labelledby="tokTitle">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="tokTitle"></h2></div>
+    <p>⟦Send this in a private chat, not a group. It contains a personal token, so anyone holding it can send data as this participant.‖Kirim lewat chat pribadi, jangan di grup. Isinya token pribadi, jadi siapa pun yang memegangnya bisa mengirim data atas nama peserta ini.⟧</p>
+    <div class="cmd">
+      <div class="cmd-head"><span>macOS / Linux</span><button class="btn ghost small" type="button" data-copy="sh">⟦Copy‖Salin⟧</button></div>
+      <pre id="cmdSh"></pre>
+    </div>
+    <div class="cmd">
+      <div class="cmd-head"><span>Windows (PowerShell)</span><button class="btn ghost small" type="button" data-copy="ps">⟦Copy‖Salin⟧</button></div>
+      <pre id="cmdPs"></pre>
+    </div>
+    <div class="warn">⟦These commands are shown only now. If they get lost, create a new token from the participant's menu.‖Perintah ini cuma muncul sekarang. Kalau hilang, buat token baru dari menu peserta.⟧</div>
+    <div class="row-actions">
+      <button class="btn ghost" type="button" data-copy="msg">⟦Copy full message‖Salin pesan lengkap⟧</button>
+      <button class="btn" type="button" id="tokDone">⟦Done‖Selesai⟧</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- manage one participant -->
+<dialog id="editDlg" aria-labelledby="edTitle">
+  <div class="dlg" id="edBody"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  var LANG = "__LB_LANG__" === "id" ? "id" : "en";
+  var LOCALE = LANG === "id" ? "id-ID" : "en-US";
+  function T(en, id) { return LANG === "id" ? id : en; }
+  var TITLE = "__LB_TITLE__";
+  var data = { participants: [], teams: [] };
+  var lastCmd = null;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function num(n) { return Math.round(Number(n) || 0).toLocaleString(LOCALE); }
+  function compact(n) {
+    n = Math.round(Number(n) || 0);
+    var units = [[1e9, "B"], [1e6, "M"], [1e3, "K"]];
+    for (var i = 0; i < units.length; i++) {
+      var v = n / units[i][0];
+      if (v >= 1) {
+        var t = v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2);
+        if (Number(t) >= 1000 && i > 0) { i--; t = (n / units[i][0]).toFixed(2); }
+        if (t.indexOf(".") >= 0) t = t.replace(/0+$/, "").replace(/\.$/, "");
+        return t + units[i][1];
+      }
+    }
+    return String(n);
+  }
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function initials(name) {
+    var p = String(name).trim().split(/\s+/);
+    return ((p[0] || "")[0] || "?").toUpperCase() + (p.length > 1 ? (p[p.length - 1][0] || "").toUpperCase() : "");
+  }
+  function avatar(name, url, size) {
+    var a = el("span", "av");
+    if (size) a.style.setProperty("--size", size + "px");
+    a.style.setProperty("--h", String(hash(name) % 360));
+    if (url) { var img = new Image(); img.alt = ""; img.src = url; img.onerror = function () { a.textContent = initials(name); }; a.appendChild(img); }
+    else a.textContent = initials(name);
+    return a;
+  }
+  function when(ts) {
+    if (!ts) return T("Never", "Belum pernah");
+    var s = Math.max(0, Date.now() / 1000 - ts);
+    if (s < 120) return T("Just now", "Barusan");
+    if (s < 3600) return Math.round(s / 60) + T(" min ago", " menit lalu");
+    if (s < 86400) return Math.round(s / 3600) + T(" h ago", " jam lalu");
+    return Math.round(s / 86400) + T(" days ago", " hari lalu");
+  }
+  function fullDate(ts) { return ts ? new Date(ts * 1000).toLocaleString(LOCALE, { dateStyle: "medium", timeStyle: "short" }) : ""; }
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2200);
+  }
+  function api(method, url, body) {
+    var opts = { method: method, credentials: "same-origin", cache: "no-store", headers: { "X-LB-Request": "1" } };
+    if (body !== undefined) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+    return fetch(url, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || (T("Failed (", "Gagal (") + r.status + ")"));
+        return j;
+      });
+    });
+  }
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    var ta = el("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } finally { ta.remove(); }
+    return Promise.resolve();
+  }
+  // Two-step buttons instead of confirm(): first press arms, second press within 4 s acts.
+  function armed(btn, label, run) {
+    var orig = btn.textContent, timer = null;
+    btn.addEventListener("click", function () {
+      if (!btn.classList.contains("armed")) {
+        btn.classList.add("armed"); btn.textContent = label;
+        timer = setTimeout(function () { btn.classList.remove("armed"); btn.textContent = orig; }, 4000);
+        return;
+      }
+      clearTimeout(timer); btn.classList.remove("armed"); btn.textContent = orig;
+      run(btn);
+    });
+  }
+
+  // ---------- list ----------
+  function load() {
+    return api("GET", "/api/admin/participants").then(function (j) {
+      data = j; render();
+      $("logoutBtn").hidden = !j.signed_in_with_key;
+    }).catch(function (e) { $("lede").textContent = e.message; });
+  }
+  function render() {
+    var ps = data.participants, active = ps.filter(function (p) { return p.active; }).length;
+    var waiting = ps.filter(function (p) { return p.active && !p.last_seen && !p.machines.length; }).length;
+    $("lede").textContent = T(ps.length + " participants, " + active + " active" + (waiting ? ", " + waiting + " never sent data" : "") +
+      ". Click a participant to edit them, create a new token or remove history.",
+      ps.length + " peserta, " + active + " aktif" + (waiting ? ", " + waiting + " belum pernah kirim data" : "") +
+      ". Klik peserta untuk mengubah data, membuat token baru, atau menghapus riwayat.");
+    var dl = $("teams"); dl.replaceChildren();
+    data.teams.forEach(function (t) { var o = el("option"); o.value = t; dl.appendChild(o); });
+    var q = $("q").value.trim().toLowerCase();
+    var shown = ps.filter(function (p) {
+      return !q || [p.name, p.team, p.email].some(function (v) { return v && v.toLowerCase().indexOf(q) >= 0; });
+    });
+    var body = $("rows"); body.replaceChildren();
+    shown.forEach(function (p) {
+      var tr = el("tr", p.active ? "" : "off");
+      tr.tabIndex = 0;
+      tr.dataset.id = String(p.id);
+      tr.setAttribute("aria-label", T("Manage ", "Kelola ") + p.name);
+      var td = el("td"), who = el("div", "who");
+      who.appendChild(avatar(p.name, p.avatar));
+      var t = el("div"); t.style.minWidth = "0";
+      t.appendChild(el("div", "nm", p.name));
+      t.appendChild(el("div", "em", p.email || T("No login email yet", "Email belum terhubung")));
+      who.appendChild(t); td.appendChild(who); tr.appendChild(td);
+      tr.appendChild(el("td", "col-team" + (p.team ? "" : " muted"), p.team || T("No team", "Tanpa tim")));
+      var seen = el("td", "col-seen" + (p.last_seen ? "" : " muted"), when(p.last_seen));
+      seen.title = fullDate(p.last_seen);
+      tr.appendChild(seen);
+      var out = el("td", "num col-out", compact(p.output)); out.title = num(p.output) + T(" tokens", " token");
+      tr.appendChild(out);
+      var st = el("td");
+      if (!p.active) st.appendChild(el("span", "pill offp", T("Inactive", "Nonaktif")));
+      else if (!p.last_seen && !p.machines.length) st.appendChild(el("span", "pill wait", T("Not installed", "Belum install")));
+      else st.appendChild(el("span", "pill on", T("Active", "Aktif")));
+      tr.appendChild(st);
+      body.appendChild(tr);
+    });
+    var empty = $("empty");
+    empty.hidden = shown.length > 0;
+    empty.textContent = ps.length ? T("No participant matches the search.", "Tidak ada peserta yang cocok dengan pencarian.") : T("No participants yet. Add one with the form above.", "Belum ada peserta. Tambahkan dari form di atas.");
+  }
+  $("q").addEventListener("input", render);
+  function pickRow(e) {
+    var tr = e.target.closest && e.target.closest("tr[data-id]");
+    if (!tr) return;
+    if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+    if (e.type === "keydown") e.preventDefault();
+    openEdit(Number(tr.dataset.id));
+  }
+  $("rows").addEventListener("click", pickRow);
+  $("rows").addEventListener("keydown", pickRow);
+
+  // ---------- add ----------
+  $("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var f = e.target, btn = f.querySelector("button");
+    $("addErr").textContent = "";
+    btn.disabled = true;
+    api("POST", "/api/admin/participants", { name: f.elements["name"].value, team: f.elements["team"].value, email: f.elements["email"].value })
+      .then(function (j) { f.reset(); showCommands(j, T("Install commands for ", "Perintah install untuk ") + j.name); return load(); })
+      .catch(function (err) { $("addErr").textContent = err.message; })
+      .then(function () { btn.disabled = false; });
+  });
+
+  // ---------- install commands ----------
+  var tokenDlg = $("tokenDlg");
+  function showCommands(j, title) {
+    lastCmd = j;
+    $("tokTitle").textContent = title;
+    $("cmdSh").textContent = j.commands.sh;
+    $("cmdPs").textContent = j.commands.ps;
+    tokenDlg.showModal();
+  }
+  function message(j) {
+    var cmds = "macOS / Linux:\n" + j.commands.sh + "\n\nWindows (PowerShell):\n" + j.commands.ps + "\n\n";
+    return T(
+      "Hi " + j.name + ", here is how to join " + TITLE + ". Run this once in a terminal on the computer where you use Claude Code.\n\n" + cmds +
+      "When it finishes, close and reopen Claude Code. Leaderboard: " + location.origin + "\n" +
+      "This command contains your personal token, so please don't share it.",
+      "Halo " + j.name + ", ini perintah untuk ikut " + TITLE + ". Jalankan sekali di terminal laptop yang kamu pakai untuk Claude Code.\n\n" + cmds +
+      "Setelah selesai, tutup lalu buka lagi Claude Code. Leaderboard: " + location.origin + "\n" +
+      "Perintah ini berisi token pribadi kamu, jadi jangan dibagikan ke orang lain.");
+  }
+  tokenDlg.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-copy]");
+    if (!b || !lastCmd) return;
+    var k = b.dataset.copy;
+    copyText(k === "msg" ? message(lastCmd) : lastCmd.commands[k]).then(function () {
+      toast(k === "msg" ? T("Full message copied", "Pesan lengkap disalin") : T("Command copied", "Perintah disalin"));
+    });
+  });
+  $("tokDone").addEventListener("click", function () { tokenDlg.close(); });
+  tokenDlg.addEventListener("close", function () { lastCmd = null; $("cmdSh").textContent = ""; $("cmdPs").textContent = ""; });
+
+  // ---------- manage one participant ----------
+  var editDlg = $("editDlg"), editId = null;
+  editDlg.addEventListener("click", function (e) {
+    if (e.target === editDlg || (e.target.closest && e.target.closest("[data-close]"))) editDlg.close();
+  });
+  editDlg.addEventListener("close", function () {
+    var tr = editId != null && document.querySelector('tr[data-id="' + editId + '"]');
+    editId = null;
+    if (tr) tr.focus();
+  });
+  function closeBtn() {
+    var x = el("button", "x"); x.type = "button"; x.setAttribute("data-close", ""); x.setAttribute("aria-label", T("Close", "Tutup"));
+    x.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>';
+    return x;
+  }
+  function field(label, name, value, type, extra) {
+    var l = el("label", "f" + (extra ? " " + extra : ""));
+    l.appendChild(document.createTextNode(label));
+    var i = el("input"); i.type = type || "text"; i.name = name; i.value = value || ""; i.autocomplete = "off";
+    if (name === "team") i.setAttribute("list", "teams");
+    l.appendChild(i);
+    return l;
+  }
+  function openEdit(id) {
+    editId = id;
+    renderEdit();
+    if (!editDlg.open) editDlg.showModal();
+  }
+  function renderEdit() {
+    var p = data.participants.find(function (x) { return x.id === editId; });
+    var body = $("edBody");
+    if (!p) { editDlg.close(); return; }
+    body.replaceChildren();
+
+    var head = el("div", "dlg-head");
+    head.appendChild(avatar(p.name, p.avatar, 48));
+    var h = el("h2", "", p.name); h.id = "edTitle";
+    head.appendChild(h);
+    head.appendChild(closeBtn());
+    body.appendChild(head);
+    body.appendChild(el("p", "", T("Joined ", "Ikut sejak ") + fullDate(p.created_at) + T(". Last data: ", ". Terakhir kirim data: ") + (p.last_seen ? fullDate(p.last_seen) : T("never", "belum pernah")) + "."));
+
+    // details
+    var form = el("form"); form.autocomplete = "off";
+    var grid = el("div", "form-grid");
+    grid.appendChild(field(T("Name", "Nama"), "name", p.name));
+    grid.appendChild(field(T("Team", "Tim"), "team", p.team));
+    grid.appendChild(field(T("Login email", "Email login"), "email", p.email, "email", "wide"));
+    var chk = el("label", "check wide");
+    var cb = el("input"); cb.type = "checkbox"; cb.name = "active"; cb.checked = p.active;
+    chk.appendChild(cb);
+    chk.appendChild(document.createTextNode(T("Active: shown on the leaderboard and the token is accepted", "Aktif: tampil di leaderboard dan tokennya diterima")));
+    grid.appendChild(chk);
+    form.appendChild(grid);
+    var acts = el("div", "row-actions");
+    var status = el("span", "status");
+    acts.appendChild(status);
+    var save = el("button", "btn", T("Save changes", "Simpan perubahan")); save.type = "submit";
+    acts.appendChild(save);
+    form.appendChild(acts);
+    var ferr = el("div", "err"); ferr.setAttribute("role", "alert");
+    form.appendChild(ferr);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      ferr.textContent = ""; save.disabled = true;
+      api("POST", "/api/admin/participants/" + p.id + "/update", {
+        name: form.elements["name"].value, team: form.elements["team"].value, email: form.elements["email"].value, active: form.elements["active"].checked
+      }).then(function () { toast(T("Changes saved", "Perubahan disimpan")); return load(); })
+        .then(renderEdit)
+        .catch(function (err) { ferr.textContent = err.message; save.disabled = false; });
+    });
+    body.appendChild(form);
+
+    // token
+    var tok = el("section", "sec");
+    tok.appendChild(el("h3", "", "Token"));
+    tok.appendChild(el("p", "hint", T("If the install command got lost or leaked, create a new token. The old one stops working at once, so the participant has to run the new command.", "Kalau perintah install hilang atau bocor, buat token baru. Token lama langsung berhenti bekerja, jadi peserta harus menjalankan perintah yang baru.")));
+    var rot = el("button", "btn ghost", T("Create new token", "Buat token baru")); rot.type = "button";
+    armed(rot, T("Press again to replace the token", "Tekan lagi untuk ganti token"), function (b) {
+      b.disabled = true;
+      api("POST", "/api/admin/participants/" + p.id + "/rotate", {})
+        .then(function (j) { editDlg.close(); showCommands(j, T("New token for ", "Token baru untuk ") + j.name); })
+        .catch(function (err) { toast(err.message); })
+        .then(function () { b.disabled = false; });
+    });
+    tok.appendChild(rot);
+    body.appendChild(tok);
+
+    // history per machine
+    var hist = el("section", "sec");
+    hist.appendChild(el("h3", "", T("History uploaded from computers", "Riwayat 30 hari dari laptop")));
+    if (!p.machines.length) {
+      hist.appendChild(el("p", "hint", T("No history uploaded yet. It is sent automatically when the install command runs.", "Belum ada riwayat yang diunggah. Riwayat terkirim otomatis saat perintah install dijalankan.")));
+    } else {
+      hist.appendChild(el("p", "hint", T("One row per computer (host name and user are hashed). Remove a row if that history is not this participant's. Live data sent after the install is kept.", "Satu baris per laptop (nama komputer dan user login disamarkan). Hapus kalau riwayatnya bukan milik peserta ini. Data live setelah install tidak ikut terhapus.")));
+      var ul = el("ul", "machines");
+      p.machines.forEach(function (m) {
+        var li = el("li"), info = el("div");
+        info.appendChild(el("div", "code", T("Computer ", "Laptop ") + m.machine.slice(0, 8)));
+        info.appendChild(el("div", "meta", T(compact(m.output) + " output tokens from " + num(m.messages) + " messages. Uploaded " + fullDate(m.at) + ".", compact(m.output) + " output token dari " + num(m.messages) + " pesan. Diunggah " + fullDate(m.at) + ".")));
+        li.appendChild(info);
+        var del = el("button", "btn danger small", T("Remove", "Hapus")); del.type = "button";
+        armed(del, T("Sure?", "Yakin hapus?"), function (b) {
+          b.disabled = true;
+          api("POST", "/api/admin/participants/" + p.id + "/machine-delete/" + encodeURIComponent(m.machine), {})
+            .then(function () { toast(T("History removed", "Riwayat laptop dihapus")); return load(); })
+            .then(renderEdit)
+            .catch(function (err) { toast(err.message); b.disabled = false; });
+        });
+        li.appendChild(del);
+        ul.appendChild(li);
+      });
+      hist.appendChild(ul);
+    }
+    body.appendChild(hist);
+
+    // photo
+    if (p.avatar) {
+      var ph = el("section", "sec");
+      ph.appendChild(el("h3", "", T("Photo", "Foto")));
+      ph.appendChild(el("p", "hint", T("Remove it if the photo is inappropriate. The participant can still add another one.", "Hapus kalau fotonya tidak pantas. Peserta tetap bisa memasang foto lain.")));
+      var rm = el("button", "btn danger small", T("Remove photo", "Hapus foto")); rm.type = "button";
+      armed(rm, T("Sure? Remove photo", "Yakin hapus foto?"), function (b) {
+        b.disabled = true;
+        api("POST", "/api/admin/participants/" + p.id + "/avatar-delete", {})
+          .then(function () { toast(T("Photo removed", "Foto dihapus")); return load(); })
+          .then(renderEdit)
+          .catch(function (err) { toast(err.message); b.disabled = false; });
+      });
+      ph.appendChild(rm);
+      body.appendChild(ph);
+    }
+
+    // delete
+    var dz = el("section", "sec");
+    dz.appendChild(el("h3", "", T("Delete participant", "Hapus peserta")));
+    dz.appendChild(el("p", "hint", T("Deletes " + p.name + " with all their usage, history and photo. This cannot be undone. To only hide them, turn off Active above.", "Menghapus " + p.name + " beserta semua data pemakaian, riwayat, dan fotonya. Tidak bisa dibatalkan. Kalau cuma ingin menyembunyikan, matikan pilihan Aktif di atas.")));
+    var cd = el("div", "confirm-del");
+    var ci = el("input"); ci.type = "text"; ci.placeholder = T("Type " + p.name + " to confirm", "Ketik " + p.name + " untuk konfirmasi"); ci.setAttribute("aria-label", T("Type the name to confirm", "Ketik nama untuk konfirmasi"));
+    var db = el("button", "btn danger solid", T("Delete", "Hapus")); db.type = "button"; db.disabled = true;
+    ci.addEventListener("input", function () { db.disabled = ci.value.trim().toLowerCase() !== p.name.toLowerCase(); });
+    db.addEventListener("click", function () {
+      db.disabled = true;
+      api("POST", "/api/admin/participants/" + p.id + "/delete", { confirm: ci.value })
+        .then(function () { editDlg.close(); toast(p.name + T(" deleted", " dihapus")); return load(); })
+        .catch(function (err) { toast(err.message); db.disabled = false; });
+    });
+    cd.appendChild(ci); cd.appendChild(db);
+    dz.appendChild(cd);
+    body.appendChild(dz);
+  }
+
+  // ---------- theme ----------
+  var themeBtn = $("themeBtn"), systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+  function currentTheme() {
+    var t = document.documentElement.getAttribute("data-theme");
+    return t === "light" || t === "dark" ? t : (systemDark.matches ? "dark" : "light");
+  }
+  function syncThemeBtn() {
+    var mode = currentTheme();
+    themeBtn.dataset.mode = mode;
+    themeBtn.setAttribute("aria-label", mode === "dark" ? T("Switch to light mode", "Ganti ke mode terang") : T("Switch to dark mode", "Ganti ke mode gelap"));
+    themeBtn.title = themeBtn.getAttribute("aria-label");
+  }
+  themeBtn.addEventListener("click", function () {
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("lb_theme", next); } catch (e) {}
+    syncThemeBtn();
+  });
+  if (systemDark.addEventListener) systemDark.addEventListener("change", syncThemeBtn);
+  syncThemeBtn();
+
+  $("logoutBtn").addEventListener("click", function () {
+    api("POST", "/api/admin/logout", {}).then(function () { location.href = "/admin"; });
+  });
+
+  load();
+  setInterval(function () { if (!document.hidden && !editDlg.open && !tokenDlg.open) load(); }, 15000);
+})();
+</script>
+</body>
+</html>

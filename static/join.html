@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="⟦en‖id⟧">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⟦Join‖Cara Ikut⟧ __LB_TITLE__</title>
+<style>
+  :root { --bg: #f6f4ef; --surface: #fff; --text: #1d1b17; --muted: #6b665c; --line: #e4dfd4; --accent: #c4623f; --code: #f0ede6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151412; --surface: #1e1c19; --text: #f1ede4; --muted: #a39d90; --line: #34312b; --accent: #e8875f; --code: #262420; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 16px; margin: 28px 0 8px; }
+  p, li { color: var(--text); }
+  .muted { color: var(--muted); }
+  pre { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; }
+  a { color: var(--accent); }
+  ol { padding-left: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p><a href="/">← __LB_TITLE__</a></p>
+  <h1>⟦How to join‖Cara ikut⟧ __LB_TITLE__</h1>
+  <p class="muted">⟦Ask the admin for your install command. It contains your personal token, so do not share it with anyone. One token per person; if you install it on several laptops, they all count toward the same name.‖Minta perintah install ke admin. Isinya token pribadi kamu, jadi jangan dibagikan ke orang lain. Satu token untuk satu orang; kalau dipasang di beberapa laptop, semuanya dihitung ke nama yang sama.⟧</p>
+
+  <h2>⟦Install‖Pasang⟧</h2>
+  <ol>
+    <li>⟦Run the command from the admin in Terminal (macOS / Linux) or PowerShell (Windows).‖Jalankan perintah dari admin di Terminal (macOS / Linux) atau PowerShell (Windows).⟧</li>
+    <li>⟦Close and reopen Claude Code.‖Tutup lalu buka lagi Claude Code.⟧</li>
+    <li>⟦Use Claude Code as usual. Your numbers show up on the leaderboard a few seconds later.‖Pakai Claude Code seperti biasa. Angka muncul di leaderboard beberapa detik kemudian.⟧</li>
+  </ol>
+
+  <h2>⟦What gets sent‖Apa yang dikirim⟧</h2>
+  <ol>
+    <li>⟦Token counts per type (input, output, cache) and model.‖Jumlah token per tipe (input, output, cache) dan model.⟧</li>
+    <li>⟦The cost estimate calculated by Claude Code, session count, and active time.‖Estimasi biaya yang dihitung Claude Code, jumlah sesi, dan waktu aktif.⟧</li>
+  </ol>
+  <p>⟦Prompt contents, responses, code, and file names are <strong>not</strong> sent. The installer only adds a few‖Isi prompt, jawaban, kode, dan nama file <strong>tidak</strong> dikirim. Installer hanya menambah beberapa variabel⟧ <code>OTEL_*</code> ⟦variables to the‖ke blok⟧ <code>env</code> ⟦block in‖di⟧ <code>~/.claude/settings.json</code>⟦, after first making a backup of that file.‖, dan membuat backup file itu dulu.⟧</p>
+
+  <h2>⟦Opting out‖Berhenti ikut⟧</h2>
+  <p>⟦Run the same install command, but replace the token at the end with‖Jalankan perintah install yang sama, tapi ganti token di akhir dengan⟧ <code>--uninstall</code> (macOS / Linux). ⟦On Windows, run‖Di Windows, jalankan⟧ <code>$env:LB_UNINSTALL='1'</code> ⟦first, then the same install command. Or remove the‖dulu lalu perintah install yang sama. Atau hapus variabel⟧ <code>OTEL_EXPORTER_OTLP_METRICS_*</code> ⟦variables from‖dari⟧ <code>~/.claude/settings.json</code>.</p>
+</div>
+</body>
+</html>

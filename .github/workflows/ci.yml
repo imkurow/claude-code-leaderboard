@@ -1,0 +1,30 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compile
+        run: python -m py_compile server.py manage.py lbcommon.py accessauth.py
+      - name: Shell syntax
+        run: bash -n static/install.sh run.sh run-tunnel.sh
+      - name: Smoke test
+        run: |
+          export LB_DB="$RUNNER_TEMP/lb.db" LB_PORT=8799 LB_ADMIN_KEY=ci-key
+          python manage.py demo
+          python server.py > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 20); do curl -fs http://127.0.0.1:8799/healthz && break; sleep 0.5; done
+          curl -fs "http://127.0.0.1:8799/api/leaderboard?period=30d" | python -c "import json,sys; d=json.load(sys.stdin); assert len(d['rows']) == 8, d"
+          curl -fs http://127.0.0.1:8799/ | grep -q '<html lang="en">'
+          curl -fs http://127.0.0.1:8799/ | python -c "import sys; assert chr(0x27e6) not in sys.stdin.read(), 'unresolved language marker'"
+          curl -fs http://127.0.0.1:8799/install.sh | bash -n
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8799/api/admin/participants)" = 403
+          curl -fs -c jar -X POST http://127.0.0.1:8799/api/admin/login -H 'X-LB-Request: 1' -H 'Content-Type: application/json' -d '{"key":"ci-key"}'
+          curl -fs -b jar http://127.0.0.1:8799/api/admin/participants > /dev/null

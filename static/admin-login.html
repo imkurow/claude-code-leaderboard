@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="__LB_LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⟦Admin sign-in‖Masuk admin⟧ - __LB_TITLE__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141413'/%3E%3Crect x='5' y='15' width='6' height='12' rx='1' fill='%23B0AEA5'/%3E%3Crect x='13' y='8' width='6' height='19' rx='1' fill='%23D97757'/%3E%3Crect x='21' y='18' width='6' height='9' rx='1' fill='%23D4A27F'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..600&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem("lb_theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<style>
+  :root {
+    --fog: #F0EEE6;
+    --paper: #FAF9F5;
+    --ink: #141413;
+    --ink-2: #3D3D3A;
+    --ink-3: #76746C;
+    --rule: #DEDCD1;
+    --signal: #3E6E9F;
+    --gold: #D97757;
+    --silver: #9C9A91;
+    --bronze: #C4925F;
+    --av-bg: 0.89;
+    --av-fg: 0.36;
+    --err: #B5482B;
+    --shadow: rgba(20, 20, 19, .28);
+    --stage: #ECE9E0;
+    --glow: #FFFFFF;
+    --stone-top: #FCFBF8;
+    --stone-1: #E6E2D7;
+    --stone-2: #D3CEC1;
+    --stone-edge: rgba(255, 255, 255, .8);
+    --rank-gold: linear-gradient(180deg, #D3A443 0%, #9A6E1C 100%);
+    --rank-silver: linear-gradient(180deg, #A7AEB7 0%, #5F6770 100%);
+    --rank-bronze: linear-gradient(180deg, #CF8A52 0%, #84481F 100%);
+    --m-gold: linear-gradient(145deg, #F7E7AE 0%, #D9AE4C 36%, #A87B22 68%, #E9CB78 100%);
+    --m-silver: linear-gradient(145deg, #FCFCFD 0%, #CDD1D6 38%, #8F969F 70%, #DDE0E4 100%);
+    --m-bronze: linear-gradient(145deg, #F6D3AE 0%, #CB8954 38%, #8D522A 70%, #DDA77A 100%);
+    --ease-enter: cubic-bezier(.22, 1, .36, 1);
+    --display: "Source Serif 4", "Tiempos Headline", Georgia, serif;
+    --text: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  /* Theme: follows the system unless the toggle picked one (html[data-theme]). */
+  :root[data-theme="dark"] {
+      --fog: #1F1E1D;
+      --paper: #262624;
+      --ink: #FAF9F5;
+      --ink-2: #C9C7BD;
+      --ink-3: #96948B;
+      --rule: #3A3935;
+      --signal: #8DB4DC;
+      --gold: #D97757;
+      --silver: #AEACA3;
+      --bronze: #D4A27F;
+      --av-bg: 0.38;
+      --av-fg: 0.9;
+      --err: #F09A7C;
+      --shadow: rgba(0, 0, 0, .55);
+      --stage: #232321;
+      --glow: rgba(255, 238, 220, .075);
+      --stone-top: #3B3A36;
+      --stone-1: #31302D;
+      --stone-2: #292826;
+      --stone-edge: rgba(255, 255, 255, .07);
+      --rank-gold: var(--m-gold);
+      --rank-silver: var(--m-silver);
+      --rank-bronze: var(--m-bronze);
+      color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --fog: #1F1E1D;
+        --paper: #262624;
+        --ink: #FAF9F5;
+        --ink-2: #C9C7BD;
+        --ink-3: #96948B;
+        --rule: #3A3935;
+        --signal: #8DB4DC;
+        --gold: #D97757;
+        --silver: #AEACA3;
+        --bronze: #D4A27F;
+        --av-bg: 0.38;
+        --av-fg: 0.9;
+        --err: #F09A7C;
+        --shadow: rgba(0, 0, 0, .55);
+      --stage: #232321;
+      --glow: rgba(255, 238, 220, .075);
+      --stone-top: #3B3A36;
+      --stone-1: #31302D;
+      --stone-2: #292826;
+      --stone-edge: rgba(255, 255, 255, .07);
+      --rank-gold: var(--m-gold);
+      --rank-silver: var(--m-silver);
+      --rank-bronze: var(--m-bronze);
+        color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--fog); color: var(--ink); font: 400 16px/1.55 var(--text); }
+  button, input { font: inherit; color: inherit; }
+  .card { width: min(380px, 100%); background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; padding: 26px 24px 24px; }
+  h1 { margin: 0 0 6px; font: 500 26px/1.15 var(--display); letter-spacing: -0.01em; }
+  p { margin: 0 0 18px; color: var(--ink-2); font-size: 15px; }
+  label { display: grid; gap: 6px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+  input { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--rule); background: var(--fog); }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .btn { width: 100%; margin-top: 14px; border: 1px solid var(--ink); background: var(--ink); color: var(--fog); padding: 11px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+  .btn[disabled] { opacity: .5; }
+  .err { color: var(--err); font-size: 14px; margin-top: 10px; min-height: 1.4em; }
+  a { color: var(--ink-3); font-size: 14px; display: inline-block; margin-top: 16px; }
+</style>
+</head>
+<body>
+<form class="card" id="f">
+  <h1>⟦Admin sign-in‖Masuk admin⟧</h1>
+  <p>⟦Enter the admin key from the server config (LB_ADMIN_KEY).‖Masukkan kunci admin dari config server (LB_ADMIN_KEY).⟧</p>
+  <label>⟦Admin key‖Kunci admin⟧ <input type="password" id="key" autocomplete="current-password" required autofocus></label>
+  <button class="btn" type="submit">⟦Sign in‖Masuk⟧</button>
+  <div class="err" id="err" role="alert"></div>
+  <a href="/">⟦Back to the leaderboard‖Kembali ke leaderboard⟧</a>
+</form>
+<script>
+document.getElementById("f").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var btn = this.querySelector("button"), err = document.getElementById("err");
+  btn.disabled = true; err.textContent = "";
+  fetch("/api/admin/login", {
+    method: "POST", credentials: "same-origin",
+    headers: { "X-LB-Request": "1", "Content-Type": "application/json" },
+    body: JSON.stringify({ key: document.getElementById("key").value })
+  }).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) {
+      if (!r.ok) throw new Error(j.error || r.status);
+      location.reload();
+    });
+  }).catch(function (x) { err.textContent = x.message; btn.disabled = false; });
+});
+</script>
+</body>
+</html>
