@@ -32,7 +32,7 @@ Claude Code has built-in [OpenTelemetry metrics](https://docs.claude.com/en/docs
 
 ## Quick start
 
-You need Python 3.9 or newer. There is nothing to `pip install`.
+You need Python 3.10 or newer. There is nothing to `pip install`.
 
 ```bash
 git clone https://github.com/imkurow/claude-code-leaderboard.git
