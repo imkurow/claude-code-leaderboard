@@ -1,5 +1,7 @@
 # Claude Code Leaderboard
 
+**Website:** https://leaderboard.kurows.com
+
 A small, self-hosted leaderboard of who writes the most with [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) on your team. Each person's Claude Code reports its own token usage through OpenTelemetry. This works when everyone uses their **own personal account**: you need no shared organization and no admin API key.
 
 ![Leaderboard](docs/dashboard.png)
