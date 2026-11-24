@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en" data-type="software" data-radius="sharp" data-ground="sage" data-buttons="tonal" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claude Code Leaderboard: a self-hosted usage board for teams</title>
+<meta name="description" content="Rank your team's Claude Code output tokens on a server you run. Everyone keeps their own Claude account, and only numbers leave each laptop.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://leaderboard.kurows.com/">
+<meta property="og:site_name" content="Claude Code Leaderboard">
+<meta property="og:title" content="Claude Code Leaderboard: a self-hosted usage board for teams">
+<meta property="og:description" content="Rank your team's Claude Code output tokens on a server you run. Free and MIT licensed.">
+<meta property="og:image" content="https://leaderboard.kurows.com/share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://leaderboard.kurows.com/share.jpg">
+<link rel="canonical" href="https://leaderboard.kurows.com/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#faf9f5">
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400..700&family=DM+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<!-- the client's own colours (the product's UI: paper, ink, its signal blue) through start.mjs brand -->
+<style>
+:root {
+  --p-bg: #faf9f5; --p-surface: #f0eee6; --p-ink: #141413; --p-muted: #65645d;
+  --p-accent: #3e6e9f; --p-accent-ink: #faf9f5; --p-action: #3e6e9f; --p-action-ink: #faf9f5;
+  --p-inv-bg: #141413; --p-inv-surface: #212120; --p-inv-ink: #faf9f5; --p-inv-muted: #999996;
+  --p-inv-accent: #3e6e9f; --p-inv-accent-ink: #faf9f5; --p-inv-action: #3e6e9f; --p-inv-action-ink: #faf9f5;
+  --font-display: "Urbanist", system-ui, sans-serif;
+  --font-text: "Urbanist", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.03em;
+  --display-tracking-xl: -0.04em;
+}
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/diagrams/diagram.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/liquid-type/moment.js">
+<!-- page CSS: only what sits inside a visual (the product's own UI, rebuilt from static/index.html), one --p-h per card group -->
+<style>
+/* ---------- the product's UI (static/index.html), scoped to .lb ---------- */
+.lb {
+  --lb-fog: #f0eee6; --lb-paper: #faf9f5; --lb-ink: #141413; --lb-ink2: #3d3d3a; --lb-ink3: #65645d;
+  --lb-rule: #dedcd1; --lb-signal: #3e6e9f; --lb-gold: #d97757; --lb-stage: #ece9e0;
+  --lb-stone-top: #fcfbf8; --lb-stone-1: #e6e2d7; --lb-stone-2: #d3cec1;
+  --lb-serif: "Source Serif 4", Georgia, serif;
+  --m-gold: linear-gradient(145deg, #f7e7ae 0%, #d9ae4c 36%, #a87b22 68%, #e9cb78 100%);
+  --m-silver: linear-gradient(145deg, #fcfcfd 0%, #cdd1d6 38%, #8f969f 70%, #dde0e4 100%);
+  --m-bronze: linear-gradient(145deg, #f6d3ae 0%, #cb8954 38%, #8d522a 70%, #dda77a 100%);
+  --r-gold: linear-gradient(180deg, #d3a443 0%, #9a6e1c 100%);
+  --r-silver: linear-gradient(180deg, #a7aeb7 0%, #5f6770 100%);
+  --r-bronze: linear-gradient(180deg, #cf8a52 0%, #84481f 100%);
+  color: var(--lb-ink); font: 400 14px/1.5 var(--font-text); font-variant-numeric: lining-nums tabular-nums;
+  text-align: left;
+}
+.lb-av { --size: 40px; width: var(--size); height: var(--size); border-radius: 50%; flex: none; display: grid; place-items: center;
+  font: 600 calc(var(--size) * .34)/1 var(--font-text); letter-spacing: .01em;
+  background: oklch(.89 .04 var(--h, 60)); color: oklch(.36 .05 var(--h, 60)); }
+.lb-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--lb-rule); background: var(--lb-fog); }
+.lb-lede { margin: 0; font-size: 14px; color: var(--lb-ink2); }
+.lb-lede b { color: var(--lb-ink); font-weight: 600; }
+.lb-periods { display: flex; gap: 2px; padding: 3px; background: var(--lb-paper); border: 1px solid var(--lb-rule); border-radius: 10px; flex: none; }
+.lb-periods span { padding: 4px 9px; border-radius: 7px; font-size: 13px; color: var(--lb-ink2); white-space: nowrap; }
+.lb-periods .on { background: var(--lb-ink); color: var(--lb-fog); }
+.lb-stage { position: relative; isolation: isolate; overflow: hidden; padding: 32px 24px 0; background: var(--lb-stage); }
+.lb-stage::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(420px circle at 50% 14%, #fff, transparent 72%); }
+.lb-podium { display: grid; grid-template-columns: 1fr 1.16fr 1fr; align-items: end; gap: 0 14px; max-width: 640px; margin: 0 auto; }
+.lb-seat { display: flex; flex-direction: column; min-width: 0; }
+.lb-seat[data-pos="1"] { order: 2; --metal: var(--m-gold); --rank: var(--r-gold); --plinth: 104px; }
+.lb-seat[data-pos="2"] { order: 1; --metal: var(--m-silver); --rank: var(--r-silver); --plinth: 80px; }
+.lb-seat[data-pos="3"] { order: 3; --metal: var(--m-bronze); --rank: var(--r-bronze); --plinth: 66px; }
+.lb-who { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 2px 20px; min-width: 0; }
+.lb-ring { --size: 58px; display: block; width: calc(var(--size) + 10px); height: calc(var(--size) + 10px); padding: 3px; border-radius: 50%; background: var(--metal); margin-bottom: 12px; box-shadow: 0 14px 28px -16px rgb(20 20 19 / .28); }
+.lb-seat[data-pos="1"] .lb-ring { --size: 74px; }
+.lb-ring .lb-av { width: 100%; height: 100%; border: 3px solid var(--lb-stage); --size: inherit; font-size: 18px; }
+.lb-seat[data-pos="1"] .lb-ring .lb-av { font-size: 23px; }
+.lb-name { font: 500 17px/1.2 var(--lb-serif); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-seat[data-pos="1"] .lb-name { font-size: 20px; }
+.lb-team { font-size: 12px; color: var(--lb-ink3); margin-top: 2px; }
+.lb-num { margin-top: 10px; font: 500 28px/1 var(--lb-serif); letter-spacing: -.01em; }
+.lb-seat[data-pos="1"] .lb-num { font-size: 36px; }
+.lb-unit { font-size: 12px; color: var(--lb-ink3); margin-top: 5px; }
+.lb-plinth { position: relative; height: var(--plinth); margin-top: 14px; display: flex; justify-content: center; padding-top: 12px;
+  background: linear-gradient(180deg, var(--lb-stone-1), var(--lb-stone-2));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .8), inset 0 14px 18px -14px rgb(0 0 0 / .14); }
+.lb-plinth::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 12px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--lb-stone-top) 82%, var(--lb-stage)), var(--lb-stone-top));
+  clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%); }
+.lb-plinth::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--metal); }
+.lb-rank { display: block; padding-bottom: .1em; font: 500 34px/1.15 var(--lb-serif); background: var(--rank); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lb-seat[data-pos="1"] .lb-rank { font-size: 39px; }
+.lb-rows { list-style: none; margin: 0; padding: 0; background: var(--lb-paper); border-top: 1px solid var(--lb-rule); }
+.lb-row { display: grid; grid-template-columns: 2.2ch 34px minmax(0, 1fr) auto; gap: 3px 12px; align-items: center; padding: 11px 20px; border-top: 1px solid var(--lb-rule); }
+.lb-row:first-child { border-top: 0; }
+.lb-row .lb-av { --size: 34px; }
+.lb-pos { color: var(--lb-ink3); font: 500 15px/1 var(--lb-serif); text-align: right; }
+.lb-rname { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-rname span { font-weight: 400; color: var(--lb-ink3); margin-left: 8px; font-size: 13px; }
+.lb-meta { display: flex; flex-wrap: wrap; column-gap: 14px; font-size: 12px; color: var(--lb-ink3); }
+.lb-rnum { font: 500 17px/1 var(--lb-serif); text-align: right; }
+.lb-track { grid-column: 3 / 5; height: 3px; border-radius: 2px; background: color-mix(in oklab, var(--lb-rule) 70%, transparent); overflow: hidden; }
+.lb-track b { display: block; height: 100%; width: var(--p); background: var(--lb-ink3); border-radius: 2px; }
+/* the detail card */
+.lb-dt { padding: 22px 24px; background: var(--lb-paper); }
+.lb-dt-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.lb-dt-head .lb-av { --size: 52px; font-size: 17px; }
+.lb-dt-name { margin: 0; font: 500 22px/1.15 var(--lb-serif); letter-spacing: -.01em; }
+.lb-dt-sub { margin-top: 3px; font-size: 13px; color: var(--lb-ink3); }
+.lb-fig { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.lb-big { font: 500 42px/1 var(--lb-serif); letter-spacing: -.02em; }
+.lb-cap { font-size: 13px; color: var(--lb-ink3); }
+.lb-plot { position: relative; height: 112px; margin-top: 16px; border-bottom: 1px solid var(--lb-rule); }
+.lb-plot__max { position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed var(--lb-rule); font-size: 11px; color: var(--lb-ink3); padding-top: 2px; }
+.lb-bars { position: absolute; left: 0; top: 18px; width: 100%; height: calc(100% - 18px); fill: var(--lb-ink3); }
+.lb-bars .on { fill: var(--lb-gold); }
+.lb-bars .last { fill: var(--lb-ink2); }
+.lb-axis { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--lb-ink3); }
+.lb-facts { margin: 18px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; }
+.lb-facts dt { font-size: 12px; color: var(--lb-ink3); }
+.lb-facts dd { margin: 2px 0 0; font: 500 18px/1.2 var(--lb-serif); }
+.lb-models { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--lb-rule); }
+.lb-models p { margin: 0 0 8px; font-weight: 600; font-size: 13px; color: var(--lb-ink2); }
+.lb-model { display: grid; grid-template-columns: 7em minmax(0, 1fr) 3em; gap: 12px; align-items: center; padding: 4px 0; font-size: 13px; }
+.lb-model .lb-track { grid-column: auto; height: 6px; border-radius: 3px; }
+.lb-model .lb-track b { border-radius: 3px; }
+.lb-model:first-of-type .lb-track b { background: var(--lb-ink2); }
+.lb-model span:last-child { text-align: right; color: var(--lb-ink3); }
+.lb-foot { margin: 14px 0 0; font-size: 12px; color: var(--lb-ink3); }
+
+/* ---------- hero: the board in a window on the lit ground, cut by the frame ---------- */
+.hero__art { --ly-cut: 28px; }
+.lb-win { border-radius: 12px; overflow: hidden; background: var(--lb-fog); box-shadow: 0 0 0 1px rgb(20 20 19 / .1), 0 30px 60px -30px rgb(20 20 19 / .45); }
+.lb-win__bar { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 14px; background: var(--lb-paper); border-bottom: 1px solid var(--lb-rule); font-size: 12px; color: var(--lb-ink3); }
+.lb-win__bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--lb-rule); }
+.lb-win__bar i + i { margin-left: -4px; }
+.lb-win__head { padding: 22px 24px 18px; padding-right: var(--ly-cut-room); }
+.lb-win__title { margin: 0; font: 500 30px/1.05 var(--lb-serif); letter-spacing: -.018em; }
+.lb-win__head .lb-lede { margin-top: 8px; }
+.lb-win__head .lb-periods { margin-top: 14px; width: max-content; }
+.lb-win .lb-stage { padding-right: var(--ly-cut-room); border-top: 1px solid var(--lb-rule); }
+.hero__art > .ly-piece--note { left: var(--s-6); bottom: var(--s-6); width: 300px; z-index: 2; }
+.lb-note { border-radius: 12px; padding: 16px 18px; background: var(--lb-paper); box-shadow: 0 0 0 1px rgb(20 20 19 / .08), 0 18px 40px -18px rgb(20 20 19 / .4); }
+.lb-note .lb-dt-head .lb-av { --size: 40px; font-size: 14px; }
+.lb-note .lb-dt-name { font-size: 18px; }
+.lb-note .lb-fig { margin-top: 10px; }
+.lb-note .lb-big { font-size: 32px; }
+.lb-note .lb-models { margin-top: 10px; padding-top: 8px; }
+@media (max-width: 1279px) { .lb-win__head .lb-lede, .lb-win__head .lb-periods, .lb-win .lb-team { display: none; } .lb-win__head { padding-bottom: 14px; } }
+@media (max-width: 1023px) { .hero__art > .ly-piece--note { left: var(--s-4); bottom: var(--s-4); width: 270px; } }
+@media (max-width: 639px) {
+  .lb-win__head, .lb-win__bar { display: none; }
+  .lb-win .lb-stage { padding: 16px 12px 0; padding-right: var(--ly-cut-room); border-top: 0; }
+  .lb-win .lb-seat[data-pos="1"] { --plinth: 70px; } .lb-win .lb-seat[data-pos="2"] { --plinth: 56px; } .lb-win .lb-seat[data-pos="3"] { --plinth: 44px; }
+  .lb-win .lb-rank, .lb-win .lb-seat[data-pos="1"] .lb-rank { font-size: 26px; }
+  .lb-win .lb-podium { gap: 0 6px; }
+  .lb-win .lb-ring { --size: 40px; margin-bottom: 8px; }
+  .lb-win .lb-seat[data-pos="1"] .lb-ring { --size: 50px; }
+  .lb-win .lb-ring .lb-av { font-size: 13px; }
+  .lb-win .lb-name, .lb-win .lb-seat[data-pos="1"] .lb-name { font-size: 13px; white-space: normal; }
+  .lb-win .lb-team, .lb-win .lb-unit { display: none; }
+  .lb-win .lb-num, .lb-win .lb-seat[data-pos="1"] .lb-num { font-size: 19px; margin-top: 6px; }
+  .lb-win .lb-who { padding-bottom: 10px; }
+}
+
+/* ---------- the board: one app window across the .wrap (app-frame) ---------- */
+.app.ui.frame { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: stretch; flex: none; padding: 0; margin-top: var(--s-7); background: var(--lb-paper); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); overflow: hidden; }
+.app.ui.frame::before { display: none; }
+.app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.app > .app__pane + .app__pane { border-left: 1px solid var(--lb-rule); }
+.app > .app__pane--list { display: flex; flex-direction: column; }
+.app > .app__pane--list > .lb-stage { flex: 1 0 auto; display: flex; align-items: flex-end; justify-content: center; }
+.app > .app__pane--list > .lb-stage > .lb-podium { width: 100%; }
+.app .lb-dt { height: 100%; }
+@media (max-width: 1279px) {
+  .app.ui.frame { grid-template-columns: minmax(0, 1fr); }
+  .app > .app__pane--open, .app .lb-rows { display: none; }
+  .app .lb-stage { padding-top: 28px; }
+  .app .lb-seat[data-pos="1"] { --plinth: 96px; } .app .lb-seat[data-pos="2"] { --plinth: 76px; } .app .lb-seat[data-pos="3"] { --plinth: 64px; }
+}
+@media (max-width: 639px) {
+  .app .lb-top { padding: 10px 12px; }
+  .app .lb-lede { display: none; }
+  .app .lb-periods span { padding: 4px 7px; font-size: 12px; }
+  .app .lb-stage { padding: 28px 8px 0; }
+  .app .lb-podium { gap: 0 6px; }
+  .app .lb-ring { --size: 44px; margin-bottom: 8px; }
+  .app .lb-seat[data-pos="1"] .lb-ring { --size: 56px; }
+  .app .lb-ring .lb-av { font-size: 14px; }
+  .app .lb-name, .app .lb-seat[data-pos="1"] .lb-name { font-size: 14px; white-space: normal; line-height: 1.15; }
+  .app .lb-num { font-size: 20px; } .app .lb-seat[data-pos="1"] .lb-num { font-size: 25px; }
+  .app .lb-seat[data-pos="1"] { --plinth: 84px; } .app .lb-seat[data-pos="2"] { --plinth: 64px; } .app .lb-seat[data-pos="3"] { --plinth: 56px; }
+  .app .lb-rank { font-size: 28px; } .app .lb-seat[data-pos="1"] .lb-rank { font-size: 32px; }
+  .app .lb-top { display: none; }
+  .app .lb-row { padding: 10px 12px; gap: 3px 10px; }
+  .app .lb-rows { display: none; }
+}
+
+/* ---------- terminals inside panels and frames ---------- */
+.term { border-radius: 12px; overflow: hidden; background: #1b1b1a; color: #ecebe6; box-shadow: 0 0 0 1px rgb(20 20 19 / .2), 0 20px 44px -22px rgb(20 20 19 / .55); font: 400 13px/1.6 var(--font-mono); }
+.term__bar { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-bottom: 1px solid rgb(255 255 255 / .08); font: 500 12px/1 var(--font-text); color: #b5b3aa; }
+.term__bar img { width: 16px; height: 16px; }
+.term__body { margin: 0; padding: 14px 16px 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.term__body .p { color: #8f8d85; user-select: none; }
+.term__body .c { color: #9e9c93; }
+.term__body .ok { color: #9fcf9a; }
+.term__body .k { color: #e8b08f; }
+
+/* ---------- the admin form in a step panel ---------- */
+.adm { border-radius: 12px; background: var(--lb-paper); padding: 18px; box-shadow: 0 0 0 1px rgb(20 20 19 / .08), 0 20px 44px -22px rgb(20 20 19 / .4); }
+.adm__title { margin: 0 0 12px; font: 500 18px/1.2 var(--lb-serif); }
+.adm__field { display: grid; gap: 4px; margin-bottom: 10px; font-size: 12px; color: var(--lb-ink2); font-weight: 500; }
+.adm__field span:last-child { display: block; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--lb-rule); background: var(--lb-fog); font-weight: 400; font-size: 13px; color: var(--lb-ink); }
+.adm__btn { display: inline-block; margin-top: 4px; padding: 9px 14px; border-radius: 9px; background: var(--lb-ink); color: var(--lb-fog); font-weight: 600; font-size: 13px; }
+
+/* ---------- small product parts in the bento ---------- */
+.lb-crop { border-radius: 12px; background: var(--lb-paper); padding: 20px; box-shadow: 0 0 0 1px rgb(20 20 19 / .08), 0 20px 44px -22px rgb(20 20 19 / .4); }
+.lb-crop__hint { margin: -4px 0 0; font-size: 13px; color: var(--lb-ink2); }
+.lb-crop__who { margin: 14px 0 0; font-size: 12px; color: var(--lb-ink3); }
+.lb-crop__circle { width: 132px; height: 132px; margin: 16px auto 14px; border-radius: 50%; display: grid; place-items: center; font: 600 36px/1 var(--font-text); background: oklch(.89 .04 63); color: oklch(.36 .05 63); box-shadow: 0 0 0 1px var(--lb-rule); }
+.lb-crop__zoom { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--lb-ink3); }
+.lb-crop__zoom i { flex: 1; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--lb-ink) 42%, var(--lb-rule) 42%); position: relative; }
+.lb-crop__zoom i::after { content: ""; position: absolute; left: 42%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--lb-ink); }
+.lb-crop__btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.lb-crop__btns span { padding: 8px 12px; border-radius: 9px; border: 1px solid var(--lb-rule); font-size: 13px; font-weight: 600; }
+.lb-crop__btns span:last-child { background: var(--lb-ink); border-color: var(--lb-ink); color: var(--lb-fog); }
+.lb-id { border-radius: 12px; background: var(--lb-fog); padding: 20px; box-shadow: 0 0 0 1px rgb(20 20 19 / .08), 0 20px 44px -22px rgb(20 20 19 / .4); }
+.lb-id .lb-win__title { font-size: 26px; }
+.lb-id .lb-lede { margin-top: 10px; font-size: 14px; }
+.lb-id .lb-lede small { display: block; margin-top: 2px; font-size: 12px; color: var(--lb-ink3); }
+.lb-id .lb-periods { margin-top: 14px; width: max-content; max-width: 100%; flex-wrap: wrap; }
+.lb-id .lb-stage { margin: 18px -20px 0; padding: 26px 12px 0; border-top: 1px solid var(--lb-rule); }
+.lb-id .lb-podium { gap: 0 6px; }
+.lb-id .lb-ring { --size: 40px; margin-bottom: 8px; }
+.lb-id .lb-seat[data-pos="1"] .lb-ring { --size: 50px; }
+.lb-id .lb-ring .lb-av, .lb-id .lb-seat[data-pos="1"] .lb-ring .lb-av { font-size: 13px; }
+.lb-id .lb-name, .lb-id .lb-seat[data-pos="1"] .lb-name { font-size: 13px; white-space: normal; line-height: 1.15; }
+.lb-id .lb-num, .lb-id .lb-seat[data-pos="1"] .lb-num { font-size: 20px; margin-top: 6px; }
+.lb-id .lb-who { padding-bottom: 12px; }
+.lb-id .lb-seat[data-pos="1"] { --plinth: 90px; } .lb-id .lb-seat[data-pos="2"] { --plinth: 64px; } .lb-id .lb-seat[data-pos="3"] { --plinth: 48px; }
+.lb-id .lb-rank { font-size: 30px; } .lb-id .lb-seat[data-pos="1"] .lb-rank { font-size: 40px; }
+
+/* ---------- sections ---------- */
+#features .panel { --p-h: 300px; }
+#features .panel > .frame__img { object-position: 50% 0; }
+#setup .panel { --p-h: 300px; }
+.open-cards > .card { grid-column: 1 / -1; }
+@media (min-width: 640px) { .open-cards > .card { grid-column: auto / span 4; } }
+@media (min-width: 640px) and (max-width: 1023px) { #setup .panel { --p-h: 360px; } #how .frame--split { --ratio: 60%; } }
+@media (min-width: 1024px) { #setup .open-cards { flex: 1 1 auto; } }
+.card .term__body { font-size: 12px; line-height: 1.55; }
+@media (max-width: 639px) {
+  #how .checks, #run .run-more, #privacy .frame, #features .card > p, #faq .section-head > p, #faq .faq__item--wide { display: none; }
+  #run .run-stack { margin-top: var(--s-5); }
+  #how .frame--split { --ratio: 80%; }
+  #features .panel { --p-h: 160px; }
+}
+@media (max-width: 639px) {
+  #features .panel { --p-h: 200px; } #setup .panel { --p-h: 260px; }
+  .lb-id .lb-periods, .lb-crop__hint, .lb-crop__who { display: none; }
+  .lb-crop__circle { width: 72px; height: 72px; font-size: 22px; margin: 8px auto 10px; }
+}
+.term--file { width: 100%; }
+#privacy .stats { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
+.term--file .term__body { font-size: 12px; line-height: 1.65; }
+.run-stack { width: 100%; display: grid; gap: var(--s-5); }
+.run-card { border-radius: 12px; background: var(--lb-paper); padding: 6px 20px; box-shadow: 0 0 0 1px rgb(20 20 19 / .08), 0 20px 44px -22px rgb(20 20 19 / .4); }
+.run-card .ic-row { gap: 16px; padding: 24px 0; }
+#run .term .term__body { font-size: 13px; line-height: 1.75; padding: 18px 20px 22px; }
+.run-card .ic-row__meta { color: var(--lb-ink2); }
+@media (max-width: 639px) { #run .run-card { display: none; } }
+@media (max-width: 359px) { .nav__logo .lg-long { display: none; } }
+</style>
+</head>
+<body>
+<!-- type: software (site-kind software): a self-hosted Claude Code usage leaderboard for teams; open source, MIT
+     deal: hero collage (UI cut by its frame), nav-mega, close-type, footer-statement, rhythm surface-pairs (#features),
+           buttons tonal, mark: the project's own icon (favicon.svg, from static/index.html) in place of the dealt arc;
+           palette: the client's own colours through start.mjs brand (the product UI's paper #faf9f5, ink #141413,
+           signal blue #3e6e9f) in place of the dealt white-link-blue, which clashed with the product's warm UI;
+           type urbanist (Urbanist + DM Mono): the first pairing, geist, failed hero-lines (the 48-character h1 ran to
+           4 lines) and the next, bricolage, brings three families of its own, so with the product's own Source Serif 4
+           (inside the product UI only) the page would load four; radius sharp (developer tool); lit ground sage;
+           grounds: bg-halo (#faq); the dealt bg-band on #board was taken off (its noise made a broken request in perf)
+     effect: grain-gradient on the hero's art frame (the one effect, live in the hero only)
+     moments: liquid-type on #privacy's headline (the one statement: what leaves a laptop, ripples under the pointer).
+              iris-opens was dealt for #features and taken out: its ring moves by left/top and gave a layout shift of 0.33.
+              First deal was counter-rolls and marquee-row; dealt again because their strips and the clipped
+              marquee track fail the checker's cut-text, overlap and row-lines at rest.
+     hero entrance: the name of the thing first, then what to do; hover: every link and button answers -->
+<header class="nav">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top"><img src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px"><span><span class="lg-long">Claude Code </span>Leaderboard</span></a>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item">
+        <a class="nav__link" href="#board">Board <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu">
+          <div class="wrap grid">
+            <div class="menu-col span-3">
+              <p class="t-label">Data</p>
+              <a href="#how">How usage arrives<span>OpenTelemetry from each laptop</span></a>
+              <a href="#privacy">What is sent<span>Numbers only, never prompts</span></a>
+            </div>
+            <div class="menu-col span-3">
+              <p class="t-label">Hosting</p>
+              <a href="#run">Where it runs<span>Python, Docker, systemd, cron</span></a>
+              <a href="https://github.com/imkurow/claude-code-leaderboard/blob/main/docs/cloudflare.md">Cloudflare guide<span>Tunnel and Access, step by step</span></a>
+            </div>
+            <a class="menu-card span-3 start-10" href="https://github.com/imkurow/claude-code-leaderboard/releases/tag/v1.0.0">
+              <div class="panel"><img class="frame__img" src="img/detail.webp" alt="Ada Lovelace's detail card with her output tokens for the last 30 days" width="560" height="300" loading="lazy"></div>
+              <span class="t-card">Version 1.0.0</span>
+              <span class="t-small muted">The first release, MIT licensed</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="nav__item"><a class="nav__link" href="#features">Features</a></div>
+      <div class="nav__item"><a class="nav__link" href="#faq">FAQ</a></div>
+      <div class="nav__item"><a class="nav__link" href="#setup">Setup</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero hero--collage" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text grid hero__grid">
+      <div class="hero__text span-5">
+        <h1 id="hero-h">Self-hosted Claude Code leaderboard for teams</h1>
+        <p class="hero__lead">Each laptop's Claude Code sends its token counts to one Python file you run. Everyone keeps their own Claude account, and the board ranks output tokens live.</p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
+          <a class="btn btn--secondary" href="#setup">See the setup</a>
+        </div>
+        <p class="hero__proof">Free and MIT licensed. Version 1.0.0 needs Python 3.10 or newer and nothing from pip.</p>
+      </div>
+      <div class="hero__art span-6 start-7" data-fx="grain-gradient" data-fx-seed="7" data-fx-params='{"calm":0.25,"calmX":0.4,"calmY":0.4}' role="img" aria-label="The leaderboard for the last 30 days: Ada Lovelace first with 7.41 million output tokens, Alan Turing second, Grace Hopper third, and Ada's detail card">
+        <div class="ly-piece ly-piece--main lb lb-win" aria-hidden="true">
+          <div class="lb-win__bar"><i></i><i></i><i></i><span>Claude Code Leaderboard</span></div>
+          <div class="lb-win__head">
+            <div class="lb-win__title">Claude Code Leaderboard</div>
+            <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
+            <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
+          </div>
+          <div class="lb-stage"><div class="lb-podium">
+            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.41M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
+            <div class="lb-seat" data-pos="2"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:248">AT</span></span><div class="lb-name">Alan Turing</div><div class="lb-team">Research</div><div class="lb-num">5.52M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">2</span></div></div>
+            <div class="lb-seat" data-pos="3"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:255">GH</span></span><div class="lb-name">Grace Hopper</div><div class="lb-team">Platform</div><div class="lb-num">5M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">3</span></div></div>
+          </div></div>
+        </div>
+        <div class="ly-piece ly-piece--note lb lb-note" aria-hidden="true">
+          <div class="lb-dt-name">Ada Lovelace</div>
+          <div class="lb-dt-sub">Platform. Rank 1 of 7 in the last 30 days</div>
+          <div class="lb-fig"><span class="lb-big">7.41M</span><span class="lb-cap">28% of all team output</span></div>
+          <div class="lb-models">
+            <div class="lb-model"><span>Sonnet 5.5</span><span class="lb-track"><b style="--p:62%"></b></span><span>62%</span></div>
+            <div class="lb-model"><span>Opus 5.5</span><span class="lb-track"><b style="--p:27%"></b></span><span>27%</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section id="board" aria-labelledby="board-h">
+    <div class="wrap">
+      <div class="grid">
+        <h2 class="span-5" id="board-h">The leaderboard and a card per person</h2>
+        <div class="span-6 start-7 stack-4">
+          <p>Pick today, 7 days, 30 days, this month or all time. The page checks for new usage every second, and a click on a name opens that person's card.</p>
+          <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#readme">Read the README</a>
+        </div>
+      </div>
+      <div class="ui app frame lb" role="img" aria-label="The leaderboard for the last 30 days: the podium with Ada Lovelace, Alan Turing and Grace Hopper, the ranking with Katherine Johnson and Linus Torvalds, and Ada Lovelace's detail card with her output per day, cache, sessions, cost and models">
+        <div class="app__pane app__pane--list" aria-hidden="true">
+          <div class="lb-top">
+            <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
+            <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
+          </div>
+          <div class="lb-stage"><div class="lb-podium">
+            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.41M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
+            <div class="lb-seat" data-pos="2"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:248">AT</span></span><div class="lb-name">Alan Turing</div><div class="lb-team">Research</div><div class="lb-num">5.52M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">2</span></div></div>
+            <div class="lb-seat" data-pos="3"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:255">GH</span></span><div class="lb-name">Grace Hopper</div><div class="lb-team">Platform</div><div class="lb-num">5M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">3</span></div></div>
+          </div></div>
+          <ol class="lb-rows">
+            <li class="lb-row"><span class="lb-pos">4</span><span class="lb-av" style="--h:63">KJ</span><div><div class="lb-rname">Katherine Johnson<span>Data</span></div><div class="lb-meta"><span>Sonnet 5.5</span><span>53 sessions</span><span>$391.26</span><span>active 2 h ago</span></div></div><span class="lb-rnum">3.35M</span><span class="lb-track"><b style="--p:45%"></b></span></li>
+          </ol>
+        </div>
+        <div class="app__pane app__pane--open" aria-hidden="true">
+          <div class="lb-dt">
+            <div class="lb-dt-head"><span class="lb-av" style="--h:6">AL</span><div><div class="lb-dt-name">Ada Lovelace</div><div class="lb-dt-sub">Platform. Rank 1 of 7 in the last 30 days</div></div></div>
+            <div class="lb-fig"><span class="lb-big">7.41M</span><span class="lb-cap">output tokens, 28% of all team output</span></div>
+            <div class="lb-plot">
+              <span class="lb-plot__max">569K</span>
+              <svg class="lb-bars" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="0.15" y="90.2" width="3.15" height="9.8" rx="0.6"/><rect x="3.60" y="59.0" width="3.15" height="41.0" rx="0.6"/><rect x="7.05" y="54.1" width="3.15" height="45.9" rx="0.6"/><rect x="10.49" y="49.2" width="3.15" height="50.8" rx="0.6"/><rect x="13.94" y="70.5" width="3.15" height="29.5" rx="0.6"/><rect x="17.39" y="71.3" width="3.15" height="28.7" rx="0.6"/><rect x="20.84" y="91.8" width="3.15" height="8.2" rx="0.6"/><rect x="24.29" y="94.3" width="3.15" height="5.7" rx="0.6"/><rect x="27.74" y="51.6" width="3.15" height="48.4" rx="0.6"/><rect x="31.18" y="57.4" width="3.15" height="42.6" rx="0.6"/><rect x="34.63" y="56.5" width="3.15" height="43.5" rx="0.6"/><rect x="38.08" y="50.0" width="3.15" height="50.0" rx="0.6"/><rect x="41.53" y="40.1" width="3.15" height="59.9" rx="0.6"/><rect x="44.98" y="95.1" width="3.15" height="4.9" rx="0.6"/><rect x="48.43" y="94.3" width="3.15" height="5.7" rx="0.6"/><rect x="51.87" y="81.1" width="3.15" height="18.9" rx="0.6"/><rect x="55.32" y="32.8" width="3.15" height="67.2" rx="0.6"/><rect x="58.77" y="64.7" width="3.15" height="35.3" rx="0.6"/><rect x="62.22" y="63.9" width="3.15" height="36.1" rx="0.6"/><rect x="65.67" y="24.6" width="3.15" height="75.4" rx="0.6"/><rect class="on" x="69.12" y="95.9" width="3.15" height="4.1" rx="0.6"/><rect x="72.56" y="18.0" width="3.15" height="82.0" rx="0.6"/><rect x="76.01" y="69.7" width="3.15" height="30.3" rx="0.6"/><rect x="79.46" y="82.8" width="3.15" height="17.2" rx="0.6"/><rect x="82.91" y="87.7" width="3.15" height="12.3" rx="0.6"/><rect x="86.36" y="65.6" width="3.15" height="34.4" rx="0.6"/><rect x="89.81" y="97.5" width="3.15" height="2.5" rx="0.6"/><rect x="93.25" y="49.2" width="3.15" height="50.8" rx="0.6"/><rect class="last" x="96.70" y="71.3" width="3.15" height="28.7" rx="0.6"/></svg>
+            </div>
+            <div class="lb-axis"><span>Oct 26</span><span>Nov 10</span><span>Today</span></div>
+            <dl class="lb-facts">
+              <div><dt>Input</dt><dd>308K</dd></div><div><dt>Cache read</dt><dd>752M</dd></div><div><dt>Cache written</dt><dd>26.1M</dd></div>
+              <div><dt>Sessions</dt><dd>51</dd></div><div><dt>Active days</dt><dd>22</dd></div><div><dt>Estimated cost</dt><dd>$865.32</dd></div>
+            </dl>
+            <div class="lb-models">
+              <div class="lb-model"><span>Sonnet 5.5</span><span class="lb-track"><b style="--p:62%"></b></span><span>62%</span></div>
+              <div class="lb-model"><span>Opus 5.5</span><span class="lb-track"><b style="--p:27%"></b></span><span>27%</span></div>
+              <div class="lb-model"><span>Haiku 5.5</span><span class="lb-track"><b style="--p:10%"></b></span><span>10%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-5">
+          <h2 id="how-h">How usage reaches the board</h2>
+          <p class="t-lead">Claude Code has OpenTelemetry metrics built in. The installer backs up <code>~/.claude/settings.json</code> and adds a few <code>env</code> keys; each laptop then posts its counts with a personal token.</p>
+          <ul class="checks">
+            <li>The server keeps hourly totals: tokens by type and model, cost, sessions and active time.</li>
+            <li>Re-running the installer replaces the imported history, so nothing counts twice.</li>
+          </ul>
+          <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#how-it-works">Read how it works</a>
+        </div>
+        <div class="frame frame--split span-6 start-7">
+          <div class="dg" data-diagram data-dg-still><script type="application/json">{"layout":"fanin","alt":"Claude Code on macOS, Linux and Windows laptops, plus the local transcripts, send their counts to server.py, which writes hourly totals to SQLite for the board.","sources":[{"label":"macOS","icon":"apple","sub":"Claude Code"},{"label":"Linux","icon":"linux-tux","sub":"Claude Code"},{"label":"Windows","icon":"windows","sub":"Claude Code"},{"label":"Transcripts","icon":"claude-code","sub":"Last 30 days"}],"target":{"label":"server.py","icon":"python"},"then":[{"label":"SQLite","icon":"sqlite","meta":"Hourly totals"}],"motion":{"pulse":"none"},"ground":"dots"}</script></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="privacy" aria-labelledby="privacy-h">
+    <div class="wrap">
+      <h2 class="mo-lt__type" id="privacy-h" data-moment="liquid-type">Usage numbers only</h2>
+      <div class="grid" style="margin-top:var(--s-7)">
+        <div class="span-5 stack-6">
+          <p class="t-lead">Token counts, model names, estimated cost, session counts and active time leave each laptop. Prompts, code and file names stay on it.</p>
+          <div class="stats">
+            <div><p class="t-small muted">between metric sends</p><p class="t-stat">5 s</p></div>
+            <div><p class="t-small muted">of history at install</p><p class="t-stat">30 days</p></div>
+            <div><p class="t-small muted">totals per person</p><p class="t-stat">1 h</p></div>
+          </div>
+        </div>
+        <div class="frame frame--split span-6 start-7" style="--ratio: 0px">
+          <div class="term term--file" role="img" aria-label="The env keys the installer adds to the Claude Code settings file: telemetry on, OTLP metrics over HTTP JSON to the leaderboard with a personal token, every 5000 milliseconds">
+            <div class="term__bar" aria-hidden="true"><img loading="lazy" src="assets/icons/claude-code.svg" alt="" width="20" height="12">~/.claude/settings.json</div>
+<pre class="term__body" aria-hidden="true">{
+  <span class="k">"env"</span>: {
+    <span class="k">"CLAUDE_CODE_ENABLE_TELEMETRY"</span>: "1",
+    <span class="k">"OTEL_METRICS_EXPORTER"</span>: "otlp",
+    <span class="k">"OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"</span>: "http/json",
+    <span class="k">"OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"</span>: "https://leaderboard.example.com/v1/metrics",
+    <span class="k">"OTEL_EXPORTER_OTLP_METRICS_HEADERS"</span>: "x-lb-token=lb_xxxxxxxx",
+    <span class="k">"OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"</span>: "delta",
+    <span class="k">"OTEL_METRIC_EXPORT_INTERVAL"</span>: "5000"
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section g2 g2m ground-surface" id="features" aria-labelledby="features-h">
+    <div class="wrap">
+      <div class="group">
+        <div class="section-head">
+          <h2 id="features-h">Admin page, photos, themes and two languages</h2>
+        </div>
+        <div class="grid">
+          <article class="card card--row card--open m-nolift span-6">
+            <h3>Adds people to the leaderboard</h3>
+            <p>It writes each person's install message. Rename people, rotate tokens or remove one computer's history.</p>
+            <div class="panel"><img class="frame__img" src="img/admin.webp" alt="The admin page: a form to add a participant and the participant list with total output and status" width="1040" height="550" loading="lazy"></div>
+          </article>
+          <article class="card card--row card--open m-nolift span-6">
+            <h3>Shows the leaderboard in a dark theme</h3>
+            <p>It follows the system setting until someone picks light or dark.</p>
+            <div class="panel"><img class="frame__img" src="img/board-dark.webp" alt="The podium in the dark theme" width="700" height="754" loading="lazy"></div>
+          </article>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open m-nolift span-6">
+          <h3>Shows the leaderboard in Bahasa Indonesia</h3>
+          <p>English or Indonesian: set <code>LB_LANG</code> to <code>en</code> or <code>id</code>.</p>
+          <div class="panel" role="img" aria-label="The leaderboard's header and podium in Bahasa Indonesia">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:40px">
+              <div class="ui lb lb-id" aria-hidden="true">
+                <div class="lb-win__title">Claude Code Leaderboard</div>
+                <div class="lb-lede">Dalam 30 hari terakhir, Claude menulis <b>26.8M</b> token untuk 7 orang.</div>
+                <div class="lb-periods"><span>Hari ini</span><span>7 hari</span><span class="on">30 hari</span><span>Bulan ini</span><span>Semua</span></div>
+                <div class="lb-dt-sub">329 sesi, estimasi $3,187.04 dengan harga API.</div>
+              </div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open m-nolift span-6">
+          <h3>Lets each person add a photo</h3>
+          <p>People upload their own picture, with a crop and zoom step.</p>
+          <div class="panel" role="img" aria-label="The photo dialog with a round crop and a zoom slider">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:300px;--ax:max(24px, 50% - 150px);--ay:40px">
+              <div class="ui lb lb-crop" aria-hidden="true">
+                <div class="adm__title">Your photo</div>
+                <div class="lb-crop__hint">Drag the photo to position it, then save.</div>
+                <div class="lb-crop__circle">KJ</div>
+                <div class="lb-crop__zoom">Zoom <i></i></div>
+                <div class="lb-crop__who">Linked as Katherine Johnson.</div>
+              </div>
+            </div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="run" aria-labelledby="run-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-5">
+          <h2 id="run-h">Runs on Linux, macOS or Docker with Python 3.10</h2>
+          <p class="t-lead">One Python file on the standard library, SQLite storage and no build step. Keep it up with systemd, Docker's restart policy, or <code>run.sh</code> from cron.</p>
+          <p class="run-more">For private access, Cloudflare Tunnel and Access need no open ports, and people log in with their work email. Without Cloudflare, an admin passphrase and a secret viewer link do the job.</p>
+          <a class="link" href="https://github.com/imkurow/claude-code-leaderboard/blob/main/docs/cloudflare.md">Read the Cloudflare guide</a>
+        </div>
+        <div class="span-6 start-7">
+          <div class="run-stack">
+            <div class="ui run-card" role="img" aria-label="Ways to run the leaderboard: python3 server.py on Python 3.10 or newer, Docker Compose, systemd or cron, and Cloudflare Tunnel and Access"><ul class="ic-list" aria-hidden="true">
+              <li class="ic-row"><span class="ic-tile"><img loading="lazy" class="ic" data-icon="python" src="assets/icons/python.svg" alt="" width="40" height="40"></span><span class="ic-row__main"><span class="ic-row__title">python3 server.py</span><span class="ic-row__meta">Python 3.10 or newer, nothing to install</span></span></li>
+              <li class="ic-row"><span class="ic-tile"><img loading="lazy" class="ic ic-land" data-icon="docker" src="assets/icons/docker.svg" alt="" width="40" height="29"></span><span class="ic-row__main"><span class="ic-row__title">Docker Compose</span><span class="ic-row__meta">Data in the leaderboard-data volume</span></span></li>
+              <li class="ic-row"><span class="ic-tile"><img loading="lazy" class="ic" data-icon="linux-tux" src="assets/icons/linux-tux.svg" alt="" width="34" height="40"></span><span class="ic-row__main"><span class="ic-row__title">systemd or cron</span><span class="ic-row__meta">A unit file in deploy/, or run.sh</span></span></li>
+              <li class="ic-row"><span class="ic-tile"><img loading="lazy" class="ic ic-wide" data-icon="cloudflare" src="assets/icons/cloudflare.svg" alt="" width="40" height="18"></span><span class="ic-row__main"><span class="ic-row__title">Cloudflare Tunnel and Access</span><span class="ic-row__meta">Optional tunnel profile in Compose</span></span></li>
+            </ul></div>
+            <div class="ui term" role="img" aria-label="A terminal starting the leaderboard with Docker Compose and loading the demo data">
+              <div class="term__bar" aria-hidden="true"><img loading="lazy" src="assets/icons/docker.svg" alt="" width="16" height="12">docker compose</div>
+<pre class="term__body" aria-hidden="true"><span class="p">$ </span>cp config.env.example config.env
+<span class="c"># set LB_ADMIN_KEY in config.env</span>
+<span class="p">$ </span>docker compose up -d
+<span class="ok">✔ Container leaderboard  Started</span>
+<span class="p">$ </span>docker compose exec leaderboard python3 manage.py demo
+<span class="p">$ </span>docker compose --profile tunnel up -d</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-halo" id="faq" aria-labelledby="faq-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="faq-h">Questions and limits</h2>
+        <p>To try it with made-up data first, run <code>python3 manage.py demo</code> on an empty database.</p>
+      </div>
+      <div class="grid">
+        <div class="faq span-6">
+          <div class="faq__item"><h3>Do we need a shared Claude organization?</h3><p>No. It works when everyone uses their own personal Claude account. You need no shared organization and no admin API key.</p></div>
+          <div class="faq__item"><h3>Does usage on claude.ai count?</h3><p>No. Only Claude Code produces these metrics; the desktop chat and claude.ai do not show up.</p></div>
+          <div class="faq__item"><h3>Can someone send fake usage numbers?</h3><p>Yes, with their own token. It is a friendly leaderboard, not billing.</p></div>
+          <div class="faq__item"><h3>Is the cost on the leaderboard what we pay?</h3><p>It is Claude Code's own estimate at API prices. People on a subscription pay their plan, so read the figure as a guide.</p></div>
+        </div>
+        <div class="faq span-6 start-7">
+          <div class="faq__item"><h3>What does the leaderboard cost?</h3><p>Nothing. It is MIT licensed and runs on your own server.</p></div>
+          <div class="faq__item faq__item--wide"><h3>Does the server need Docker?</h3><p>No. <code>python3 server.py</code> runs it on Python 3.10 or newer; Docker Compose is one option.</p></div>
+          <div class="faq__item faq__item--wide"><h3>Can Windows laptops join the leaderboard?</h3><p>Yes, through PowerShell. That installer is tested less than the macOS and Linux one, so bug reports help.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="setup" aria-labelledby="setup-h" style="--hm: 2">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="setup-h">Set it up in 3 steps</h2>
+      </div>
+      <div class="grid open-cards">
+        <article class="card card--row card--open m-nolift">
+          <span class="step-num">1</span>
+          <h3>Start the leaderboard server</h3>
+          <p>Set <code>LB_ADMIN_KEY</code> to a long random string, then run it. The board opens on port 8790.</p>
+          <div class="panel" role="img" aria-label="A terminal cloning the repository and starting server.py">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:420px;--ax:24px;--ay:32px">
+              <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/python.svg" alt="" width="16" height="16">Terminal</div>
+<pre class="term__body"><span class="p">$ </span>git clone https://github.com/imkurow/claude-code-leaderboard.git
+<span class="p">$ </span>cd claude-code-leaderboard
+<span class="p">$ </span>cp config.env.example config.env
+<span class="p">$ </span>python3 server.py</pre></div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open m-nolift">
+          <span class="step-num">2</span>
+          <h3>Add people to the leaderboard</h3>
+          <p>Open <code>/admin</code>, enter your admin key, add a participant and copy the command it shows.</p>
+          <div class="panel" role="img" aria-label="The admin page's form to add a participant, filled in for Grace Hopper on the Platform team">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:340px;--ax:max(24px, 50% - 170px);--ay:32px">
+              <div class="ui lb adm" aria-hidden="true">
+                <div class="adm__title">Add a participant</div>
+                <div class="adm__field"><span>Name</span><span>Grace Hopper</span></div>
+                <div class="adm__field"><span>Team</span><span>Platform</span></div>
+              </div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open m-nolift">
+          <span class="step-num">3</span>
+          <h3>Connect each laptop's Claude Code</h3>
+          <p>Each person runs their command once in a terminal, then restarts Claude Code.</p>
+          <div class="panel" role="img" aria-label="The install command for macOS and Linux, and the one for Windows PowerShell">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:420px;--ax:24px;--ay:32px">
+              <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/apple.svg" alt="" width="13" height="16" style="filter:invert(1)"><img loading="lazy" src="assets/icons/linux-tux.svg" alt="" width="14" height="16"><img loading="lazy" src="assets/icons/windows.svg" alt="" width="16" height="16">Install</div>
+<pre class="term__body"><span class="c"># macOS / Linux</span>
+curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx
+<span class="c"># Windows (PowerShell)</span>
+<span class="k">$env:LB_TOKEN</span>='lb_xxxxxxxx'; irm https://leaderboard.example.com/install.ps1 | iex</pre></div>
+            </div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing footer--statement g2m" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--type">
+      <div class="section-head">
+        <h2 id="close-h">Run the leaderboard for your team</h2>
+        <p>Free and MIT licensed. Version 1.0.0 is on GitHub.</p>
+      </div>
+      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><img loading="lazy" src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px">Claude Code Leaderboard</a>
+          <p class="footer__lede">A self-hosted Claude Code leaderboard for teams on personal accounts.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Board</h3><ul><li><a href="#board">Ranking</a></li><li><a href="#features">Features</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Setup</h3><ul><li><a href="#setup">Three steps</a></li><li><a href="#run">Hosting</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Project</h3><ul><li><a href="https://github.com/imkurow/claude-code-leaderboard/releases/tag/v1.0.0">Release notes</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/blob/main/LICENSE">MIT license</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Help</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/issues">Issues</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 imkurow, built together with Claude. Not affiliated with Anthropic. &ldquo;Claude&rdquo; is a trademark of Anthropic.</span>
+        <span>Product names and logos are trademarks of their owners.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<nav class="actionbar" aria-label="Quick actions">
+  <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
+</nav>
+
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+<script type="module" src="assets/diagrams/mount.js"></script>
+</body>
+</html>
