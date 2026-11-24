@@ -142,6 +142,10 @@ Please report security issues privately via GitHub's "Report a vulnerability".
 - **Partial history.** The imported history has tokens but no cost or active time.
 - **Windows installer.** It is tested less than the macOS and Linux one. Bug reports are welcome.
 
+## Authors
+
+Built by [imkurow](https://github.com/imkurow) together with Claude (Anthropic) in Claude Code.
+
 ## License
 
 [MIT](LICENSE)
