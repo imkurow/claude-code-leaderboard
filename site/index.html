@@ -419,9 +419,9 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             <div class="menu-col span-3">
               <p class="t-label">Hosting</p>
               <a href="#run">Where it runs<span>Python, Docker, systemd, cron</span></a>
-              <a href="https://github.com/imkurow/claude-code-leaderboard/blob/main/docs/cloudflare.md">Cloudflare guide<span>Tunnel and Access, step by step</span></a>
+              <a href="https://github.com/imkurow/crownboard/blob/main/docs/cloudflare.md">Cloudflare guide<span>Tunnel and Access, step by step</span></a>
             </div>
-            <a class="menu-card span-3 start-10" href="https://github.com/imkurow/claude-code-leaderboard/releases/tag/v1.0.0">
+            <a class="menu-card span-3 start-10" href="https://github.com/imkurow/crownboard/releases/tag/v1.0.0">
               <div class="panel"><img class="frame__img" src="img/detail.webp" alt="Ada Lovelace's detail card with her output tokens for the last 30 days" width="560" height="300" loading="lazy"></div>
               <span class="t-card">Version 1.0.0</span>
               <span class="t-small muted">The first release, MIT licensed</span>
@@ -434,7 +434,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
       <div class="nav__item"><a class="nav__link" href="#setup">Setup</a></div>
     </nav>
     <div class="nav__actions">
-      <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
+      <a class="btn btn--primary" href="https://github.com/imkurow/crownboard">Get it on GitHub</a>
     </div>
     <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -449,7 +449,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
         <h1 id="hero-h">Self-hosted AI coding leaderboard for teams</h1>
         <p class="hero__lead">Claude Code, 9router, JRouter, Hermes Agent, OpenCode or OpenRouter on each laptop sends token counts to one Python file you run. Every model counts, everyone keeps their own account, and first place gets the crown.</p>
         <div class="btn-row">
-          <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
+          <a class="btn btn--primary" href="https://github.com/imkurow/crownboard">Get it on GitHub</a>
           <a class="btn btn--secondary" href="#setup">See the setup</a>
         </div>
         <p class="hero__proof">Free and MIT licensed. Needs Python 3.10 or newer and nothing from pip.</p>
@@ -487,7 +487,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
         <h2 class="span-5" id="board-h">The leaderboard and a card per person</h2>
         <div class="span-6 start-7 stack-4">
           <p>Pick today, 7 days, 30 days, this month or all time, or one harness. The page checks for new usage every second, arrows show who moved since yesterday, and side panels list who is active now. A click on a name opens that person's card.</p>
-          <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#readme">Read the README</a>
+          <a class="link" href="https://github.com/imkurow/crownboard#readme">Read the README</a>
         </div>
       </div>
       <div class="ui app frame lb" role="img" aria-label="The leaderboard for the last 30 days: the podium with Ada Lovelace, Alan Turing and Grace Hopper, the ranking with Katherine Johnson and Linus Torvalds, and Ada Lovelace's detail card with her output per day, cache, sessions, cost and models">
@@ -561,7 +561,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             <li>The server keeps hourly totals: tokens by type and model, cost, requests, sessions and active time.</li>
             <li>Re-running the installer replaces the imported history, so nothing counts twice.</li>
           </ul>
-          <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#how-it-works">Read how it works</a>
+          <a class="link" href="https://github.com/imkurow/crownboard#how-it-works">Read how it works</a>
         </div>
         <div class="frame frame--split span-6 start-7">
           <div class="dg" data-diagram><script type="application/json">{"layout":"fanin","alt":"Claude Code on each laptop, the 9router and JRouter usage logs, the Hermes Agent and OpenCode databases, and the OpenRouter activity API send their counts to server.py, which writes hourly totals to SQLite for the board.","sources":[{"label":"Claude Code","icon":"claude-code","sub":"macOS, Linux, Windows"},{"label":"9router, JRouter","icon":"ui:router","sub":"Usage log"},{"label":"Hermes, OpenCode","icon":"ui:database","sub":"Local database"},{"label":"OpenRouter","icon":"openrouter","sub":"Activity API"}],"target":{"label":"server.py","icon":"python"},"then":[{"label":"SQLite","icon":"sqlite","meta":"Hourly totals"}],"motion":{"cycle":3.2},"ground":"dots"}</script></div>
@@ -672,7 +672,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
           <h2 id="run-h">Runs on Linux, macOS or Docker with Python 3.10</h2>
           <p class="t-lead">One Python file on the standard library, SQLite storage and no build step. Keep it up with systemd, Docker's restart policy, or <code>run.sh</code> from cron.</p>
           <p class="run-more">For private access, Cloudflare Tunnel and Access need no open ports, and people log in with their work email. Without Cloudflare, an admin passphrase and a secret viewer link do the job.</p>
-          <a class="link" href="https://github.com/imkurow/claude-code-leaderboard/blob/main/docs/cloudflare.md">Read the Cloudflare guide</a>
+          <a class="link" href="https://github.com/imkurow/crownboard/blob/main/docs/cloudflare.md">Read the Cloudflare guide</a>
         </div>
         <div class="span-6 start-7">
           <div class="run-stack">
@@ -730,8 +730,8 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             <p>Set <code>LB_ADMIN_KEY</code> to a long random string, then run it. The board opens on port 8790.</p>
             <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="A terminal cloning the repository and starting server.py">
               <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/python.svg" alt="" width="16" height="16">Terminal</div>
-<pre class="term__body"><span class="p">$ </span>git clone https://github.com/imkurow/claude-code-leaderboard.git
-<span class="p">$ </span>cd claude-code-leaderboard
+<pre class="term__body"><span class="p">$ </span>git clone https://github.com/imkurow/crownboard.git
+<span class="p">$ </span>cd crownboard
 <span class="p">$ </span>cp config.env.example config.env
 <span class="p">$ </span>python3 server.py</pre></div>
             </figure>
@@ -776,7 +776,7 @@ curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx -
         <h2 id="close-h">Run the leaderboard for your team</h2>
         <p>Free and MIT licensed. Version 1.0.0 is on GitHub.</p>
       </div>
-      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/imkurow/crownboard">Get it on GitHub<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
     </div>
     <div class="closing__links">
       <div class="grid">
@@ -786,8 +786,8 @@ curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx -
         </div>
         <div class="span-2 footer__col"><h3>Board</h3><ul><li><a href="#board">Ranking</a></li><li><a href="#badges">Badges</a></li><li><a href="#features">Features</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Setup</h3><ul><li><a href="#setup">Three steps</a></li><li><a href="#run">Hosting</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Project</h3><ul><li><a href="https://github.com/imkurow/claude-code-leaderboard/releases/tag/v1.0.0">Release notes</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/blob/main/LICENSE">MIT license</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Help</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/issues">Issues</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Project</h3><ul><li><a href="https://github.com/imkurow/crownboard/releases/tag/v1.0.0">Release notes</a></li><li><a href="https://github.com/imkurow/crownboard/blob/main/LICENSE">MIT license</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Help</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/imkurow/crownboard/issues">Issues</a></li></ul></div>
       </div>
       <div class="footer__legal">
         <span>&copy; 2026 imkurow, built together with Claude. Formerly Claude Code Leaderboard. Not affiliated with Anthropic. &ldquo;Claude&rdquo; is a trademark of Anthropic.</span>
@@ -798,7 +798,7 @@ curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx -
 </footer>
 
 <nav class="actionbar" aria-label="Quick actions">
-  <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
+  <a class="btn btn--primary" href="https://github.com/imkurow/crownboard">Get it on GitHub</a>
 </nav>
 
 <script type="module" src="assets/system.js"></script>

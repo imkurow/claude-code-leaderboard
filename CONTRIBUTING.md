@@ -18,8 +18,8 @@ Thanks for helping out. Bug reports, fixes, translations and small features are 
 You need Python 3.10 or newer and nothing else.
 
 ```bash
-git clone https://github.com/imkurow/claude-code-leaderboard.git
-cd claude-code-leaderboard
+git clone https://github.com/imkurow/crownboard.git
+cd crownboard
 export LB_DB=/tmp/lb-dev.db LB_ADMIN_KEY=dev-key
 python3 manage.py demo        # made-up participants with 45 days of usage
 python3 server.py             # http://127.0.0.1:8790, admin at /admin with "dev-key"

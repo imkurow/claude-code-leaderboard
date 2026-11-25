@@ -43,8 +43,8 @@ Claude Code has built-in [OpenTelemetry metrics](https://docs.claude.com/en/docs
 You need Python 3.10 or newer. There is nothing to `pip install`.
 
 ```bash
-git clone https://github.com/imkurow/claude-code-leaderboard.git
-cd claude-code-leaderboard
+git clone https://github.com/imkurow/crownboard.git
+cd crownboard
 cp config.env.example config.env
 # set LB_ADMIN_KEY in config.env to a long random string, e.g.  openssl rand -hex 24
 python3 server.py
