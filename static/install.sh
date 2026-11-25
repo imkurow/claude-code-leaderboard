@@ -3,6 +3,7 @@
 #
 #   ⟦Install‖Pasang⟧ : ⟦get the full command (with CF-Access-* headers) from the admin‖perintah lengkap (dengan header CF-Access-*) didapat dari admin⟧
 #   ⟦Remove‖Hapus⟧  : bash -s -- --uninstall  (⟦use the same download command‖pakai perintah download yang sama⟧)
+#   9router : bash -s -- <TOKEN> --9router   (⟦on the Linux machine that runs 9router; remove with‖di mesin Linux yang menjalankan 9router; hapus dengan⟧ --uninstall --9router)
 #
 # ⟦What changes: the "env" block in ~/.claude/settings.json (a backup is made first).‖Yang diubah: blok "env" di ~/.claude/settings.json (backup dibuat dulu).⟧
 # ⟦What Claude Code sends: metric numbers (token counts per type & model, cost estimate,
@@ -20,10 +21,12 @@ case "$CF_ID" in __*) CF_ID="" ;; esac
 case "$CF_SECRET" in __*) CF_SECRET="" ;; esac
 SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 MODE=install
+ROUTER=0
 TOKEN=""
 for arg in "$@"; do
   case "$arg" in
     --uninstall) MODE=uninstall ;;
+    --9router) ROUTER=1 ;;
     -*) echo "⟦Unknown option‖Opsi tidak dikenal⟧: $arg" >&2; exit 2 ;;
     *) TOKEN="$arg" ;;
   esac
@@ -51,6 +54,238 @@ if [ "$MODE" = install ]; then
     302|403) echo "⟦rejected by Cloudflare Access. Ask the admin for the latest install command.‖ditolak Cloudflare Access. Minta perintah install terbaru ke admin.⟧" >&2; exit 1 ;;
     *) echo "⟦failed‖gagal⟧ (HTTP $code). ⟦Could not reach the leaderboard server.‖Server leaderboard tidak bisa dihubungi.⟧" >&2; exit 1 ;;
   esac
+fi
+
+# ---------------------------------------------------------------------------
+# 9router: instead of Claude Code telemetry, read 9router's own usage log on this machine
+# every minute (cron) and send hourly totals per model. Prompts and responses are not read.
+# ---------------------------------------------------------------------------
+if [ "$ROUTER" = 1 ]; then
+  R_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude-leaderboard"
+  R_SCRIPT="$R_DIR/9router-sync.py"
+  R_TAG="# claude-leaderboard 9router sync"
+  if [ "$MODE" = uninstall ]; then
+    if command -v crontab >/dev/null 2>&1; then
+      (crontab -l 2>/dev/null | grep -vF "$R_TAG" || true) | crontab - || true
+    fi
+    rm -f "$R_SCRIPT" "$R_DIR/9router.env" "$R_DIR/9router.state" "$R_DIR/9router.lock" "$R_DIR/9router-sync.log"
+    echo "⟦9router sync removed. Data already on the leaderboard stays.‖Sinkron 9router dihapus. Data yang sudah ada di leaderboard tetap.⟧"
+    exit 0
+  fi
+  command -v python3 >/dev/null 2>&1 || { echo "⟦python3 is needed for the 9router sync.‖Sinkron 9router butuh python3.⟧" >&2; exit 1; }
+  R_DB="${LB_9R_DB:-${DATA_DIR:-$HOME/.9router}/db/data.sqlite}"
+  if [ ! -f "$R_DB" ]; then
+    echo "⟦9router's database was not found at‖Database 9router tidak ditemukan di⟧ $R_DB" >&2
+    echo "⟦Run this as the user that runs 9router, or give its path:‖Jalankan sebagai user yang menjalankan 9router, atau sebutkan lokasinya:⟧ ... | LB_9R_DB=/path/to/data.sqlite bash -s -- <TOKEN> --9router" >&2
+    exit 1
+  fi
+  mkdir -p "$R_DIR"
+  chmod 700 "$R_DIR"
+  umask 077
+  cat > "$R_DIR/9router.env" <<EOF
+LB_URL=__LB_URL__
+LB_TOKEN=$TOKEN
+LB_CF_ID=$CF_ID
+LB_CF_SECRET=$CF_SECRET
+LB_9R_DB=$R_DB
+LB_9R_KEYS=${LB_9R_KEYS:-}
+EOF
+  cat > "$R_SCRIPT" <<'PY'
+#!/usr/bin/env python3
+"""__LB_TITLE__: send 9router usage to the leaderboard.
+
+Reads 9router's usage log (usageHistory in its SQLite database) read-only and sends hourly
+totals per model: tokens, cost and request count. Prompts and responses are never read or sent.
+Settings live in 9router.env beside this file. cron runs it every minute; it only sends when
+the totals changed, and at least every 30 minutes.
+"""
+import datetime as dt
+import fcntl
+import getpass
+import hashlib
+import json
+import os
+import socket
+import sqlite3
+import sys
+import time
+import urllib.error
+import urllib.request
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DAYS = 90
+RESEND = 1800
+
+
+def settings():
+    c = {}
+    with open(os.path.join(HERE, "9router.env"), encoding="utf-8") as fh:
+        for line in fh:
+            k, sep, v = line.rstrip("\n").partition("=")
+            if sep:
+                c[k.strip()] = v.strip()
+    return c
+
+
+def to_ts(v):
+    if v is None:
+        return None
+    if isinstance(v, (int, float)):
+        return v / 1000.0 if v > 1e11 else float(v)
+    s = str(v).strip()
+    if s.isdigit():
+        n = int(s)
+        return n / 1000.0 if n > 1e11 else float(n)
+    try:
+        d = dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=dt.timezone.utc)
+    return d.timestamp()
+
+
+def num(v):
+    try:
+        f = float(v or 0)
+    except (TypeError, ValueError):
+        return 0.0
+    return f if f > 0 and f == f else 0.0
+
+
+def collect(cfg):
+    path = cfg.get("LB_9R_DB") or os.path.expanduser("~/.9router/db/data.sqlite")
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True, timeout=15)
+    con.row_factory = sqlite3.Row
+    cols = {r["name"] for r in con.execute("PRAGMA table_info(usageHistory)")}
+    need = {"timestamp", "model", "promptTokens", "completionTokens"}
+    if not need <= cols:
+        raise SystemExit("9router: usageHistory has an unknown layout (%s); this 9router version is not supported yet."
+                         % ", ".join(sorted(cols)) if cols else "9router: no usageHistory table in %s" % path)
+    pick = [c for c in ("timestamp", "provider", "model", "promptTokens", "completionTokens", "cost", "status", "tokens", "apiKey") if c in cols]
+    since = time.time() - DAYS * 86400
+    sample = con.execute("SELECT timestamp FROM usageHistory ORDER BY rowid DESC LIMIT 1").fetchone()
+    raw = sample[0] if sample is not None else None
+    if isinstance(raw, str) and not raw.isdigit():
+        bound = dt.datetime.fromtimestamp(since, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")  # ISO text sorts by time
+    elif raw is not None and float(raw) > 1e11:
+        bound = since * 1000  # milliseconds
+    else:
+        bound = since
+    keys = {k.strip() for k in (cfg.get("LB_9R_KEYS") or "").split(",") if k.strip()}
+    allowed = None
+    if keys and "apiKey" in cols:
+        allowed = set(keys)
+        try:
+            for r in con.execute("SELECT * FROM apiKeys"):
+                r = dict(r)
+                if keys & {str(r.get("name") or ""), str(r.get("id") or ""), str(r.get("key") or "")}:
+                    allowed |= {str(r.get("key") or ""), str(r.get("id") or "")}
+        except sqlite3.Error:
+            pass
+    agg, first, last, n = {}, None, None, 0
+    for r in con.execute("SELECT %s FROM usageHistory WHERE timestamp >= ?" % ", ".join(pick), (bound,)):
+        r = dict(r)
+        if allowed is not None and str(r.get("apiKey") or "") not in allowed:
+            continue
+        ts = to_ts(r.get("timestamp"))
+        if ts is None or ts < since:
+            continue
+        try:
+            t = json.loads(r.get("tokens") or "{}")
+        except ValueError:
+            t = {}
+        t = t if isinstance(t, dict) else {}
+        prompt, out = num(r.get("promptTokens")), num(r.get("completionTokens"))
+        cached = num(t.get("cached_tokens") or t.get("cache_read_input_tokens"))
+        created = num(t.get("cache_creation_input_tokens"))
+        status = str(r.get("status") or "ok").lower()
+        if not (prompt or out) and status not in ("ok", "success", "200"):
+            continue
+        # OpenAI-style prompt_tokens include the cached part; Anthropic-style input_tokens do not.
+        inp = prompt - cached - created if prompt >= cached + created else prompt
+        model = str(r.get("model") or r.get("provider") or "unknown")[:80]
+        hour = int(ts) - int(ts) % 3600
+        a = agg.setdefault((hour, model), {"hour": hour, "model": model, "input": 0, "output": 0,
+                                           "cache_read": 0, "cache_creation": 0, "cost": 0.0, "requests": 0})
+        a["input"] += int(inp)
+        a["output"] += int(out)
+        a["cache_read"] += int(cached)
+        a["cache_creation"] += int(created)
+        a["cost"] = round(a["cost"] + num(r.get("cost")), 6)
+        a["requests"] += 1
+        first = ts if first is None else min(first, ts)
+        last = ts if last is None else max(last, ts)
+        n += 1
+    con.close()
+    now = int(time.time())
+    machine = "9router-" + hashlib.sha256(("%s|%s|%s" % (socket.gethostname(), getpass.getuser(), path)).encode()).hexdigest()[:16]
+    return {
+        "machine": machine,
+        "from": (int(first) - int(first) % 3600) if first is not None else now - now % 3600,
+        "last_request": int(last) if last is not None else None,
+        "rows": sorted(agg.values(), key=lambda a: (a["hour"], a["model"])),
+    }, n
+
+
+def send(cfg, payload):
+    req = urllib.request.Request(cfg["LB_URL"].rstrip("/") + "/v1/metrics/9router", data=json.dumps(payload).encode(),
+                                 method="POST", headers={"Content-Type": "application/json", "x-lb-token": cfg["LB_TOKEN"],
+                                                         "User-Agent": "claude-leaderboard-9router-sync"})
+    if cfg.get("LB_CF_ID"):
+        req.add_header("CF-Access-Client-Id", cfg["LB_CF_ID"])
+        req.add_header("CF-Access-Client-Secret", cfg.get("LB_CF_SECRET", ""))
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read() or b"{}")
+
+
+def main():
+    force = "--force" in sys.argv
+    lock = open(os.path.join(HERE, "9router.lock"), "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return 0
+    cfg = settings()
+    payload, n = collect(cfg)
+    state_path = os.path.join(HERE, "9router.state")
+    digest = hashlib.sha256(json.dumps(payload["rows"], sort_keys=True).encode()).hexdigest()
+    try:
+        with open(state_path) as fh:
+            state = json.load(fh)
+    except (OSError, ValueError):
+        state = {}
+    if not force and state.get("digest") == digest and time.time() - state.get("at", 0) < RESEND:
+        return 0
+    try:
+        res = send(cfg, payload)
+    except urllib.error.HTTPError as e:
+        print("%s: the leaderboard answered HTTP %d: %s" % (time.strftime("%F %T"), e.code, e.read()[:200].decode("utf-8", "replace")))
+        return 1
+    except (urllib.error.URLError, OSError) as e:
+        print("%s: could not reach the leaderboard: %s" % (time.strftime("%F %T"), e))
+        return 1
+    with open(state_path, "w") as fh:
+        json.dump({"digest": digest, "at": time.time()}, fh)
+    if force or sys.stdout.isatty():
+        print("OK, %d requests, %s output tokens." % (n, format(res.get("output", 0), ",")))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+PY
+  chmod 700 "$R_SCRIPT"
+  printf '⟦Sending 9router usage (up to 90 days)... ‖Kirim pemakaian 9router (maks. 90 hari)... ⟧'
+  python3 "$R_SCRIPT" --force || { echo "⟦failed, see the message above.‖gagal, lihat pesan di atas.⟧" >&2; exit 1; }
+  if command -v crontab >/dev/null 2>&1; then
+    line="* * * * * /usr/bin/env python3 \"$R_SCRIPT\" > \"$R_DIR/9router-sync.log\" 2>&1 $R_TAG"
+    { crontab -l 2>/dev/null | grep -vF "$R_TAG" || true; echo "$line"; } | crontab -
+    echo "⟦Done. 9router usage now reaches‖Selesai. Pemakaian 9router sekarang masuk ke⟧ __LB_URL__ ⟦every minute.‖tiap menit.⟧"
+  else
+    echo "⟦crontab is not available here. Run this every minute with your own scheduler:‖crontab tidak tersedia. Jalankan ini tiap menit lewat scheduler lain:⟧ python3 $R_SCRIPT" >&2
+  fi
+  exit 0
 fi
 
 mkdir -p "$(dirname "$SETTINGS")"

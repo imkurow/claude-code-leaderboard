@@ -167,6 +167,7 @@
   .pill.on { color: var(--signal); background: color-mix(in oklab, var(--signal) 12%, transparent); }
   .pill.offp { color: var(--ink-3); background: color-mix(in oklab, var(--ink-3) 14%, transparent); }
   .pill.wait { color: var(--bronze); background: color-mix(in oklab, var(--bronze) 15%, transparent); }
+  .pill.src { margin-left: 6px; padding: 0 7px; font-size: 11px; vertical-align: 1px; color: var(--ink-2); border: 1px solid var(--rule); }
   .empty { padding: 28px 22px; color: var(--ink-3); }
 
   .av {
@@ -295,6 +296,10 @@
     <div class="cmd">
       <div class="cmd-head"><span>Windows (PowerShell)</span><button class="btn ghost small" type="button" data-copy="ps">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdPs"></pre>
+    </div>
+    <div class="cmd">
+      <div class="cmd-head"><span>⟦9router (on the Linux machine that runs it)‖9router (di mesin Linux yang menjalankannya)⟧</span><button class="btn ghost small" type="button" data-copy="router">⟦Copy‖Salin⟧</button></div>
+      <pre id="cmdRouter"></pre>
     </div>
     <div class="warn">⟦These commands are shown only now. If they get lost, create a new token from the participant's menu.‖Perintah ini cuma muncul sekarang. Kalau hilang, buat token baru dari menu peserta.⟧</div>
     <div class="row-actions">
@@ -429,7 +434,9 @@
       var td = el("td"), who = el("div", "who");
       who.appendChild(avatar(p.name, p.avatar));
       var t = el("div"); t.style.minWidth = "0";
-      t.appendChild(el("div", "nm", p.name));
+      var nmv = el("div", "nm", p.name);
+      if (p.router) nmv.appendChild(el("span", "pill src", "9router"));
+      t.appendChild(nmv);
       t.appendChild(el("div", "em", p.email || T("No login email yet", "Email belum terhubung")));
       who.appendChild(t); td.appendChild(who); tr.appendChild(td);
       tr.appendChild(el("td", "col-team" + (p.team ? "" : " muted"), p.team || T("No team", "Tanpa tim")));
@@ -479,10 +486,13 @@
     $("tokTitle").textContent = title;
     $("cmdSh").textContent = j.commands.sh;
     $("cmdPs").textContent = j.commands.ps;
+    $("cmdRouter").textContent = j.commands.router;
     tokenDlg.showModal();
   }
   function message(j) {
-    var cmds = "macOS / Linux:\n" + j.commands.sh + "\n\nWindows (PowerShell):\n" + j.commands.ps + "\n\n";
+    var cmds = "macOS / Linux:\n" + j.commands.sh + "\n\nWindows (PowerShell):\n" + j.commands.ps + "\n\n" +
+      T("If you use 9router instead, run this once on the Linux machine where 9router runs (as the same user):\n",
+        "Kalau kamu pakai 9router, jalankan ini sekali di mesin Linux tempat 9router berjalan (dengan user yang sama):\n") + j.commands.router + "\n\n";
     return T(
       "Hi " + j.name + ", here is how to join " + TITLE + ". Run this once in a terminal on the computer where you use Claude Code.\n\n" + cmds +
       "When it finishes, close and reopen Claude Code. Leaderboard: " + location.origin + "\n" +
@@ -600,8 +610,11 @@
       var ul = el("ul", "machines");
       p.machines.forEach(function (m) {
         var li = el("li"), info = el("div");
-        info.appendChild(el("div", "code", T("Computer ", "Laptop ") + m.machine.slice(0, 8)));
-        info.appendChild(el("div", "meta", T(compact(m.output) + " output tokens from " + num(m.messages) + " messages. Uploaded " + fullDate(m.at) + ".", compact(m.output) + " output token dari " + num(m.messages) + " pesan. Diunggah " + fullDate(m.at) + ".")));
+        var r9 = m.machine.indexOf("9router-") === 0;
+        info.appendChild(el("div", "code", r9 ? "9router " + m.machine.slice(8, 16) : T("Computer ", "Laptop ") + m.machine.slice(0, 8)));
+        info.appendChild(el("div", "meta", r9
+          ? T(compact(m.output) + " output tokens from " + num(m.messages) + " requests. Last sync " + fullDate(m.at) + ".", compact(m.output) + " output token dari " + num(m.messages) + " request. Sinkron terakhir " + fullDate(m.at) + ".")
+          : T(compact(m.output) + " output tokens from " + num(m.messages) + " messages. Uploaded " + fullDate(m.at) + ".", compact(m.output) + " output token dari " + num(m.messages) + " pesan. Diunggah " + fullDate(m.at) + ".")));
         li.appendChild(info);
         var del = el("button", "btn danger small", T("Remove", "Hapus")); del.type = "button";
         armed(del, T("Sure?", "Yakin hapus?"), function (b) {

@@ -9,6 +9,7 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 - **Podium and live ranking.** Output tokens per person for today, 7 days, 30 days, this month or all time. The page refreshes every second.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
 - **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.
+- **9router users too.** People who use [9router](https://github.com/decolua/9router) on a Linux machine join with the same token. Their usage is read from 9router's own log every minute and marked with a "9router" label, and the board can be filtered to Claude Code or 9router users.
 - **Admin page.** Add people and copy a ready-made install message for each. You can also rename people, rotate tokens, remove one computer's history or a photo, and delete people.
 - **Profile photos.** Each person uploads their own, with a crop and zoom step.
 - **Light and dark themes.** English and Bahasa Indonesia interface.
@@ -91,6 +92,22 @@ Running it again with `--uninstall` (bash) or `$env:LB_UNINSTALL='1'` (PowerShel
 
 To add a photo, a person clicks "Add photo" on the board and pastes their token once.
 
+### People who use 9router
+
+9router keeps its own usage log, so for its users the leaderboard reads that log instead of Claude Code's telemetry. Run the same command with `--9router` on the Linux machine where 9router runs, as the user that runs it:
+
+```bash
+curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --9router
+```
+
+- **What it installs.** A small Python script in `~/.local/share/claude-leaderboard/` and a cron entry that runs it every minute. It needs `python3` and `crontab`, and changes nothing in 9router.
+- **What it sends.** It reads `~/.9router/db/data.sqlite` read-only and sends hourly totals per model: input, output and cache tokens, 9router's cost estimate and the request count. Prompts and responses are never read. The first run sends up to 90 days of history.
+- **Every model counts.** 9router can route to Claude, GPT, Gemini, Qwen and others, and all of them count toward the person's total. The detail card shows the split per model.
+- **On the board** these people get a "9router" label and a request count instead of sessions. A filter (Everyone, Claude Code, 9router) appears once someone sends 9router data, and ranks follow the filter.
+- **Options.** If the database is somewhere else, put `LB_9R_DB=/path/to/data.sqlite` before `bash`. If several people share one 9router, put `LB_9R_KEYS=name1,name2` (9router API key names) before `bash` so each person only sends their own keys.
+- **Removing it.** Run the command with `--uninstall --9router`. Usage already on the board stays.
+- **Counting twice.** If the same requests also go through Claude Code with telemetry installed, they count twice. Use one or the other for that person.
+
 ## Configuration
 
 All settings live in `config.env`, and environment variables override it. See [config.env.example](config.env.example).
@@ -138,7 +155,8 @@ Please report security issues privately via GitHub's "Report a vulnerability".
 
 ## Limitations
 
-- **Claude Code only.** Usage on claude.ai or in the desktop chat doesn't produce these metrics.
+- **Claude Code or 9router only.** Usage on claude.ai or in the desktop chat doesn't produce these metrics.
+- **9router's database layout.** The 9router sync reads 9router's internal `usageHistory` table (tested with 9router 0.5.69). A future 9router version could change it; the sync then stops with a clear message instead of sending wrong numbers.
 - **Self-reported numbers.** Someone could send fake numbers with their own token. This is a friendly leaderboard, not billing.
 - **Estimated cost.** The cost figure is Claude Code's own estimate at API prices. People on a subscription pay their plan instead.
 - **Partial history.** The imported history has tokens but no cost or active time.

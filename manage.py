@@ -40,6 +40,10 @@ def print_instructions(name, token):
     print("Windows (PowerShell):")
     print("  " + cmds["ps"])
     print()
+    print(t("9router (run on the Linux machine where 9router runs, as the same user):",
+            "9router (jalankan di mesin Linux tempat 9router berjalan, dengan user yang sama):"))
+    print("  " + cmds["router"])
+    print()
 
 
 def get(conn, name):

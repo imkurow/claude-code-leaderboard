@@ -4,9 +4,10 @@
 One process, standard library only:
   POST /v1/metrics        OTLP/HTTP JSON receiver (Claude Code telemetry), auth by x-lb-token
   GET|POST /v1/metrics/backfill   history from local transcripts (window, then upload)
+  POST /v1/metrics/9router        hourly totals read from a 9router usage log (replaces that machine's rows)
   GET  /                  leaderboard page
-  GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all)
-  GET  /api/participant   one participant's detail (?id=&period=): series, models, token mix
+  GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router)
+  GET  /api/participant   one participant's detail (?id=&period=&source=): series, models, token mix
   GET  /install.sh        installer for macOS / Linux
   GET  /install.ps1       installer for Windows PowerShell
   GET  /api/me            who is viewing (email from Cloudflare Access) + linked participant
@@ -256,9 +257,13 @@ def as_count(v, cap):
     return float(v)
 
 
+ROUTER_PREFIX = "9router-"
+ROUTER_FIELDS = dict(BACKFILL_FIELDS, cost=("", 5_000), requests=("", 1_000_000))
+
+
 def store_backfill(employee_id, payload):
     machine = payload.get("machine")
-    if not valid_machine(machine):
+    if not valid_machine(machine) or machine.startswith(ROUTER_PREFIX):
         raise ValueError("bad machine id")
     rows = payload.get("rows") or []
     sessions = payload.get("sessions") or []
@@ -315,6 +320,71 @@ def store_backfill(employee_id, payload):
     return {"ok": True, "buckets": len(out), "skipped": skipped, "output": int(output), "cutoff": cutoff}
 
 
+def store_router(employee_id, payload):
+    """Hourly totals from a 9router usage log. Each sync sends every hour from `from` on and
+    replaces that machine's rows for those hours, so a repeat never counts twice and hours the
+    log no longer holds (if 9router ever trims it) stay as they were."""
+    machine = payload.get("machine")
+    if not valid_machine(machine) or not machine.startswith(ROUTER_PREFIX):
+        raise ValueError("bad machine id")
+    rows = payload.get("rows") or []
+    if not isinstance(rows, list) or len(rows) > BACKFILL_MAX_ROWS:
+        raise ValueError("bad rows")
+    now = int(time.time())
+    start = now - BACKFILL_MAX_DAYS * 86400
+    frm = payload.get("from")
+    if not isinstance(frm, int) or frm % 3600 or frm > now:
+        raise ValueError("bad from")
+    out = {}
+    requests = 0
+    for r in rows:
+        if not isinstance(r, dict):
+            raise ValueError("bad row")
+        hour, model = r.get("hour"), r.get("model")
+        if not isinstance(hour, int) or hour % 3600 or not isinstance(model, str) or not 0 < len(model) <= 80:
+            raise ValueError("bad row")
+        if hour < max(frm, start - 3600) or hour > now:
+            continue
+        for field, (typ, cap) in ROUTER_FIELDS.items():
+            v = as_count(r.get(field, 0), cap)
+            if not v:
+                continue
+            if field == "cost":
+                k = (hour, "claude_code.cost.usage", "", model)
+            elif field == "requests":
+                k = (hour, "router.request.count", "", "")
+                requests += v
+            else:
+                k = (hour, "claude_code.token.usage", typ, model)
+            out[k] = out.get(k, 0.0) + v
+    last = payload.get("last_request")
+    last = int(last) if isinstance(last, (int, float)) and start <= last <= now + 300 else None
+    with DB_LOCK:
+        DB.execute("BEGIN IMMEDIATE")
+        try:
+            DB.execute("DELETE FROM usage_backfill WHERE employee_id = ? AND machine = ? AND hour >= ?", (employee_id, machine, frm))
+            DB.executemany(
+                "INSERT INTO usage_backfill(employee_id, machine, hour, metric, type, model, value) VALUES (?,?,?,?,?,?,?)",
+                [(employee_id, machine, h, m, t, mo, v) for (h, m, t, mo), v in out.items()],
+            )
+            total = DB.execute(
+                "SELECT COALESCE(SUM(value), 0) FROM usage_backfill WHERE employee_id = ? AND machine = ? AND metric = 'router.request.count'",
+                (employee_id, machine)).fetchone()[0]
+            DB.execute(
+                "INSERT INTO backfill_runs(employee_id, machine, at, cutoff, messages) VALUES (?,?,?,?,?) "
+                "ON CONFLICT(employee_id, machine) DO UPDATE SET at = excluded.at, cutoff = excluded.cutoff, messages = excluded.messages",
+                (employee_id, machine, now, now, int(total)),
+            )
+            if last:
+                DB.execute("UPDATE employees SET last_seen = MAX(COALESCE(last_seen, 0), ?) WHERE id = ?", (min(last, now), employee_id))
+            DB.execute("COMMIT")
+        except Exception:
+            DB.execute("ROLLBACK")
+            raise
+    output = sum(v for (h, m, t, mo), v in out.items() if t == "output")
+    return {"ok": True, "buckets": len(out), "requests": int(requests), "output": int(output)}
+
+
 def find_employee(token):
     if not token:
         return None
@@ -360,8 +430,22 @@ _LB_CACHE = {}
 _LB_CACHE_LOCK = threading.Lock()
 
 
-def leaderboard(period, me_id=None):
-    """Every open dashboard polls once a second, so the result is shared for up to a second."""
+SOURCES = ("all", "claude", "9router")
+TOTAL_KEYS = ("output", "input", "cache_read", "cache_creation", "cost", "sessions", "requests")
+
+
+def rank_rows(rows):
+    rank, prev = 0, None
+    for i, r in enumerate(rows, 1):
+        if r["output"] != prev:
+            rank, prev = i, r["output"]
+        r["rank"] = rank
+    return rows
+
+
+def leaderboard(period, me_id=None, source="all"):
+    """Every open dashboard polls once a second, so the result is shared for up to a second.
+    source narrows the board to people on Claude Code or on 9router; ranks follow the filter."""
     now = time.time()
     with _LB_CACHE_LOCK:
         hit = _LB_CACHE.get(period)
@@ -371,16 +455,27 @@ def leaderboard(period, me_id=None):
     data = hit[1]
     rows = []
     for r in data["rows"]:
+        if source == "claude" and r["router"] or source == "9router" and not r["router"]:
+            continue
         r = dict(r)
         r["me"] = r["id"] == me_id
         rows.append(r)
-    return dict(data, rows=rows)
+    if source != "all":
+        rank_rows(rows)
+        totals = {k: sum(x[k] for x in rows) for k in TOTAL_KEYS}
+        totals["cost"] = round(totals["cost"], 4)
+        return dict(data, rows=rows, totals=totals, source=source)
+    return dict(data, rows=rows, source=source)
 
 
-def participant(employee_id, period, me_id=None):
-    """Detail card: the leaderboard row plus output over time and the model split."""
-    board = leaderboard(period, me_id)
+def participant(employee_id, period, me_id=None, source="all"):
+    """Detail card: the leaderboard row plus output over time and the model split.
+    Rank and share follow the board's source filter when the person is part of it."""
+    board = leaderboard(period, me_id, source)
     row = next((r for r in board["rows"] if r["id"] == employee_id), None)
+    if row is None and source != "all":
+        board = leaderboard(period, me_id)
+        row = next((r for r in board["rows"] if r["id"] == employee_id), None)
     if row is None:
         return None
     since = board["since"]
@@ -459,7 +554,9 @@ def _leaderboard(period):
               COALESCE(SUM(CASE WHEN u.metric='claude_code.token.usage' AND u.type='cacheCreation' THEN u.value END),0) AS cache_creation,
               COALESCE(SUM(CASE WHEN u.metric='claude_code.cost.usage' THEN u.value END),0) AS cost,
               COALESCE(SUM(CASE WHEN u.metric='claude_code.session.count' THEN u.value END),0) AS sessions,
-              COALESCE(SUM(CASE WHEN u.metric='claude_code.active_time.total' THEN u.value END),0) AS active_seconds
+              COALESCE(SUM(CASE WHEN u.metric='claude_code.active_time.total' THEN u.value END),0) AS active_seconds,
+              COALESCE(SUM(CASE WHEN u.metric='router.request.count' THEN u.value END),0) AS requests,
+              EXISTS(SELECT 1 FROM backfill_runs r WHERE r.employee_id = e.id AND r.machine LIKE '9router-%') AS router
             FROM employees e
             LEFT JOIN ({all_usage}) u ON u.employee_id = e.id AND u.hour >= ?
             WHERE e.active = 1
@@ -479,12 +576,9 @@ def _leaderboard(period):
         cur = top_model.get(m["employee_id"])
         if cur is None or m["v"] > cur[1]:
             top_model[m["employee_id"]] = (m["model"], m["v"])
-    out, rank, prev = [], 0, None
-    for i, r in enumerate(rows, 1):
-        if r["output"] != prev:
-            rank, prev = i, r["output"]
+    out = []
+    for r in rows:
         out.append({
-            "rank": rank,
             "name": r["name"],
             "team": r["team"],
             "output": int(r["output"]),
@@ -494,18 +588,22 @@ def _leaderboard(period):
             "cost": round(r["cost"], 4),
             "sessions": int(r["sessions"]),
             "active_seconds": int(r["active_seconds"]),
+            "requests": int(r["requests"]),
+            "router": bool(r["router"]),
             "top_model": (top_model.get(r["id"]) or ("", 0))[0],
             "last_seen": r["last_seen"],
             "avatar": avatar_url(r),
             "id": r["id"],
         })
-    totals = {k: sum(x[k] for x in out) for k in ("output", "input", "cache_read", "cache_creation", "cost", "sessions")}
+    rank_rows(out)
+    totals = {k: sum(x[k] for x in out) for k in TOTAL_KEYS}
     return {
         "period": period,
         "since": since,
         "generated_at": int(time.time()),
         "tz": CFG["LB_TZ"],
         "totals": totals,
+        "has_router": any(x["router"] for x in out),
         "rows": out,
     }
 
@@ -601,6 +699,7 @@ def admin_list():
             "id": r["id"], "name": r["name"], "team": r["team"], "email": r["email"], "active": bool(r["active"]),
             "created_at": r["created_at"], "last_seen": r["last_seen"], "first_otel_at": r["first_otel_at"],
             "avatar": avatar_url(r), "output": int(totals.get(r["id"], 0)), "machines": machines.get(r["id"], []),
+            "router": any(m["machine"].startswith(ROUTER_PREFIX) for m in machines.get(r["id"], [])),
         } for r in rows],
     }
 
@@ -898,8 +997,11 @@ class Handler(BaseHTTPRequestHandler):
                         pid = int((qs.get("id") or [""])[0])
                     except ValueError:
                         return self.send_json(400, {"error": "id"})
+                    source = (qs.get("source") or ["all"])[0]
+                    if source not in SOURCES:
+                        source = "all"
                     _, me = self.viewer()
-                    data = participant(pid, period, me["id"] if me else None)
+                    data = participant(pid, period, me["id"] if me else None, source)
                     if data is None:
                         return self.send_json(404, {"error": "not found"})
                     return self.send_json(200, data, {"Cache-Control": "no-store"})
@@ -907,8 +1009,11 @@ class Handler(BaseHTTPRequestHandler):
                     period = (qs.get("period") or ["7d"])[0]
                     if period not in PERIODS:
                         period = "7d"
+                    source = (qs.get("source") or ["all"])[0]
+                    if source not in SOURCES:
+                        source = "all"
                     _, me = self.viewer()
-                    return self.send_json(200, leaderboard(period, me["id"] if me else None), {"Cache-Control": "no-store"})
+                    return self.send_json(200, leaderboard(period, me["id"] if me else None, source), {"Cache-Control": "no-store"})
                 page = "join.html" if path == "/join" else "index.html"
                 return self.send_template(page, "text/html; charset=utf-8")
             return self.send(404, "not found\n", "text/plain")
@@ -1031,7 +1136,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:
                 log("POST %s failed: %r" % (path, exc))
                 return self.send_json(500, {"error": T("Could not save. Try again.", "Gagal menyimpan, coba lagi.")})
-        if path not in ("/v1/metrics", "/v1/metrics/backfill"):
+        if path not in ("/v1/metrics", "/v1/metrics/backfill", "/v1/metrics/9router"):
             return self.send(404, "not found\n", "text/plain")
         token = self.headers.get("x-lb-token") or ""
         auth = self.headers.get("Authorization") or ""
@@ -1062,6 +1167,15 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(body or b"{}")
         except (OSError, ValueError, zlib.error):
             return self.send_json(400, {"error": "bad json"})
+        if path == "/v1/metrics/9router":
+            try:
+                result = store_router(employee_id, payload if isinstance(payload, dict) else {})
+            except ValueError as exc:
+                return self.send_json(400, {"error": str(exc)})
+            except Exception as exc:
+                log("9router sync failed for employee %s: %r" % (employee_id, exc))
+                return self.send_json(500, {"error": "9router sync failed"})
+            return self.send_json(200, result)
         if path == "/v1/metrics/backfill":
             try:
                 result = store_backfill(employee_id, payload if isinstance(payload, dict) else {})

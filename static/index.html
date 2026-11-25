@@ -232,6 +232,14 @@
     background: color-mix(in oklab, var(--signal) 12%, transparent);
   }
   .who .badge { margin: 6px 0 0; }
+  /* a participant whose usage comes from 9router */
+  .src {
+    display: inline-block; vertical-align: 2px; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+    font: 600 11px/1.5 var(--text); color: var(--ink-2); border: 1px solid var(--rule); background: var(--paper);
+  }
+  .who .src { margin: 6px 0 0; }
+  .who .src + .badge { margin-left: 4px; }
+  .sources[hidden] { display: none; }
 
   .plinth {
     position: relative; height: var(--plinth); margin-top: 14px;
@@ -473,6 +481,12 @@
         <button type="button" data-p="month">⟦This month‖Bulan ini⟧</button>
         <button type="button" data-p="all">⟦All time‖Semua⟧</button>
       </div>
+      <div class="periods sources" id="sources" role="group" aria-label="⟦Source‖Sumber⟧" hidden>
+        <span class="thumb" aria-hidden="true"></span>
+        <button type="button" data-s="all">⟦Everyone‖Semua⟧</button>
+        <button type="button" data-s="claude">Claude Code</button>
+        <button type="button" data-s="9router">9router</button>
+      </div>
     </div>
   </header>
 
@@ -481,7 +495,7 @@
 
   <p class="note">
     <span id="updated"></span>
-    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
+    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <span id="srcNote" hidden>⟦For 9router users, tokens and costs come from 9router's own log.‖Untuk pengguna 9router, token dan biaya diambil dari log 9router.⟧</span> <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
   </p>
 </div>
 
@@ -543,6 +557,9 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var period = "7d";
   try { period = localStorage.getItem("lb_period") || "7d"; } catch (e) {}
+  var source = "all";
+  try { source = localStorage.getItem("lb_source") || "all"; } catch (e) {}
+  if (["all", "claude", "9router"].indexOf(source) < 0) source = "all";
   var me = null;          // { email, participant }
   var lastData = null;
   var shownNums = {};     // name -> figure last shown on the podium (rolls again only when it changes)
@@ -601,9 +618,16 @@
   }
   function modelName(m) {
     if (!m) return "";
+    if (!/^claude-/.test(m)) return m;   // other providers' models (through 9router) keep their own names
     m = m.replace(/^claude-/, "").replace(/\[.*\]$/, "").replace(/-\d{8}$/, "");
     var parts = m.split("-"), fam = parts.shift() || "";
     return fam.charAt(0).toUpperCase() + fam.slice(1) + (parts.length ? " " + parts.join(".") : "");
+  }
+  function srcPill(row) { return row && row.router ? el("span", "src", "9router") : null; }
+  function activity(r) {
+    // 9router has no sessions, so its people show their request count instead
+    if (r.router && !r.sessions) return num(r.requests) + T(r.requests === 1 ? " request" : " requests", " request");
+    return r.sessions + T(r.sessions === 1 ? " session" : " sessions", " sesi");
   }
   function ago(ts) {
     if (!ts) return T("never sent data", "belum pernah kirim data");
@@ -670,6 +694,8 @@
       who.appendChild(ring);
       who.appendChild(el("div", "name", row.name));
       who.appendChild(el("div", "team", row.team || ""));
+      var pill = srcPill(row);
+      if (pill) who.appendChild(pill);
       if (row.me) who.appendChild(el("span", "badge", T("You", "Kamu")));
       var n = el("div", "num");
       n.setAttribute("role", "text");
@@ -744,12 +770,14 @@
       var mid = el("div", "");
       var nm = el("div", "name", r.name);
       if (r.team) nm.appendChild(el("span", "team", r.team));
+      var rp = srcPill(r);
+      if (rp) nm.appendChild(rp);
       if (r.me) nm.appendChild(el("span", "badge", T("You", "Kamu")));
       mid.appendChild(nm);
       var meta = el("div", "meta");
       if (r.output) {
         if (r.top_model) meta.appendChild(el("span", "", modelName(r.top_model)));
-        meta.appendChild(el("span", "", r.sessions + T(r.sessions === 1 ? " session" : " sessions", " sesi")));
+        meta.appendChild(el("span", "", activity(r)));
         if (r.cost) meta.appendChild(el("span", "", usd(r.cost)));
       } else {
         meta.appendChild(el("span", "", T("No usage in this period", "Belum ada pemakaian di periode ini")));
@@ -774,20 +802,30 @@
     var people = data.rows.filter(function (r) { return r.output > 0; }).length;
     lede.replaceChildren();
     if (!people) {
-      lede.textContent = PERIOD_LEAD[data.period] + T(", no Claude Code usage has been recorded yet.", " belum ada pemakaian Claude Code yang tercatat.");
+      lede.textContent = PERIOD_LEAD[data.period] + (data.source === "9router"
+        ? T(", no 9router usage has been recorded yet.", " belum ada pemakaian 9router yang tercatat.")
+        : T(", no Claude Code usage has been recorded yet.", " belum ada pemakaian Claude Code yang tercatat."));
       return;
     }
+    // 9router can route to any model, so the board only says "Claude" when nobody uses it
+    var writer = data.source === "claude" || !data.has_router ? "Claude" : data.source === "9router" ? T("9router's models", "model 9router") : T("the AI", "AI");
     var total = el("strong");
-    lede.appendChild(document.createTextNode(PERIOD_LEAD[data.period] + T(", Claude wrote ", ", Claude menulis ")));
+    lede.appendChild(document.createTextNode(PERIOD_LEAD[data.period] + T(", " + writer + " wrote ", ", " + writer + " menulis ")));
     lede.appendChild(total);
     lede.appendChild(document.createTextNode(T(" tokens for " + people + (people === 1 ? " person." : " people."), " token untuk " + people + " orang.")));
-    countUp(total, lastData && lastData.period === data.period ? lastData.totals.output : 0, data.totals.output, 900, 0);
+    countUp(total, lastData && lastData.period === data.period && lastData.source === data.source ? lastData.totals.output : 0, data.totals.output, 900, 0);
+    var acts = [];
+    if (data.totals.sessions || !data.totals.requests) acts.push(num(data.totals.sessions) + T(" sessions", " sesi"));
+    if (data.totals.requests) acts.push(num(data.totals.requests) + T(" 9router requests", " request 9router"));
     var fine = el("span", "fine",
-      num(data.totals.sessions) + T(" sessions", " sesi") + (data.totals.cost ? T(", about " + usd(data.totals.cost) + " at API prices", ", estimasi " + usd(data.totals.cost) + " dengan harga API") : "") + ".");
+      acts.join(T(" and ", " dan ")) + (data.totals.cost ? T(", about " + usd(data.totals.cost) + " at API prices", ", estimasi " + usd(data.totals.cost) + " dengan harga API") : "") + ".");
     lede.appendChild(fine);
   }
 
   function render(data, animate) {
+    var srcs = $("sources");
+    if (srcs.hidden === !!data.has_router) { srcs.hidden = !data.has_router; moveThumb(srcs); }
+    $("srcNote").hidden = !data.has_router;
     renderLede(data);
     renderPodium(data.rows, animate);
     renderRest(data.rows);
@@ -802,14 +840,15 @@
   // "aktif x menit lalu" stays fresh), which keeps hover states and animations from restarting.
   var lastSig = "", lastPaint = 0, inflight = false, failures = 0;
   function load(animate) {
-    var want = period;
+    var want = period, wantSrc = source;
     inflight = true;
-    return fetch("/api/leaderboard?period=" + encodeURIComponent(want), { cache: "no-store", credentials: "same-origin" })
+    return fetch("/api/leaderboard?period=" + encodeURIComponent(want) + "&source=" + encodeURIComponent(wantSrc), { cache: "no-store", credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (data) {
         failures = 0;
-        if (want !== period) return;
-        var sig = JSON.stringify([data.period, data.totals, data.rows]);
+        if (want !== period || wantSrc !== source) return;
+        if (!data.has_router && source !== "all") { selectSource("all", true); return; }
+        var sig = JSON.stringify([data.period, data.source, data.has_router, data.totals, data.rows]);
         if (animate || sig !== lastSig || Date.now() - lastPaint > 60000) {
           var changed = sig !== lastSig;
           lastSig = sig; lastPaint = Date.now();
@@ -831,27 +870,42 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden && !inflight) load(false); });
 
   // ---------- period switch ----------
-  function moveThumb() {
-    var btn = document.querySelector('.periods button[aria-pressed="true"]');
-    var thumb = document.querySelector(".periods .thumb");
-    if (!btn || !thumb) return;
-    thumb.style.width = btn.offsetWidth + "px";
-    thumb.style.transform = "translateX(" + btn.offsetLeft + "px)";
+  function moveThumb(group) {
+    (group ? [group] : document.querySelectorAll(".periods")).forEach(function (g) {
+      var btn = g.querySelector('button[aria-pressed="true"]');
+      var thumb = g.querySelector(".thumb");
+      if (!btn || !thumb) return;
+      thumb.style.width = btn.offsetWidth + "px";
+      thumb.style.transform = "translateX(" + btn.offsetLeft + "px)";
+    });
   }
   function select(p, animate) {
     period = p;
     try { localStorage.setItem("lb_period", p); } catch (e) {}
-    document.querySelectorAll(".periods button").forEach(function (b) {
+    document.querySelectorAll(".periods button[data-p]").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.p === p));
     });
     moveThumb();
     load(animate);
   }
-  document.querySelectorAll(".periods button").forEach(function (b) {
+  document.querySelectorAll(".periods button[data-p]").forEach(function (b) {
     b.addEventListener("click", function () { if (b.dataset.p !== period) select(b.dataset.p, true); });
   });
-  window.addEventListener("resize", moveThumb);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveThumb);
+  function selectSource(s, animate) {
+    source = s;
+    try { localStorage.setItem("lb_source", s); } catch (e) {}
+    document.querySelectorAll("#sources button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.s === s));
+    });
+    moveThumb($("sources"));
+    if (animate) load(true);
+  }
+  document.querySelectorAll("#sources button").forEach(function (b) {
+    b.addEventListener("click", function () { if (b.dataset.s !== source) selectSource(b.dataset.s, true); });
+  });
+  selectSource(source, false);
+  window.addEventListener("resize", function () { moveThumb(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { moveThumb(); });
 
   // ---------- theme toggle ----------
   var themeBtn = $("themeBtn");
@@ -1079,7 +1133,7 @@
   function loadDetail(first) {
     var id = detailId;
     if (id == null) return;
-    fetch("/api/participant?id=" + id + "&period=" + encodeURIComponent(period), { cache: "no-store", credentials: "same-origin" })
+    fetch("/api/participant?id=" + id + "&period=" + encodeURIComponent(period) + "&source=" + encodeURIComponent(source), { cache: "no-store", credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) {
         if (id !== detailId) return;
@@ -1209,6 +1263,8 @@
     var idt = el("div");
     var h = el("h2", "", d.name);
     h.id = "dtName";
+    var dp = srcPill(d);
+    if (dp) h.appendChild(dp);
     if (d.me) h.appendChild(el("span", "badge", T("You", "Kamu")));
     idt.appendChild(h);
     var subTxt = d.output
@@ -1228,7 +1284,10 @@
     var big = el("span", "big");
     big.title = num(d.output) + " token";
     fig.appendChild(big);
-    var share = d.share ? ", " + Math.round(d.share * 100) + T("% of all team output", "% dari semua output tim") : "";
+    var shareOf = source === "9router" ? T("% of 9router output", "% dari output pengguna 9router")
+      : source === "claude" ? T("% of Claude Code output", "% dari output pengguna Claude Code")
+      : T("% of all team output", "% dari semua output tim");
+    var share = d.share ? ", " + Math.round(d.share * 100) + shareOf : "";
     fig.appendChild(el("span", "cap", T("output tokens ", "output token ") + PERIOD_CAP[d.period] + share));
     frag.appendChild(fig);
 
@@ -1246,7 +1305,8 @@
     fact("Input", compact(d.input), num(d.input) + T(" tokens", " token"));
     fact(T("Cache read", "Cache dibaca"), compact(d.cache_read), num(d.cache_read) + " token");
     fact(T("Cache written", "Cache ditulis"), compact(d.cache_creation), num(d.cache_creation) + " token");
-    fact(T("Sessions", "Sesi"), num(d.sessions));
+    if (d.router && !d.sessions) fact(T("Requests", "Request"), num(d.requests), T("Requests through 9router", "Request lewat 9router"));
+    else fact(T("Sessions", "Sesi"), num(d.sessions));
     fact(d.period === "today" ? T("Active hours", "Jam aktif") : T("Active days", "Hari aktif"), d.period === "today"
       ? String(d.series.filter(function (p) { return p[1] > 0; }).length)
       : String(d.active_days));
@@ -1279,6 +1339,7 @@
     if (d.active_seconds) foot.push(T("Recorded active time ", "Waktu aktif tercatat ") + duration(d.active_seconds));
     foot.push(ago(d.last_seen).replace(/^a/, "A"));
     if (d.created_at) foot.push(T("Joined ", "Ikut sejak ") + fmtDate(d.created_at, d.tz, { day: "numeric", month: "long", year: "numeric" }));
+    if (d.router) foot.push(T("Usage read from 9router's log every minute", "Pemakaian dibaca dari log 9router tiap menit"));
     frag.appendChild(el("p", "dt-foot", foot.join(". ") + "."));
 
     if (!d.output) frag.insertBefore(el("p", "dt-empty", T("No output tokens ", "Belum ada output token ") + PERIOD_CAP[d.period] + T(". Try a longer period.", ". Coba pilih periode yang lebih panjang.")), facts);
