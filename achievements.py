@@ -167,11 +167,52 @@ CATALOG = [
      "Finish a week in the top 3 within three weeks of joining.", "Masuk 3 besar mingguan dalam tiga minggu pertama sejak ikut."),
     ("first_wave", "silver", "wave|", False, "First Wave", "Angkatan Pertama",
      "Be one of the first three people on the leaderboard.", "Termasuk tiga orang pertama di leaderboard."),
+    # ---- season 2: harder ones, counted only from the day the server first knew them (FRESH)
+    ("season_opener", "bronze", "ticket|", False, "Season Opener", "Pembuka Musim",
+     "Get output on the board after the new season of badges began.", "Dapat output di leaderboard setelah musim lencana baru dimulai."),
+    ("clockwork", "silver", "metronome|14", False, "Clockwork", "Jam Dinding",
+     "Write 100K output tokens every day for 14 days in a row.", "Hasilkan 100 ribu output token setiap hari selama 14 hari berturut-turut."),
+    ("three_shifts", "silver", "sunmoon|", False, "Three Shifts", "Tiga Shift",
+     "Work the morning (6-12), afternoon (12-18) and evening (18-24) of the same day, on 5 different days.", "Aktif pagi (06-12), siang (12-18), dan malam (18-24) di hari yang sama, sebanyak 5 hari."),
+    ("juggler", "silver", "juggle|4", False, "Juggler", "Juggler",
+     "Use 4 different models in a single day.", "Pakai 4 model berbeda dalam satu hari."),
+    ("weekend_champion", "silver", "palm|", False, "Weekend Champion", "Juara Akhir Pekan",
+     "Finish a Saturday or a Sunday in first place.", "Selesai di peringkat 1 pada hari Sabtu atau Minggu."),
+    ("team_spirit", "silver", "team|", False, "One Team, One Soul", "Satu Tim Satu Jiwa",
+     "Be active on the same day as every teammate (team of 3 or more), on 5 different days.", "Aktif di hari yang sama dengan semua teman satu tim (minimal 3 orang), sebanyak 5 hari."),
+    ("diesel", "gold", "train|7", False, "Diesel Engine", "Mesin Diesel",
+     "Write 500K output tokens every day for 7 days in a row.", "Hasilkan 500 ribu output token setiap hari selama 7 hari berturut-turut."),
+    ("hattrick", "gold", "hattrick|", False, "Hat-trick", "Hattrick",
+     "Finish first three days in a row.", "Juara harian 3 hari berturut-turut."),
+    ("domination", "gold", "summit|", False, "Domination", "Dominasi",
+     "Win a day with more output than the second and third place combined.", "Menang harian dengan output lebih besar dari gabungan peringkat 2 dan 3."),
+    ("photo_finish", "gold", "photofinish|", False, "Photo Finish", "Photo Finish",
+     "Win a day by less than 1% over the second place.", "Menang harian dengan selisih kurang dari 1% dari peringkat 2."),
+    ("night_racer", "gold", "racecar|1M", False, "Night Racer", "Pembalap Malam",
+     "Write 1M output tokens between midnight and 5 AM in one night.", "Hasilkan 1 juta output token antara jam 00.00 dan 05.00 dalam satu malam."),
+    ("quantum_leap", "gold", "leap|5x", False, "Quantum Leap", "Lompatan Kuantum",
+     "Have a day with 5 times your daily average of the 7 days before (that average at least 100K).", "Punya satu hari dengan output 5 kali rata-rata harianmu di 7 hari sebelumnya (rata-ratanya minimal 100 ribu)."),
+    ("overtaker", "gold", "overtake|10", False, "Master Overtaker", "Penyalip Ulung",
+     "Overtake someone on today's board 10 times.", "Menyalip orang lain di papan hari ini sebanyak 10 kali."),
+    ("supernova", "legend", "nova|3M", False, "Supernova", "Supernova",
+     "Write 3M output tokens within one hour.", "Hasilkan 3 juta output token dalam satu jam."),
+    ("opus_marathon", "legend", "runner|5M", False, "Opus Marathon", "Maraton Opus",
+     "Write 5M output tokens with Opus models in one day.", "Hasilkan 5 juta output token dengan model Opus dalam satu hari."),
+    ("rock_bottom", "legend", "rise|", False, "From Rock Bottom", "Bangkit dari Dasar",
+     "Be in last place at some hour of a day (4 or more people active) and finish that day first.", "Sempat di posisi terakhir pada suatu jam (minimal 4 orang aktif) lalu selesai di peringkat 1 di hari itu."),
+    ("hundred_month", "legend", "chest|100M", False, "Hundred-Million Month", "Bulan Seratus Juta",
+     "Write 100M output tokens within one calendar month.", "Hasilkan 100 juta output token dalam satu bulan kalender."),
+    ("podium_regular", "legend", "podium|10", False, "Podium Regular", "Langganan Podium",
+     "Finish in the daily top 3 for 10 days in a row.", "Masuk 3 besar harian 10 hari berturut-turut."),
     # ---- meta
     ("collector", "legend", "puzzle|40", False, "Collector", "Kolektor",
      "Unlock 40 other badges.", "Buka 40 lencana lain."),
 ]
 BY_ID = {b[0]: b for b in CATALOG}
+# Badges that only count usage from the day the server first saw them (not old history).
+FRESH = ("season_opener", "clockwork", "three_shifts", "juggler", "weekend_champion", "team_spirit", "diesel", "hattrick",
+         "domination", "photo_finish", "night_racer", "quantum_leap", "overtaker", "supernova", "opus_marathon", "rock_bottom",
+         "hundred_month", "podium_regular")
 TIERS = ("bronze", "silver", "gold", "legend")
 
 
@@ -541,6 +582,197 @@ def evaluate(emps, hourly, totals, models, machines, tz, now):
     return out
 
 
+def evaluate_fresh(emps, hourly, hour_models, overtakes, since, tz, now):
+    """Season badges: like evaluate(), but only usage from `since` (unix time, per badge) counts.
+    hourly: {id: [(hour, output)]}; hour_models: {id: [(hour, model, output)]}; overtakes: {id: [ts]}."""
+    today = datetime.fromtimestamp(now, tz).date()
+    out = {}
+    start = {b: since.get(b, now) for b in FRESH}
+    first = min(start.values())
+
+    def day_of(h):
+        return datetime.fromtimestamp(h, tz).date()
+
+    def end_ts(d):
+        return int(datetime.combine(d + timedelta(days=1), datetime.min.time(), tz).timestamp()) - 1
+
+    def from_day(b):
+        return day_of(start[b]) if start[b] < now else today + timedelta(days=1)
+
+    # per person: day -> output, day -> set of hours, day -> {model: output}; everyone: day -> {person: output}
+    days, hours_of, models_of = defaultdict(lambda: defaultdict(float)), defaultdict(lambda: defaultdict(set)), defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
+    board, cum = defaultdict(dict), defaultdict(lambda: defaultdict(dict))   # cum: day -> hour -> {person: running total}
+    for e, rows in hourly.items():
+        for h, v in rows:
+            if v <= 0 or h < first:
+                continue
+            d = day_of(h)
+            days[e][d] += v
+            hours_of[e][d].add(datetime.fromtimestamp(h, tz).hour)
+            board[d][e] = board[d].get(e, 0) + v
+    for e, rows in hour_models.items():
+        for h, m, v in rows:
+            if v > 0 and h >= first:
+                models_of[e][day_of(h)][m] += v
+    for d in board:
+        acc = defaultdict(float)
+        per_hour = defaultdict(dict)
+        for e, rows in hourly.items():
+            for h, v in rows:
+                if v > 0 and h >= first and day_of(h) == d:
+                    per_hour[h][e] = per_hour[h].get(e, 0) + v
+        for h in sorted(per_hour):
+            for e, v in per_hour[h].items():
+                acc[e] += v
+            cum[d][h] = dict(acc)
+
+    def standings(d):
+        return sorted(((v, e) for e, v in board[d].items() if v > 0), reverse=True)
+
+    done_days = sorted(d for d in board if d < today)
+
+    for e, info_ in emps.items():
+        r = {}
+
+        def put(bid, ok, at=None, cur=None, target=None):
+            r[bid] = {"done": bool(ok), "at": at if ok else None, "cur": cur, "target": target}
+
+        def mine(b):   # this person's days from the badge's start
+            return {d: v for d, v in days[e].items() if d >= from_day(b)}
+
+        # season opener
+        md = mine("season_opener")
+        put("season_opener", bool(md), end_ts(min(md)) if md else None)
+
+        # runs of days over a floor
+        def run_badge(bid, floor, need):
+            md, best, run, prev, at = mine(bid), 0, 0, None, None
+            for d in sorted(md):
+                run = run + 1 if prev is not None and (d - prev).days == 1 and md[d] >= floor else (1 if md[d] >= floor else 0)
+                prev = d if md[d] >= floor else None
+                best = max(best, run)
+                if run >= need and at is None:
+                    at = end_ts(d)
+            put(bid, at is not None, at, min(best, need), need)
+        run_badge("clockwork", 100_000, 14)
+        run_badge("diesel", 500_000, 7)
+
+        # three shifts
+        n, at = 0, None
+        for d in sorted(hours_of[e]):
+            if d < from_day("three_shifts"):
+                continue
+            hs = hours_of[e][d]
+            if any(6 <= x < 12 for x in hs) and any(12 <= x < 18 for x in hs) and any(x >= 18 for x in hs):
+                n += 1
+                if n == 5:
+                    at = end_ts(d)
+        put("three_shifts", n >= 5, at, min(n, 5), 5)
+
+        # juggler, opus marathon
+        jd = [d for d in sorted(models_of[e]) if d >= from_day("juggler") and sum(1 for v in models_of[e][d].values() if v > 0) >= 4]
+        most = max((sum(1 for v in ms.values() if v > 0) for d, ms in models_of[e].items() if d >= from_day("juggler")), default=0)
+        put("juggler", bool(jd), end_ts(jd[0]) if jd else None, min(most, 4), 4)
+        opus = {d: sum(v for m, v in ms.items() if "opus" in m.lower()) for d, ms in models_of[e].items() if d >= from_day("opus_marathon")}
+        od = [d for d in sorted(opus) if opus[d] >= 5_000_000]
+        put("opus_marathon", bool(od), end_ts(od[0]) if od else None, min(max(opus.values(), default=0), 5_000_000), 5_000_000)
+
+        # big hours and nights
+        hrs = [(h, v) for h, v in hourly.get(e, []) if h >= start["supernova"]]
+        big = max((v for _, v in hrs), default=0)
+        put("supernova", big >= 3_000_000, next((h for h, v in sorted(hrs) if v >= 3_000_000), None), min(big, 3_000_000), 3_000_000)
+        nights = defaultdict(float)
+        for h, v in hourly.get(e, []):
+            if h >= start["night_racer"] and v > 0 and datetime.fromtimestamp(h, tz).hour < 5:
+                nights[day_of(h)] += v
+        nd = [d for d in sorted(nights) if nights[d] >= 1_000_000]
+        put("night_racer", bool(nd), end_ts(nd[0]) if nd else None, min(max(nights.values(), default=0), 1_000_000), 1_000_000)
+
+        # quantum leap: needs 7 earlier days inside the season too
+        md, at = mine("quantum_leap"), None
+        for d in sorted(md):
+            prev7 = [md.get(d - timedelta(days=k), 0) for k in range(1, 8)]
+            if all((d - timedelta(days=k)) >= from_day("quantum_leap") for k in range(1, 8)):
+                avg = sum(prev7) / 7
+                if avg >= 100_000 and md[d] >= 5 * avg:
+                    at = end_ts(d)
+                    break
+        put("quantum_leap", at is not None, at)
+
+        # a month of 100M
+        months = defaultdict(float)
+        for d, v in mine("hundred_month").items():
+            months[(d.year, d.month)] += v
+        hm = max(months.values(), default=0)
+        put("hundred_month", hm >= 100_000_000, end_ts(today) if hm >= 100_000_000 else None, min(hm, 100_000_000), 100_000_000)
+
+        # overtakes
+        ov = sorted(t for t in overtakes.get(e, []) if t >= start["overtaker"])
+        put("overtaker", len(ov) >= 10, ov[9] if len(ov) >= 10 else None, min(len(ov), 10), 10)
+
+        # standings on completed days
+        wins = [d for d in done_days if standings(d) and standings(d)[0][1] == e]
+        def first_win(bid, ok):
+            for d in wins:
+                if d >= from_day(bid) and ok(d):
+                    return end_ts(d)
+            return None
+        at = first_win("weekend_champion", lambda d: d.weekday() >= 5)
+        put("weekend_champion", at is not None, at)
+        at = first_win("domination", lambda d: len(standings(d)) >= 3 and standings(d)[0][0] > standings(d)[1][0] + standings(d)[2][0])
+        put("domination", at is not None, at)
+        at = first_win("photo_finish", lambda d: len(standings(d)) >= 2 and standings(d)[0][0] - standings(d)[1][0] < 0.01 * standings(d)[0][0])
+        put("photo_finish", at is not None, at)
+
+        def rock(d):
+            for h in sorted(cum[d]):
+                active = sorted(((v, p) for p, v in cum[d][h].items() if v > 0))
+                if len(active) >= 4 and active[0][1] == e:
+                    return True
+            return False
+        at = first_win("rock_bottom", rock)
+        put("rock_bottom", at is not None, at)
+
+        def streak_of(bid, cond, need):
+            run, prev, best, at = 0, None, 0, None
+            for d in done_days:
+                if d < from_day(bid):
+                    continue
+                ok = cond(d)
+                run = run + 1 if ok and prev is not None and (d - prev).days == 1 else (1 if ok else 0)
+                prev = d if ok else None
+                best = max(best, run)
+                if run >= need and at is None:
+                    at = end_ts(d)
+            put(bid, at is not None, at, min(best, need), need)
+        streak_of("hattrick", lambda d: d in wins, 3)
+        streak_of("podium_regular", lambda d: e in [p for _, p in standings(d)[:3]], 10)
+
+        # team spirit: every teammate (3+) active the same day
+        team = info_.get("team")
+        mates = [p for p, i in emps.items() if team and i.get("team") == team]
+        n, at = 0, None
+        if len(mates) >= 3:
+            for d in sorted(board):
+                if d >= from_day("team_spirit") and all(board[d].get(p, 0) > 0 for p in mates):
+                    n += 1
+                    if n == 5:
+                        at = end_ts(d)
+        put("team_spirit", n >= 5, at, min(n, 5), 5)
+        out[e] = r
+    return out
+
+
+def merge(base, fresh):
+    """Add the season results and count the collector again with them."""
+    for e, r in fresh.items():
+        base.setdefault(e, {}).update(r)
+    for e, r in base.items():
+        others = sum(1 for k, v in r.items() if v["done"] and k != "collector")
+        r["collector"] = {"done": others >= 40, "at": None, "cur": min(others, 40), "target": 40}
+    return base
+
+
 # One line of flavour per badge, shown big in the badge popup (English, Indonesian).
 FLAVOR = {
     "first_words": ("Every legend starts with a single token.", "Setiap legenda dimulai dari satu token."),
@@ -616,4 +848,22 @@ FLAVOR = {
     "rising_star": ("Just arrived, already shining.", "Baru datang, sudah bersinar."),
     "first_wave": ("You were here from the very start.", "Kamu sudah ada sejak awal."),
     "collector": ("Forty badges. The trophy cabinet is full.", "Empat puluh lencana. Lemari pialamu sudah penuh."),
+    "season_opener": ("A new season, and you were there on day one.", "Musim baru, dan kamu sudah hadir sejak hari pertama."),
+    "clockwork": ("Tick, tock, a hundred thousand. Every single day.", "Tik, tok, seratus ribu. Setiap hari, tanpa absen."),
+    "three_shifts": ("Morning, afternoon and night. You covered every shift.", "Pagi, siang, dan malam. Semua shift kamu yang jaga."),
+    "juggler": ("Four models in the air, and none of them dropped.", "Empat model di udara, tak satu pun jatuh."),
+    "weekend_champion": ("Everyone was resting. You were winning.", "Semua orang libur. Kamu justru juara."),
+    "team_spirit": ("The whole team showed up, together.", "Satu tim hadir semua, kompak."),
+    "diesel": ("Slow to start, impossible to stop.", "Lambat panas, tapi tak bisa dihentikan."),
+    "hattrick": ("Three days, three wins. The crowd goes wild.", "Tiga hari, tiga kemenangan. Penonton bersorak."),
+    "domination": ("Second and third together still could not catch you.", "Peringkat dua dan tiga digabung pun tak sanggup mengejar."),
+    "photo_finish": ("Decided by a whisker. The camera saw you first.", "Ditentukan setipis rambut. Kamera melihatmu lebih dulu."),
+    "night_racer": ("Empty streets, full throttle.", "Jalanan sepi, gas pol."),
+    "quantum_leap": ("Yesterday's ceiling is today's floor.", "Atap kemarin jadi lantai hari ini."),
+    "overtaker": ("Ten times, someone saw you in the mirror and then you were gone.", "Sepuluh kali kamu terlihat di spion, lalu menghilang ke depan."),
+    "supernova": ("Three million tokens in an hour. Visible from space.", "Tiga juta token dalam sejam. Terlihat dari luar angkasa."),
+    "opus_marathon": ("Five million words with the grandest model, in a single day.", "Lima juta token bersama model termegah, dalam sehari."),
+    "rock_bottom": ("Last place in the morning, champion by night.", "Pagi di posisi buncit, malamnya jadi juara."),
+    "hundred_month": ("One month, one hundred million. A legendary month.", "Satu bulan, seratus juta. Bulan yang melegenda."),
+    "podium_regular": ("Ten days on the podium. They should name a step after you.", "Sepuluh hari di podium. Anak tangganya pantas diberi namamu."),
 }

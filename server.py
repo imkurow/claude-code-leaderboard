@@ -512,6 +512,7 @@ def streaks():
 # ---------------------------------------------------------------- achievements
 
 _ACH = {"at": 0.0, "eval": {}}
+_EPOCHS = {}   # season badge -> the time it started counting
 _ACH_LOCK = threading.Lock()
 
 
@@ -548,7 +549,24 @@ def refresh_achievements(force=False):
                 else:
                     machines[r["employee_id"]]["computers"] += 1
             have = {(r["employee_id"], r["badge"]) for r in DB.execute("SELECT employee_id, badge FROM achievements")}
+            # season badges start counting at local midnight of the day the server first saw them
+            epochs = {r[0]: r[1] for r in DB.execute("SELECT badge, since FROM badge_epochs")}
+            missing = [b for b in achievements.FRESH if b not in epochs]
+            if missing:
+                midnight = int(datetime.fromtimestamp(now, TZ).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+                DB.executemany("INSERT OR IGNORE INTO badge_epochs(badge, since) VALUES (?,?)", [(b, midnight) for b in missing])
+                epochs.update({b: midnight for b in missing})
+            _EPOCHS.update(epochs)
+            first = min(epochs.values()) if epochs else int(now)
+            hour_models = defaultdict(list)
+            for r in DB.execute("SELECT employee_id, hour, model, SUM(value) AS v FROM (" + ALL_USAGE + ") WHERE metric = "
+                                "'claude_code.token.usage' AND type = 'output' AND hour >= ? GROUP BY employee_id, hour, model", (first,)):
+                hour_models[r["employee_id"]].append((r["hour"], r["model"], r["v"]))
+            overtakes = defaultdict(list)
+            for r in DB.execute("SELECT employee_id, ts FROM events WHERE kind = 'overtake' AND ts >= ?", (first,)):
+                overtakes[r["employee_id"]].append(r["ts"])
         result = achievements.evaluate(emps, hourly, totals, models, machines, TZ, now)
+        result = achievements.merge(result, achievements.evaluate_fresh(emps, hourly, hour_models, overtakes, epochs, TZ, now))
         first_run = not have
         new = [(e, b, int(v["at"] or now), 0 if first_run else int(now))
                for e, badges in result.items() for b, v in badges.items() if v["done"] and (e, b) not in have]
@@ -658,6 +676,8 @@ def feed(limit=25):
 def badge_view(badge_id, done):
     """A badge in the viewer's language; a secret one nobody sees until it is unlocked."""
     v = achievements.info(badge_id, lang())
+    if badge_id in _EPOCHS:
+        v["since"] = _EPOCHS[badge_id]
     if v["secret"] and not done:
         v.update(glyph="secret", label="", name="???", desc=T("A secret badge. Keep going.", "Lencana rahasia. Terus pakai Claude."),
                  flavor=T("Some things are better discovered than told.", "Ada hal yang lebih seru ditemukan sendiri."))

@@ -102,6 +102,11 @@ CREATE TABLE IF NOT EXISTS achievements (
     detected_at INTEGER NOT NULL,
     PRIMARY KEY (employee_id, badge)
 );
+-- When the server first knew a season badge: it only counts usage from then on.
+CREATE TABLE IF NOT EXISTS badge_epochs (
+    badge TEXT PRIMARY KEY,
+    since INTEGER NOT NULL
+);
 -- What happened on the board, for the live feed: badge unlocks, overtakes, streaks, people joining.
 CREATE TABLE IF NOT EXISTS events (
     id          INTEGER PRIMARY KEY,
