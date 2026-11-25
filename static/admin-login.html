@@ -120,7 +120,7 @@
   <label>⟦Admin key‖Kunci admin⟧ <input type="password" id="key" autocomplete="current-password" required autofocus></label>
   <button class="btn" type="submit">⟦Sign in‖Masuk⟧</button>
   <div class="err" id="err" role="alert"></div>
-  <a href="/">⟦Back to the leaderboard‖Kembali ke leaderboard⟧</a>
+  <a href="/">⟦Back to the leaderboard‖Kembali ke leaderboard⟧</a> &nbsp; <a href="#" data-lang-switch="⟦id‖en⟧">⟦Bahasa Indonesia‖English⟧</a>
 </form>
 <script>
 document.getElementById("f").addEventListener("submit", function (e) {
@@ -137,6 +137,15 @@ document.getElementById("f").addEventListener("submit", function (e) {
       location.reload();
     });
   }).catch(function (x) { err.textContent = x.message; btn.disabled = false; });
+});
+</script>
+<script>
+document.querySelectorAll("[data-lang-switch]").forEach(function (b) {
+  b.addEventListener("click", function (e) {
+    e.preventDefault();
+    document.cookie = "lb_lang=" + b.getAttribute("data-lang-switch") + "; path=/; max-age=31536000; SameSite=Lax";
+    location.reload();
+  });
 });
 </script>
 </body>

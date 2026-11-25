@@ -12,7 +12,7 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 - **9router users too.** People who use [9router](https://github.com/decolua/9router) on a Linux machine join with the same token. Their usage is read from 9router's own log every minute and marked with a "9router" label, and the board can be filtered to Claude Code or 9router users.
 - **Admin page.** Add people and copy a ready-made install message for each. You can also rename people, rotate tokens, remove one computer's history or a photo, and delete people.
 - **Profile photos.** Each person uploads their own, with a crop and zoom step.
-- **Light and dark themes.** English and Bahasa Indonesia interface.
+- **Light and dark themes, two languages.** English and Bahasa Indonesia, switched with a button on every page.
 - **Small and simple to run.** One Python file on the standard library, with SQLite storage and no build step. It runs on Linux, macOS or Docker.
 
 | | |
@@ -116,7 +116,7 @@ All settings live in `config.env`, and environment variables override it. See [c
 |---|---|---|
 | `LB_HOST` / `LB_PORT` | `127.0.0.1` / `8790` | Where the server listens |
 | `LB_TZ` | `UTC` | Time zone for "today", "this month" and the charts |
-| `LB_LANG` | `en` | Interface language: `en` or `id` |
+| `LB_LANG` | `en` | Default interface language: `en` or `id`. Each visitor can switch with the EN/ID button. |
 | `LB_TITLE` | `Claude Code Leaderboard` | Page title |
 | `LB_PUBLIC_URL` | from request | Base URL used in install commands |
 | `LB_ADMIN_KEY` | – | Passphrase for `/admin` |

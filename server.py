@@ -59,16 +59,22 @@ AVATAR_MAX = 600 * 1024
 AVATAR_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 AVATAR_CTYPE = {v: k for k, v in AVATAR_TYPES.items()}
 ACCESS = AccessVerifier(CFG["LB_CF_TEAM_DOMAIN"], CFG["LB_CF_VIEWER_AUD"])
-LANG = "id" if CFG["LB_LANG"].lower().startswith("id") else "en"
+LANG = "id" if CFG["LB_LANG"].lower().startswith("id") else "en"   # the default; a visitor can switch
 MARKER = re.compile(r"\u27e6(.*?)\u2016(.*?)\u27e7", re.S)   # ⟦English‖Indonesian⟧ in templates
+_REQ = threading.local()   # the language of the request this thread is answering
+
+
+def lang():
+    return getattr(_REQ, "lang", LANG)
 
 
 def T(en, id_):
-    return id_ if LANG == "id" else en
+    return id_ if lang() == "id" else en
 
 
 def localize(text):
-    return MARKER.sub(lambda m: m.group(2) if LANG == "id" else m.group(1), text)
+    current = lang()
+    return MARKER.sub(lambda m: m.group(2) if current == "id" else m.group(1), text)
 
 
 def load_secret():
@@ -929,7 +935,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.do_GET()
 
+    def set_lang(self):
+        """The visitor's choice from the language button (lb_lang cookie), else LB_LANG.
+        Installers and telemetry come without the cookie, so they keep the server default."""
+        choice = self.cookie("lb_lang")
+        _REQ.lang = choice if choice in ("en", "id") else LANG
+
     def do_GET(self):
+        self.set_lang()
         url = urlparse(self.path)
         path = url.path
         qs = parse_qs(url.query)
@@ -1127,6 +1140,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.send(404, "not found\n", "text/plain")
 
     def do_POST(self):
+        self.set_lang()
         path = urlparse(self.path).path
         if path.startswith("/api/admin/"):
             return self.admin_post(path)
@@ -1199,13 +1213,13 @@ class Handler(BaseHTTPRequestHandler):
         with open(os.path.join(STATIC, name), encoding="utf-8") as fh:
             text = fh.read()
         title = CFG["LB_TITLE"] if name.startswith("install.") else html.escape(CFG["LB_TITLE"])
-        text = text.replace("__LB_URL__", self.public_url()).replace("__LB_TITLE__", title).replace("__LB_LANG__", LANG)
+        text = text.replace("__LB_URL__", self.public_url()).replace("__LB_TITLE__", title).replace("__LB_LANG__", lang())
         text = localize(text)
         if name.startswith("install."):
             # Installers sit behind the Access service-token app, so whoever can download them
             # already holds these values; they get written into the OTel headers.
             text = text.replace("__LB_CF_ID__", CFG["LB_CF_CLIENT_ID"]).replace("__LB_CF_SECRET__", CFG["LB_CF_CLIENT_SECRET"])
-        headers = {"Cache-Control": "no-store" if name.startswith("install.") else "no-cache"}
+        headers = {"Cache-Control": "no-store" if name.startswith("install.") else "no-cache", "Vary": "Cookie"}
         if ctype.startswith("text/html"):
             headers["Content-Security-Policy"] = (
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; "

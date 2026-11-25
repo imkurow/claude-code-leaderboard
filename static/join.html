@@ -24,7 +24,7 @@
 </head>
 <body>
 <div class="wrap">
-  <p><a href="/">← __LB_TITLE__</a></p>
+  <p><a href="/">← __LB_TITLE__</a> · <a href="#" data-lang-switch="⟦id‖en⟧">⟦Bahasa Indonesia‖English⟧</a></p>
   <h1>⟦How to join‖Cara ikut⟧ __LB_TITLE__</h1>
   <p class="muted">⟦Ask the admin for your install command. It contains your personal token, so do not share it with anyone. One token per person; if you install it on several laptops, they all count toward the same name.‖Minta perintah install ke admin. Isinya token pribadi kamu, jadi jangan dibagikan ke orang lain. Satu token untuk satu orang; kalau dipasang di beberapa laptop, semuanya dihitung ke nama yang sama.⟧</p>
 
@@ -48,5 +48,14 @@
   <h2>⟦Opting out‖Berhenti ikut⟧</h2>
   <p>⟦Run the same install command, but replace the token at the end with‖Jalankan perintah install yang sama, tapi ganti token di akhir dengan⟧ <code>--uninstall</code> (macOS / Linux). ⟦On Windows, run‖Di Windows, jalankan⟧ <code>$env:LB_UNINSTALL='1'</code> ⟦first, then the same install command. Or remove the‖dulu lalu perintah install yang sama. Atau hapus variabel⟧ <code>OTEL_EXPORTER_OTLP_METRICS_*</code> ⟦variables from‖dari⟧ <code>~/.claude/settings.json</code>.</p>
 </div>
+<script>
+document.querySelectorAll("[data-lang-switch]").forEach(function (b) {
+  b.addEventListener("click", function (e) {
+    e.preventDefault();
+    document.cookie = "lb_lang=" + b.getAttribute("data-lang-switch") + "; path=/; max-age=31536000; SameSite=Lax";
+    location.reload();
+  });
+});
+</script>
 </body>
 </html>
