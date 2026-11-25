@@ -50,6 +50,7 @@
 <link rel="modulepreload" href="assets/moments/moments.js">
 <link rel="modulepreload" href="assets/moments/lib.js">
 <link rel="modulepreload" href="assets/moments/liquid-type/moment.js">
+<link rel="modulepreload" href="assets/moments/pinned-chapters/moment.js">
 <!-- page CSS: only what sits inside a visual (the product's own UI, rebuilt from static/index.html), one --p-h per card group -->
 <style>
 /* ---------- the product's UI (static/index.html), scoped to .lb ---------- */
@@ -283,6 +284,49 @@
 .run-card .ic-row__meta { color: var(--lb-ink2); }
 @media (max-width: 639px) { #run .run-card { display: none; } }
 @media (max-width: 359px) { .nav__logo .lg-long { display: none; } }
+
+/* ---------- motion: the hero board ticks (one timed loop), the language card switches ---------- */
+.hero__art .lb-win[data-m-loop], .hero__art .lb-note[data-m-loop] { --m-still: 0.05; padding-bottom: 0; }
+.lb-live { margin-left: 6px; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--lb-ink2); }
+.lb-live b { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #3f8f5a; }
+.lb-live b::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #3f8f5a; animation: lb-ring var(--m-cycle) linear infinite; }
+@keyframes lb-ring { 0% { transform: scale(1); opacity: .5; } 60%, 100% { transform: scale(3); opacity: 0; } }
+.lb-tick { display: inline-grid; font-variant-numeric: tabular-nums; }
+.lb-tick i { grid-area: 1 / 1; font-style: normal; animation: var(--m-cycle) var(--m-ease-enter, cubic-bezier(.22,1,.36,1)) infinite; }
+.lb-tick i:nth-child(1) { animation-name: lb-d1; }
+.lb-tick i:nth-child(2) { animation-name: lb-d2; opacity: 0; }
+.lb-tick i:nth-child(3) { animation-name: lb-d3; opacity: 0; }
+@keyframes lb-d1 { 0%, 20% { opacity: 1; transform: none; } 26% { opacity: 0; transform: translateY(-.4em); } 27%, 91% { opacity: 0; transform: translateY(.4em); } 96%, 100% { opacity: 1; transform: none; } }
+@keyframes lb-d2 { 0%, 20% { opacity: 0; transform: translateY(.4em); } 26%, 52% { opacity: 1; transform: none; } 58%, 100% { opacity: 0; transform: translateY(-.4em); } }
+@keyframes lb-d3 { 0%, 52% { opacity: 0; transform: translateY(.4em); } 58%, 86% { opacity: 1; transform: none; } 90% { opacity: .35; transform: none; } 92%, 100% { opacity: 0; transform: none; } }
+.panel[data-m-loop] { --m-still: 0.2; }
+.lb-lang { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin-bottom: 12px; padding: 3px; border-radius: 999px; background: var(--lb-stage); font: 600 11px/1 var(--font-mono); }
+.lb-lang span { position: relative; z-index: 1; padding: 5px 10px; text-align: center; color: var(--lb-ink3); }
+.lb-lang i { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 999px; background: var(--lb-paper); box-shadow: 0 1px 2px rgb(20 20 19 / .15); animation: lb-knob var(--m-cycle) var(--m-ease-io, cubic-bezier(.65,0,.35,1)) infinite; }
+@keyframes lb-knob { 0%, 44% { transform: translateX(100%); } 50%, 92% { transform: translateX(0); } 98%, 100% { transform: translateX(100%); } }
+.lb-faces { display: grid; grid-template-columns: minmax(0, 1fr); }
+.lb-face { grid-area: 1 / 1; min-width: 0; }
+.lb-face--id { animation: lb-face-id var(--m-cycle) linear infinite; }
+.lb-face--en { animation: lb-face-en var(--m-cycle) linear infinite; }
+@keyframes lb-face-id { 0%, 45% { opacity: 1; } 48%, 95% { opacity: 0; } 98%, 100% { opacity: 1; } }
+@keyframes lb-face-en { 0%, 48% { opacity: 0; } 51%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+/* the setup steps' drawn windows inside the pinned frame */
+#setup .mo-pc__visual--lit > .ui { width: min(100%, 480px); }
+#setup .mo-pc__visual--lit .term__body { white-space: pre-wrap; word-break: break-all; }
+#setup .mo-pc__visual--lit > .adm { width: min(100%, 340px); }
+/* static steps (under 1024px, reduced motion): the drawn windows at their own height, never cropped to 4:3 */
+#setup:not(.is-live) .mo-pc__visual--lit { aspect-ratio: auto; max-height: none; padding: 0; background: none; overflow: visible; justify-content: flex-start; }
+@media (max-width: 1023px) {
+  .lb-id .lb-dt-sub { display: none; }
+  /* below 1024 the steps stand static (the kit's rule): they fill two screens instead of 1.1 */
+  main > #setup[data-moment="pinned-chapters"][data-moment]:not(.is-live) { min-height: 200vh; min-height: 200lvh; }
+  #setup:not(.is-live) .mo-pc__steps { gap: 64px; }
+  /* one column at every static width: the window under its step, like the phone */
+  #setup:not(.is-live) .mo-pc__step { grid-template-columns: minmax(0, 1fr); border-top: 0; border-left: 2px solid var(--line); padding: 0 0 0 var(--s-5); }
+  #setup:not(.is-live) .mo-pc__step .mo-pc__visual { grid-column: 1; grid-row: auto; margin: var(--s-4) 0 0; }
+}
+@media (min-width: 640px) and (max-width: 1023px) { #setup:not(.is-live) .mo-pc__visual--lit { padding: 96px 32px; } }
+@media (prefers-reduced-motion: reduce) { .lb-live b::after { animation: none; opacity: 0; } }
 </style>
 </head>
 <body>
@@ -295,8 +339,11 @@
            4 lines) and the next, bricolage, brings three families of its own, so with the product's own Source Serif 4
            (inside the product UI only) the page would load four; radius sharp (developer tool); lit ground sage;
            grounds: bg-halo (#faq); the dealt bg-band on #board was taken off (its noise made a broken request in perf)
-     effect: grain-gradient on the hero's art frame (the one effect, live in the hero only)
-     moments: liquid-type on #privacy's headline (the one statement: what leaves a laptop, ripples under the pointer).
+     effect: grain-gradient on the hero's art frame, held still (speed 0) so the live board is the hero's one timed loop
+     loops: hero board ticks like the real page (Ada's total rolls up twice a cycle, a live ring on the bar);
+            the language card switches EN and ID; the #how diagram pulses from the laptops to SQLite
+     moments: liquid-type on #privacy's headline (the one statement: what leaves a laptop, ripples under the pointer);
+              pinned-chapters on #setup (three steps in the space of one screen: server, admin, laptops).
               iris-opens was dealt for #features and taken out: its ring moves by left/top and gave a layout shift of 0.33.
               First deal was counter-rolls and marquee-row; dealt again because their strips and the clipped
               marquee track fail the checker's cut-text, overlap and row-lines at rest.
@@ -353,24 +400,24 @@
         </div>
         <p class="hero__proof">Free and MIT licensed. Version 1.0.0 needs Python 3.10 or newer and nothing from pip.</p>
       </div>
-      <div class="hero__art span-6 start-7" data-fx="grain-gradient" data-fx-seed="7" data-fx-params='{"calm":0.25,"calmX":0.4,"calmY":0.4}' role="img" aria-label="The leaderboard for the last 30 days: Ada Lovelace first with 7.41 million output tokens, Alan Turing second, Grace Hopper third, and Ada's detail card">
-        <div class="ly-piece ly-piece--main lb lb-win" aria-hidden="true">
-          <div class="lb-win__bar"><i></i><i></i><i></i><span>Claude Code Leaderboard</span></div>
+      <div class="hero__art span-6 start-7" data-fx="grain-gradient" data-fx-seed="7" data-fx-params='{"calm":0.25,"calmX":0.4,"calmY":0.4,"speed":0,"grainMotion":0}' data-ui-pause-host role="img" aria-label="The leaderboard for the last 30 days: Ada Lovelace first with 7.41 million output tokens, Alan Turing second, Grace Hopper third, and Ada's detail card">
+        <div class="ly-piece ly-piece--main lb lb-win" data-m-loop aria-hidden="true">
+          <div class="lb-win__bar"><i></i><i></i><i></i><span>Claude Code Leaderboard</span><span class="lb-live"><b></b>Live</span></div>
           <div class="lb-win__head">
             <div class="lb-win__title">Claude Code Leaderboard</div>
             <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
             <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
           </div>
           <div class="lb-stage"><div class="lb-podium">
-            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.41M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
+            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.4<span class="lb-tick"><i>1</i><i>2</i><i>3</i></span>M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
             <div class="lb-seat" data-pos="2"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:248">AT</span></span><div class="lb-name">Alan Turing</div><div class="lb-team">Research</div><div class="lb-num">5.52M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">2</span></div></div>
             <div class="lb-seat" data-pos="3"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:255">GH</span></span><div class="lb-name">Grace Hopper</div><div class="lb-team">Platform</div><div class="lb-num">5M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">3</span></div></div>
           </div></div>
         </div>
-        <div class="ly-piece ly-piece--note lb lb-note" aria-hidden="true">
+        <div class="ly-piece ly-piece--note lb lb-note" data-m-loop aria-hidden="true">
           <div class="lb-dt-name">Ada Lovelace</div>
           <div class="lb-dt-sub">Platform. Rank 1 of 7 in the last 30 days</div>
-          <div class="lb-fig"><span class="lb-big">7.41M</span><span class="lb-cap">28% of all team output</span></div>
+          <div class="lb-fig"><span class="lb-big">7.4<span class="lb-tick"><i>1</i><i>2</i><i>3</i></span>M</span><span class="lb-cap">28% of all team output</span></div>
           <div class="lb-models">
             <div class="lb-model"><span>Sonnet 5.5</span><span class="lb-track"><b style="--p:62%"></b></span><span>62%</span></div>
             <div class="lb-model"><span>Opus 5.5</span><span class="lb-track"><b style="--p:27%"></b></span><span>27%</span></div>
@@ -441,7 +488,7 @@
           <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#how-it-works">Read how it works</a>
         </div>
         <div class="frame frame--split span-6 start-7">
-          <div class="dg" data-diagram data-dg-still><script type="application/json">{"layout":"fanin","alt":"Claude Code on macOS, Linux and Windows laptops, plus the local transcripts, send their counts to server.py, which writes hourly totals to SQLite for the board.","sources":[{"label":"macOS","icon":"apple","sub":"Claude Code"},{"label":"Linux","icon":"linux-tux","sub":"Claude Code"},{"label":"Windows","icon":"windows","sub":"Claude Code"},{"label":"Transcripts","icon":"claude-code","sub":"Last 30 days"}],"target":{"label":"server.py","icon":"python"},"then":[{"label":"SQLite","icon":"sqlite","meta":"Hourly totals"}],"motion":{"pulse":"none"},"ground":"dots"}</script></div>
+          <div class="dg" data-diagram><script type="application/json">{"layout":"fanin","alt":"Claude Code on macOS, Linux and Windows laptops, plus the local transcripts, send their counts to server.py, which writes hourly totals to SQLite for the board.","sources":[{"label":"macOS","icon":"apple","sub":"Claude Code"},{"label":"Linux","icon":"linux-tux","sub":"Claude Code"},{"label":"Windows","icon":"windows","sub":"Claude Code"},{"label":"Transcripts","icon":"claude-code","sub":"Last 30 days"}],"target":{"label":"server.py","icon":"python"},"then":[{"label":"SQLite","icon":"sqlite","meta":"Hourly totals"}],"motion":{"cycle":3.2},"ground":"dots"}</script></div>
         </div>
       </div>
     </div>
@@ -502,13 +549,23 @@
         <article class="card card--row card--open m-nolift span-6">
           <h3>Shows the leaderboard in Bahasa Indonesia</h3>
           <p>English or Indonesian: set <code>LB_LANG</code> to <code>en</code> or <code>id</code>.</p>
-          <div class="panel" role="img" aria-label="The leaderboard's header and podium in Bahasa Indonesia">
+          <div class="panel" data-m-loop role="img" aria-label="The leaderboard's header switching between English and Bahasa Indonesia">
             <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:40px">
               <div class="ui lb lb-id" aria-hidden="true">
+                <div class="lb-lang"><span>EN</span><span>ID</span><i></i></div>
                 <div class="lb-win__title">Claude Code Leaderboard</div>
-                <div class="lb-lede">Dalam 30 hari terakhir, Claude menulis <b>26.8M</b> token untuk 7 orang.</div>
-                <div class="lb-periods"><span>Hari ini</span><span>7 hari</span><span class="on">30 hari</span><span>Bulan ini</span><span>Semua</span></div>
-                <div class="lb-dt-sub">329 sesi, estimasi $3,187.04 dengan harga API.</div>
+                <div class="lb-faces">
+                  <div class="lb-face lb-face--id">
+                    <div class="lb-lede">Dalam 30 hari terakhir, Claude menulis <b>26.8M</b> token untuk 7 orang.</div>
+                    <div class="lb-periods"><span>Hari ini</span><span>7 hari</span><span class="on">30 hari</span><span>Bulan ini</span><span>Semua</span></div>
+                    <div class="lb-dt-sub">329 sesi, estimasi $3,187.04 dengan harga API.</div>
+                  </div>
+                  <div class="lb-face lb-face--en">
+                    <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
+                    <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
+                    <div class="lb-dt-sub">329 sessions, estimated $3,187.04 at API prices.</div>
+                  </div>
+                </div>
               </div>
             </div></div>
           </div>
@@ -586,55 +643,48 @@
     </div>
   </section>
 
-  <section class="section" id="setup" aria-labelledby="setup-h" style="--hm: 2">
-    <div class="wrap">
-      <div class="section-head">
+  <section class="section" id="setup" aria-labelledby="setup-h" style="--h: 2; --hm: 2" data-moment="pinned-chapters">
+    <div class="wrap mo-pc__grid">
+      <div class="mo-pc__text">
         <h2 id="setup-h">Set it up in 3 steps</h2>
-      </div>
-      <div class="grid open-cards">
-        <article class="card card--row card--open m-nolift">
-          <span class="step-num">1</span>
-          <h3>Start the leaderboard server</h3>
-          <p>Set <code>LB_ADMIN_KEY</code> to a long random string, then run it. The board opens on port 8790.</p>
-          <div class="panel" role="img" aria-label="A terminal cloning the repository and starting server.py">
-            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:420px;--ax:24px;--ay:32px">
+        <ol class="mo-pc__steps">
+          <li class="mo-pc__step">
+            <h3>Start the leaderboard server</h3>
+            <p>Set <code>LB_ADMIN_KEY</code> to a long random string, then run it. The board opens on port 8790.</p>
+            <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="A terminal cloning the repository and starting server.py">
               <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/python.svg" alt="" width="16" height="16">Terminal</div>
 <pre class="term__body"><span class="p">$ </span>git clone https://github.com/imkurow/claude-code-leaderboard.git
 <span class="p">$ </span>cd claude-code-leaderboard
 <span class="p">$ </span>cp config.env.example config.env
 <span class="p">$ </span>python3 server.py</pre></div>
-            </div></div>
-          </div>
-        </article>
-        <article class="card card--row card--open m-nolift">
-          <span class="step-num">2</span>
-          <h3>Add people to the leaderboard</h3>
-          <p>Open <code>/admin</code>, enter your admin key, add a participant and copy the command it shows.</p>
-          <div class="panel" role="img" aria-label="The admin page's form to add a participant, filled in for Grace Hopper on the Platform team">
-            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:340px;--ax:max(24px, 50% - 170px);--ay:32px">
+            </figure>
+          </li>
+          <li class="mo-pc__step">
+            <h3>Add people to the leaderboard</h3>
+            <p>Open <code>/admin</code>, enter your admin key, add a participant and copy the command it shows.</p>
+            <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="The admin page's form to add a participant, filled in for Grace Hopper on the Platform team">
               <div class="ui lb adm" aria-hidden="true">
                 <div class="adm__title">Add a participant</div>
                 <div class="adm__field"><span>Name</span><span>Grace Hopper</span></div>
                 <div class="adm__field"><span>Team</span><span>Platform</span></div>
+                <span class="adm__btn">Add participant</span>
               </div>
-            </div></div>
-          </div>
-        </article>
-        <article class="card card--row card--open m-nolift">
-          <span class="step-num">3</span>
-          <h3>Connect each laptop's Claude Code</h3>
-          <p>Each person runs their command once in a terminal, then restarts Claude Code.</p>
-          <div class="panel" role="img" aria-label="The install command for macOS and Linux, and the one for Windows PowerShell">
-            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:420px;--ax:24px;--ay:32px">
+            </figure>
+          </li>
+          <li class="mo-pc__step">
+            <h3>Connect each laptop's Claude Code</h3>
+            <p>Each person runs their command once in a terminal, then restarts Claude Code.</p>
+            <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="The install command for macOS and Linux, and the one for Windows PowerShell">
               <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/apple.svg" alt="" width="13" height="16" style="filter:invert(1)"><img loading="lazy" src="assets/icons/linux-tux.svg" alt="" width="14" height="16"><img loading="lazy" src="assets/icons/windows.svg" alt="" width="16" height="16">Install</div>
 <pre class="term__body"><span class="c"># macOS / Linux</span>
 curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx
 <span class="c"># Windows (PowerShell)</span>
 <span class="k">$env:LB_TOKEN</span>='lb_xxxxxxxx'; irm https://leaderboard.example.com/install.ps1 | iex</pre></div>
-            </div></div>
-          </div>
-        </article>
+            </figure>
+          </li>
+        </ol>
       </div>
+      <div class="mo-pc__visuals frame"></div>
     </div>
   </section>
 </main>
