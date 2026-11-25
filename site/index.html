@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Claude Code Leaderboard: a self-hosted usage board for teams</title>
-<meta name="description" content="Rank your team's Claude Code output tokens on a server you run. Everyone keeps their own Claude account, and only numbers leave each laptop.">
+<meta name="description" content="Rank your team's Claude Code, 9router, JRouter, Hermes Agent, OpenCode and OpenRouter output tokens on a server you run. Crowns, streaks and 91 badges; only numbers leave each laptop.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://leaderboard.kurows.com/">
 <meta property="og:site_name" content="Claude Code Leaderboard">
@@ -87,6 +87,8 @@
 .lb-who { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 2px 20px; min-width: 0; }
 .lb-ring { --size: 58px; display: block; width: calc(var(--size) + 10px); height: calc(var(--size) + 10px); padding: 3px; border-radius: 50%; background: var(--metal); margin-bottom: 12px; box-shadow: 0 14px 28px -16px rgb(20 20 19 / .28); }
 .lb-seat[data-pos="1"] .lb-ring { --size: 74px; }
+.lb-ring { position: relative; }
+.lb-crown { position: absolute; left: 50%; top: 0; width: 62%; height: auto; transform: translate(-50%, -76%) rotate(-8deg); filter: drop-shadow(0 5px 6px rgb(20 20 19 / .3)); pointer-events: none; }
 .lb-ring .lb-av { width: 100%; height: 100%; border: 3px solid var(--lb-stage); --size: inherit; font-size: 18px; }
 .lb-seat[data-pos="1"] .lb-ring .lb-av { font-size: 23px; }
 .lb-name { font: 500 17px/1.2 var(--lb-serif); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -255,8 +257,8 @@
 .lb-id .lb-rank { font-size: 30px; } .lb-id .lb-seat[data-pos="1"] .lb-rank { font-size: 40px; }
 
 /* ---------- sections ---------- */
-#features .panel { --p-h: 300px; }
-#features .panel > .frame__img { object-position: 50% 0; }
+:is(#features, #badges) .panel { --p-h: 300px; }
+:is(#features, #badges) .panel > .frame__img { object-position: 50% 0; }
 #setup .panel { --p-h: 300px; }
 .open-cards > .card { grid-column: 1 / -1; }
 @media (min-width: 640px) { .open-cards > .card { grid-column: auto / span 4; } }
@@ -264,13 +266,13 @@
 @media (min-width: 1024px) { #setup .open-cards { flex: 1 1 auto; } }
 .card .term__body { font-size: 12px; line-height: 1.55; }
 @media (max-width: 639px) {
-  #how .checks, #run .run-more, #privacy .frame, #features .card > p, #faq .section-head > p, #faq .faq__item--wide { display: none; }
+  #how .checks, #run .run-more, #privacy .frame, :is(#features, #badges) .card > p, #faq .section-head > p, #faq .faq__item--wide { display: none; }
   #run .run-stack { margin-top: var(--s-5); }
   #how .frame--split { --ratio: 80%; }
-  #features .panel { --p-h: 160px; }
+  :is(#features, #badges) .panel { --p-h: 160px; }
 }
 @media (max-width: 639px) {
-  #features .panel { --p-h: 200px; } #setup .panel { --p-h: 260px; }
+  :is(#features, #badges) .panel { --p-h: 200px; } #setup .panel { --p-h: 260px; }
   .lb-id .lb-periods, .lb-crop__hint, .lb-crop__who { display: none; }
   .lb-crop__circle { width: 72px; height: 72px; font-size: 22px; margin: 8px auto 10px; }
 }
@@ -340,10 +342,10 @@
   /* the board's window takes the screen under its heading */
   #board > .wrap > .app { flex: 1 1 auto; }
   /* features: each screen's card row runs to that screen's foot, as from 1024 */
-  #features > .wrap > .grid:last-child, #features > .wrap > .group > .grid:last-child { align-self: stretch; flex: 1 1 auto; min-height: 0; }
-  #features .card--open { display: flex; flex-direction: column; }
-  #features .card--open > .panel { flex: 1 1 auto; --p-h: 300px; }
-  #features .panel > .frame__img { object-position: 0 0; }
+  :is(#features, #badges) > .wrap > .grid:last-child, :is(#features, #badges) > .wrap > .group > .grid:last-child { align-self: stretch; flex: 1 1 auto; min-height: 0; }
+  :is(#features, #badges) .card--open { display: flex; flex-direction: column; }
+  :is(#features, #badges) .card--open > .panel { flex: 1 1 auto; --p-h: 300px; }
+  :is(#features, #badges) .panel > .frame__img { object-position: 0 0; }
   /* privacy: the three figures in one row */
   #privacy .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* run: tighter rows */
@@ -410,7 +412,8 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
           <div class="wrap grid">
             <div class="menu-col span-3">
               <p class="t-label">Data</p>
-              <a href="#how">How usage arrives<span>OpenTelemetry from each laptop</span></a>
+              <a href="#how">How usage arrives<span>Claude Code and five harnesses</span></a>
+              <a href="#badges">Crown and badges<span>91 badges in four tiers</span></a>
               <a href="#privacy">What is sent<span>Numbers only, never prompts</span></a>
             </div>
             <div class="menu-col span-3">
@@ -444,12 +447,12 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
     <div class="wrap"><div class="hero-text grid hero__grid">
       <div class="hero__text span-5">
         <h1 id="hero-h">Self-hosted Claude Code leaderboard for teams</h1>
-        <p class="hero__lead">Each laptop's Claude Code sends its token counts to one Python file you run. Everyone keeps their own Claude account, and the board ranks output tokens live.</p>
+        <p class="hero__lead">Each laptop's Claude Code, or its 9router, JRouter, Hermes Agent, OpenCode or OpenRouter, sends token counts to one Python file you run. Everyone keeps their own account, and the board ranks output tokens live.</p>
         <div class="btn-row">
           <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
           <a class="btn btn--secondary" href="#setup">See the setup</a>
         </div>
-        <p class="hero__proof">Free and MIT licensed. Version 1.0.0 needs Python 3.10 or newer and nothing from pip.</p>
+        <p class="hero__proof">Free and MIT licensed. Needs Python 3.10 or newer and nothing from pip.</p>
       </div>
       <div class="hero__art span-6 start-7" data-fx="grain-gradient" data-fx-seed="7" data-fx-params='{"calm":0.25,"calmX":0.4,"calmY":0.4,"speed":0,"grainMotion":0}' data-ui-pause-host role="img" aria-label="The leaderboard for the last 30 days: Ada Lovelace first with 7.41 million output tokens, Alan Turing second, Grace Hopper third, and Ada's detail card">
         <div class="ly-piece ly-piece--main lb lb-win" data-m-loop aria-hidden="true">
@@ -460,7 +463,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
           </div>
           <div class="lb-stage"><div class="lb-podium">
-            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.4<span class="lb-tick"><i>1</i><i>2</i><i>3</i></span>M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
+            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span><svg class="lb-crown" viewBox="-1 -1 70 50" aria-hidden="true"><defs><linearGradient id="lbcr1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBEDB8"/><stop offset=".38" stop-color="#E2B654"/><stop offset=".7" stop-color="#A87B22"/><stop offset="1" stop-color="#F0D27E"/></linearGradient></defs><path d="M8 44V35L3.5 13L18.5 24.5L34 6L49.5 24.5L64.5 13L60 35V44Z" fill="url(#lbcr1)" stroke="#7A5514" stroke-width="1.5" stroke-linejoin="round"/><circle cx="3.5" cy="11.5" r="3.4" fill="url(#lbcr1)" stroke="#7A5514" stroke-width="1.2"/><circle cx="64.5" cy="11.5" r="3.4" fill="url(#lbcr1)" stroke="#7A5514" stroke-width="1.2"/><circle cx="34" cy="4" r="3.9" fill="url(#lbcr1)" stroke="#7A5514" stroke-width="1.2"/><circle cx="34" cy="39.6" r="3.3" fill="#C2362B" stroke="#6E1F16"/><circle cx="20" cy="39.6" r="2.5" fill="#2F6DB5" stroke="#173A66"/><circle cx="48" cy="39.6" r="2.5" fill="#2F6DB5" stroke="#173A66"/></svg></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.4<span class="lb-tick"><i>1</i><i>2</i><i>3</i></span>M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
             <div class="lb-seat" data-pos="2"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:248">AT</span></span><div class="lb-name">Alan Turing</div><div class="lb-team">Research</div><div class="lb-num">5.52M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">2</span></div></div>
             <div class="lb-seat" data-pos="3"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:255">GH</span></span><div class="lb-name">Grace Hopper</div><div class="lb-team">Platform</div><div class="lb-num">5M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">3</span></div></div>
           </div></div>
@@ -483,7 +486,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
       <div class="grid">
         <h2 class="span-5" id="board-h">The leaderboard and a card per person</h2>
         <div class="span-6 start-7 stack-4">
-          <p>Pick today, 7 days, 30 days, this month or all time. The page checks for new usage every second, and a click on a name opens that person's card.</p>
+          <p>Pick today, 7 days, 30 days, this month or all time, or one harness. The page checks for new usage every second, arrows show who moved since yesterday, and side panels list who is active now. A click on a name opens that person's card.</p>
           <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#readme">Read the README</a>
         </div>
       </div>
@@ -494,7 +497,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
           </div>
           <div class="lb-stage"><div class="lb-podium">
-            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.41M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
+            <div class="lb-seat" data-pos="1"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:6">AL</span><svg class="lb-crown" viewBox="-1 -1 70 50" aria-hidden="true"><defs><linearGradient id="lbcr2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBEDB8"/><stop offset=".38" stop-color="#E2B654"/><stop offset=".7" stop-color="#A87B22"/><stop offset="1" stop-color="#F0D27E"/></linearGradient></defs><path d="M8 44V35L3.5 13L18.5 24.5L34 6L49.5 24.5L64.5 13L60 35V44Z" fill="url(#lbcr2)" stroke="#7A5514" stroke-width="1.5" stroke-linejoin="round"/><circle cx="3.5" cy="11.5" r="3.4" fill="url(#lbcr2)" stroke="#7A5514" stroke-width="1.2"/><circle cx="64.5" cy="11.5" r="3.4" fill="url(#lbcr2)" stroke="#7A5514" stroke-width="1.2"/><circle cx="34" cy="4" r="3.9" fill="url(#lbcr2)" stroke="#7A5514" stroke-width="1.2"/><circle cx="34" cy="39.6" r="3.3" fill="#C2362B" stroke="#6E1F16"/><circle cx="20" cy="39.6" r="2.5" fill="#2F6DB5" stroke="#173A66"/><circle cx="48" cy="39.6" r="2.5" fill="#2F6DB5" stroke="#173A66"/></svg></span><div class="lb-name">Ada Lovelace</div><div class="lb-team">Platform</div><div class="lb-num">7.41M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">1</span></div></div>
             <div class="lb-seat" data-pos="2"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:248">AT</span></span><div class="lb-name">Alan Turing</div><div class="lb-team">Research</div><div class="lb-num">5.52M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">2</span></div></div>
             <div class="lb-seat" data-pos="3"><div class="lb-who"><span class="lb-ring"><span class="lb-av" style="--h:255">GH</span></span><div class="lb-name">Grace Hopper</div><div class="lb-team">Platform</div><div class="lb-num">5M</div><div class="lb-unit">output tokens</div></div><div class="lb-plinth"><span class="lb-rank">3</span></div></div>
           </div></div>
@@ -526,20 +529,42 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
     </div>
   </section>
 
+  <section class="section g2 g2m" id="badges" aria-labelledby="badges-h">
+    <div class="wrap">
+      <div class="group">
+        <div class="section-head">
+          <h2 id="badges-h">A crown for first place and 91 badges to earn</h2>
+        </div>
+        <div class="grid">
+          <article class="card card--row card--open m-nolift span-6">
+            <h3>Crowns the leader of each period</h3>
+            <p>First place wears a gold crown and laurels, second and third get silver and bronze, and a flame counts each person's days in a row.</p>
+            <div class="panel"><img class="frame__img" src="img/podium.webp" alt="The podium: Ada Lovelace first with a gold crown and laurel wreath, Dennis Ritchie second in silver laurels, Grace Hopper third in bronze" width="1200" height="747" loading="lazy"></div>
+          </article>
+          <article class="card card--row card--open m-nolift span-6">
+            <h3>Hands out badges in four tiers</h3>
+            <p>Bronze to legend, from a first million tokens to a month in first place. Each badge opens a card with how to earn it and who has it.</p>
+            <div class="panel"><img class="frame__img" src="img/badge.webp" alt="The Champion of the Month badge, a legend medal, with how to unlock it and the one person who has it" width="836" height="1077" loading="lazy"></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="how" aria-labelledby="how-h">
     <div class="wrap">
       <div class="grid">
         <div class="span-5 stack-5">
           <h2 id="how-h">How usage reaches the board</h2>
-          <p class="t-lead">Claude Code has OpenTelemetry metrics built in. The installer backs up <code>~/.claude/settings.json</code> and adds a few <code>env</code> keys; each laptop then posts its counts with a personal token.</p>
+          <p class="t-lead">Claude Code has OpenTelemetry metrics built in: the installer adds a few <code>env</code> keys to <code>~/.claude/settings.json</code>. For 9router, JRouter, Hermes Agent, OpenCode and OpenRouter, a small Node script reads their own usage log every minute.</p>
           <ul class="checks">
-            <li>The server keeps hourly totals: tokens by type and model, cost, sessions and active time.</li>
+            <li>The server keeps hourly totals: tokens by type and model, cost, requests, sessions and active time.</li>
             <li>Re-running the installer replaces the imported history, so nothing counts twice.</li>
           </ul>
           <a class="link" href="https://github.com/imkurow/claude-code-leaderboard#how-it-works">Read how it works</a>
         </div>
         <div class="frame frame--split span-6 start-7">
-          <div class="dg" data-diagram><script type="application/json">{"layout":"fanin","alt":"Claude Code on macOS, Linux and Windows laptops, plus the local transcripts, send their counts to server.py, which writes hourly totals to SQLite for the board.","sources":[{"label":"macOS","icon":"apple","sub":"Claude Code"},{"label":"Linux","icon":"linux-tux","sub":"Claude Code"},{"label":"Windows","icon":"windows","sub":"Claude Code"},{"label":"Transcripts","icon":"claude-code","sub":"Last 30 days"}],"target":{"label":"server.py","icon":"python"},"then":[{"label":"SQLite","icon":"sqlite","meta":"Hourly totals"}],"motion":{"cycle":3.2},"ground":"dots"}</script></div>
+          <div class="dg" data-diagram><script type="application/json">{"layout":"fanin","alt":"Claude Code on each laptop, the 9router and JRouter usage logs, the Hermes Agent and OpenCode databases, and the OpenRouter activity API send their counts to server.py, which writes hourly totals to SQLite for the board.","sources":[{"label":"Claude Code","icon":"claude-code","sub":"macOS, Linux, Windows"},{"label":"9router, JRouter","icon":"ui:router","sub":"Usage log"},{"label":"Hermes, OpenCode","icon":"ui:database","sub":"Local database"},{"label":"OpenRouter","icon":"openrouter","sub":"Activity API"}],"target":{"label":"server.py","icon":"python"},"then":[{"label":"SQLite","icon":"sqlite","meta":"Hourly totals"}],"motion":{"cycle":3.2},"ground":"dots"}</script></div>
         </div>
       </div>
     </div>
@@ -586,7 +611,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
         <div class="grid">
           <article class="card card--row card--open m-nolift span-6">
             <h3>Adds people to the leaderboard</h3>
-            <p>It writes each person's install message. Rename people, rotate tokens or remove one computer's history.</p>
+            <p>Pick the harness each person uses and it writes their install message. Rename people, rotate tokens or remove one computer's history.</p>
             <div class="panel"><img class="frame__img" src="img/admin.webp" alt="The admin page: a form to add a participant and the participant list with total output and status" width="1040" height="550" loading="lazy"></div>
           </article>
           <article class="card card--row card--open m-nolift span-6">
@@ -681,12 +706,13 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
       <div class="grid">
         <div class="faq span-6">
           <div class="faq__item"><h3>Do we need a shared Claude organization?</h3><p>No. It works when everyone uses their own personal Claude account. You need no shared organization and no admin API key.</p></div>
-          <div class="faq__item"><h3>Does usage on claude.ai count?</h3><p>No. Only Claude Code produces these metrics; the desktop chat and claude.ai do not show up.</p></div>
+          <div class="faq__item"><h3>Does usage on claude.ai count?</h3><p>No. Claude Code and the five harnesses count; the desktop chat and claude.ai do not show up.</p></div>
           <div class="faq__item"><h3>Can someone send fake usage numbers?</h3><p>Yes, with their own token. It is a friendly leaderboard, not billing.</p></div>
-          <div class="faq__item"><h3>Is the cost on the leaderboard what we pay?</h3><p>It is Claude Code's own estimate at API prices. People on a subscription pay their plan, so read the figure as a guide.</p></div>
+          <div class="faq__item"><h3>Is the cost on the leaderboard what we pay?</h3><p>It is the estimate Claude Code or the harness logs, at API prices. People on a subscription pay their plan, so read the figure as a guide.</p></div>
         </div>
         <div class="faq span-6 start-7">
           <div class="faq__item"><h3>What does the leaderboard cost?</h3><p>Nothing. It is MIT licensed and runs on your own server.</p></div>
+          <div class="faq__item"><h3>Does past usage count toward badges?</h3><p>Most badges count all history. The 18 season badges count only from the day the season starts.</p></div>
           <div class="faq__item faq__item--wide"><h3>Does the server need Docker?</h3><p>No. <code>python3 server.py</code> runs it on Python 3.10 or newer; Docker Compose is one option.</p></div>
           <div class="faq__item faq__item--wide"><h3>Can Windows laptops join the leaderboard?</h3><p>Yes, through PowerShell. That installer is tested less than the macOS and Linux one, so bug reports help.</p></div>
         </div>
@@ -712,25 +738,28 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
           </li>
           <li class="mo-pc__step">
             <h3>Add people to the leaderboard</h3>
-            <p>Open <code>/admin</code>, enter your admin key, add a participant and copy the command it shows.</p>
+            <p>Open <code>/admin</code>, add a participant, pick their harness and copy the command it shows.</p>
             <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="The admin page's form to add a participant, filled in for Grace Hopper on the Platform team">
               <div class="ui lb adm" aria-hidden="true">
                 <div class="adm__title">Add a participant</div>
                 <div class="adm__field"><span>Name</span><span>Grace Hopper</span></div>
                 <div class="adm__field"><span>Team</span><span>Platform</span></div>
+                <div class="adm__field"><span>Harness</span><span>Claude Code</span></div>
                 <span class="adm__btn">Add participant</span>
               </div>
             </figure>
           </li>
           <li class="mo-pc__step">
             <h3>Connect each laptop's Claude Code</h3>
-            <p>Each person runs their command once in a terminal, then restarts Claude Code.</p>
+            <p>Each person runs their command once in a terminal. Claude Code users restart it; harness users are done.</p>
             <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="The install command for macOS and Linux, and the one for Windows PowerShell">
               <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/apple.svg" alt="" width="13" height="16" style="filter:invert(1)"><img loading="lazy" src="assets/icons/linux-tux.svg" alt="" width="14" height="16"><img loading="lazy" src="assets/icons/windows.svg" alt="" width="16" height="16">Install</div>
 <pre class="term__body"><span class="c"># macOS / Linux</span>
 curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx
 <span class="c"># Windows (PowerShell)</span>
-<span class="k">$env:LB_TOKEN</span>='lb_xxxxxxxx'; irm https://leaderboard.example.com/install.ps1 | iex</pre></div>
+<span class="k">$env:LB_TOKEN</span>='lb_xxxxxxxx'; irm https://leaderboard.example.com/install.ps1 | iex
+<span class="c"># a harness instead of Claude Code</span>
+curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --jrouter</pre></div>
             </figure>
           </li>
         </ol>
@@ -755,7 +784,7 @@ curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx
           <a class="nav__logo" href="#top"><img loading="lazy" src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px">Claude Code Leaderboard</a>
           <p class="footer__lede">A self-hosted Claude Code leaderboard for teams on personal accounts.</p>
         </div>
-        <div class="span-2 footer__col"><h3>Board</h3><ul><li><a href="#board">Ranking</a></li><li><a href="#features">Features</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Board</h3><ul><li><a href="#board">Ranking</a></li><li><a href="#badges">Badges</a></li><li><a href="#features">Features</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Setup</h3><ul><li><a href="#setup">Three steps</a></li><li><a href="#run">Hosting</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Project</h3><ul><li><a href="https://github.com/imkurow/claude-code-leaderboard/releases/tag/v1.0.0">Release notes</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/blob/main/LICENSE">MIT license</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Help</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/issues">Issues</a></li></ul></div>
