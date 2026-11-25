@@ -256,6 +256,12 @@ function collect(cfg) {
     const since = Date.now() / 1000 - DAYS * 86400;
     const sample = db.all('SELECT timestamp FROM usageHistory ORDER BY rowid DESC LIMIT 1')[0];
     const raw = sample ? sample.timestamp : null;
+    if (DRY) {
+      // where the numbers come from, so an empty result can be told apart from a wrong folder
+      const total = (db.all('SELECT COUNT(*) AS n FROM usageHistory')[0] || {}).n || 0;
+      report('reading ' + file + ': ' + total + ' requests in the log, newest ' + (raw == null ? 'none' : String(raw)) +
+        (cfg.keys ? ', only keys ' + cfg.keys : ''));
+    }
     let bound = since;
     if (typeof raw === 'string' && !/^\d+$/.test(raw)) bound = new Date(since * 1000).toISOString().slice(0, 19);   // ISO text sorts by time
     else if (raw != null && Number(raw) > 1e11) bound = since * 1000;                                                // milliseconds
