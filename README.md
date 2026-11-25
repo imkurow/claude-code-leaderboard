@@ -7,6 +7,8 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 ![Leaderboard](docs/dashboard.png)
 
 - **Podium and live ranking.** Output tokens per person for today, 7 days, 30 days, this month or all time. The page refreshes every second.
+- **Badges.** 73 achievements in four tiers (bronze, silver, gold, legend), drawn as medals: milestones, streaks, night owls and early birds, model and cache feats, daily, weekly and monthly titles, and a few secret ones. Each card shows what someone has unlocked and how close they are to the next, a gallery lists who holds what, and the board pops a notice when someone unlocks one.
+- **Rank changes and streaks.** Arrows show who moved up or down against 24 hours earlier, and a flame counts days in a row.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
 - **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.
 - **9router users too.** People who use [9router](https://github.com/decolua/9router) on a Linux machine join with the same token. Their usage is read from 9router's own log every minute and marked with a "9router" label, and the board can be filtered to Claude Code or 9router users.

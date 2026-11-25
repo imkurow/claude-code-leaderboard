@@ -39,6 +39,7 @@ python3 server.py             # http://127.0.0.1:8790, admin at /admin with "dev
 | `server.py` | HTTP server: OTLP receiver, history import, leaderboard and admin APIs, page serving |
 | `lbcommon.py` | Config loading, database schema and migrations, shared helpers |
 | `accessauth.py` | Cloudflare Access JWT verification (RS256, standard library only) |
+| `achievements.py` | The badge catalog and the rules that unlock each badge |
 | `manage.py` | Command-line admin, including `demo` |
 | `static/index.html` | Leaderboard page: podium, list, detail card, photo upload |
 | `static/admin.html`, `static/admin-login.html` | Admin page and its passphrase sign-in |
@@ -76,7 +77,7 @@ python3 server.py             # http://127.0.0.1:8790, admin at /admin with "dev
 CI runs these (see `.github/workflows/ci.yml`). You can run the same locally:
 
 ```bash
-python3 -m py_compile server.py manage.py lbcommon.py accessauth.py
+python3 -m py_compile server.py manage.py lbcommon.py accessauth.py achievements.py
 bash -n static/install.sh run.sh run-tunnel.sh
 ```
 

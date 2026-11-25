@@ -333,6 +333,65 @@
   .note { margin: 22px 2px 0; display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; font-size: 13px; color: var(--ink-3); }
   .note a { color: var(--ink-2); }
 
+
+  /* ---------- badges ---------- */
+  .bd-count { color: var(--ink-3); }
+  .bd-count svg { width: 11px; height: 12px; }
+  .bd-sec { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--rule); }
+  .bd-sec h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 12px; font: 600 14px/1.3 var(--text); color: var(--ink-2); }
+  .bd-sec h3 span { font-weight: 500; font-size: 13px; color: var(--ink-3); }
+  .bd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 12px 6px; }
+  .bd { position: relative; }
+  .bd-new { position: absolute; top: 2px; right: 6px; padding: 1px 6px; border-radius: 999px; background: var(--gold); color: #fff; font: 700 9.5px/1.5 var(--text); letter-spacing: .06em; box-shadow: 0 2px 6px -2px var(--shadow); }
+  .bd {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 2px 4px; border: 0; border-radius: 12px;
+    background: none; color: inherit; font: inherit; text-align: center; cursor: pointer;
+    transition: background-color .15s, transform .15s;
+  }
+  .bd:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
+  .bd:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
+  .bd[aria-pressed="true"] { background: color-mix(in oklab, var(--ink) 8%, transparent); }
+  .medal { display: inline-grid; flex: none; line-height: 0; filter: drop-shadow(0 7px 9px rgba(20, 20, 19, .28)); transition: transform .25s var(--ease-enter); }
+  .bd:hover .medal, .gal-row:hover .medal { transform: translateY(-2px) scale(1.05) rotate(-2deg); }
+  .bd.locked .medal, .gal-row.locked .medal { filter: grayscale(1) contrast(.85); opacity: .32; }
+  .bd.locked:hover .medal { opacity: .5; }
+  .bd .bn { font-size: 11.5px; line-height: 1.25; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .bd.locked .bn { color: var(--ink-3); }
+  .bd .bp { width: 46px; height: 3px; border-radius: 2px; background: var(--rule); overflow: hidden; }
+  .bd .bp b { display: block; height: 100%; width: var(--p); background: var(--ink-3); border-radius: 2px; }
+  .bd-info { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: color-mix(in oklab, var(--ink) 5%, transparent); font-size: 13.5px; color: var(--ink-2); }
+  .bd-info strong { color: var(--ink); font-weight: 600; }
+  .bd-more { margin: 12px 0 0; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; background: none; color: var(--ink-2); font: 500 13px/1.4 var(--text); cursor: pointer; }
+  .bd-more:hover { border-color: var(--ink-3); }
+  /* the gallery */
+  dialog.gallery { width: min(640px, calc(100vw - 24px)); }
+  .gal-tier { margin: 22px 0 0; }
+  .gal-tier h3 { margin: 0 0 6px; font: 600 13px/1.3 var(--text); color: var(--ink-3); letter-spacing: .02em; }
+  .gal-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--rule); }
+  .gal-row .gn { font-weight: 600; font-size: 15px; color: var(--ink); }
+  .gal-row .gd { font-size: 13.5px; color: var(--ink-2); margin-top: 1px; }
+  .gal-row .gh { display: flex; align-items: center; gap: 4px; margin-top: 7px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-3); }
+  .gal-row .gh .av { margin-right: -6px; box-shadow: 0 0 0 2px var(--paper); }
+  .gal-row .gh .cnt { margin-left: 12px; }
+  .gal-row.locked .gn { color: var(--ink-3); }
+  /* live notice when someone unlocks a badge */
+  .toasts { position: fixed; z-index: 50; left: 50%; bottom: 20px; transform: translateX(-50%); display: grid; gap: 8px; width: min(420px, calc(100vw - 24px)); pointer-events: none; }
+  .toast {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 16px;
+    background: var(--paper); border: 1px solid var(--rule); box-shadow: 0 18px 40px -18px var(--shadow);
+    font-size: 14px; color: var(--ink-2); animation: toast-in .45s var(--ease-enter) both; pointer-events: auto;
+  }
+  .toast { padding: 10px 18px 10px 10px; }
+  .toast strong { color: var(--ink); font-weight: 600; }
+  .toast.out { animation: toast-out .3s ease both; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(8px); } }
+  .bd-info { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; align-items: center; }
+  .bd-info .medal { grid-row: span 2; }
+  .bd-info .bt { font: 500 18px/1.2 var(--display); color: var(--ink); }
+  .bd-info .bt small { display: block; margin-top: 3px; font: 600 11.5px/1.3 var(--text); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .bd-info .bx { font-size: 13.5px; color: var(--ink-2); }
+  @media (prefers-reduced-motion: reduce) { .toast, .toast.out { animation: none; } .medal { transition: none; } }
   /* ---------- profile dialog ---------- */
   dialog {
     width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--rule); border-radius: 18px;
@@ -488,6 +547,7 @@
     </div>
     <div class="tools">
       <a class="me-chip admin-link" id="adminLink" href="/admin" hidden>Admin</a>
+      <button type="button" class="me-chip admin-link" id="badgeBtn">⟦Badges‖Lencana⟧</button>
       <button type="button" class="me-chip" id="meChip" hidden></button>
       <button type="button" class="theme-btn lang-btn" data-lang-switch="⟦id‖en⟧" aria-label="⟦Switch to Bahasa Indonesia‖Ganti ke bahasa Inggris⟧" title="⟦Switch to Bahasa Indonesia‖Ganti ke bahasa Inggris⟧">⟦ID‖EN⟧</button>
       <button type="button" class="theme-btn" id="themeBtn" aria-label="⟦Switch to dark mode‖Ganti ke mode gelap⟧">
@@ -569,6 +629,11 @@
 <dialog id="detail" class="detail" aria-labelledby="dtName">
   <div class="dt" id="dtBody"></div>
 </dialog>
+
+<dialog id="gallery" class="detail gallery" aria-labelledby="galTitle">
+  <div class="dt" id="galBody"></div>
+</dialog>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -675,6 +740,242 @@
     c.setAttribute("aria-label", c.title);
     return c;
   }
+  var TIER_NAME = { bronze: T("Bronze", "Perunggu"), silver: T("Silver", "Perak"), gold: T("Gold", "Emas"), legend: T("Legend", "Legenda") };
+  var MEDAL_ICON = '<svg viewBox="0 0 11 12" aria-hidden="true"><path fill="currentColor" d="M2 0h2.2l1.3 2.6L6.8 0H9L7 4a3.9 3.9 0 1 1-3 0L2 0Zm3.5 5.3a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2Z"/></svg>';
+  // ---------- badge art: a tiered frame (coin, rosette, sunburst, crowned crest) around an engraved glyph ----------
+  var GLYPH = {
+    sprout: '<path d="M12 21v-8M12 13c0-4-3-6-7-6 0 4 3 6 7 6ZM12 11c0-4 3-6 7-6 0 4-3 6-7 6Z"/>',
+    quill: '<path d="M20 4C12 4 7 9 5 19M20 4c-1 6-5 10-11 11M5 19l-1.5 2.5M9 12l3 3"/>',
+    diamond: '<path d="M6.5 4h11L21 9l-9 12L3 9l3.5-5ZM3 9h18M9.5 4 8 9l4 12 4-12-1.5-5"/>',
+    gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/><circle cx="12" cy="12" r="6.5"/>',
+    rocket: '<path d="M12 2c3 2 5 6 5 10l-2 4H9l-2-4c0-4 2-8 5-10Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 15.5 6 18.5v-4.5M15 15.5l3 3v-4.5M10.5 19.5 12 22l1.5-2.5"/>',
+    galaxy: '<circle cx="12" cy="12" r="1.8"/><path d="M12 4c5 0 8.5 3 8.5 7M12 20c-5 0-8.5-3-8.5-7M20.5 11c0 4-4 6.5-8.5 6.5M3.5 13c0-4 4-6.5 8.5-6.5"/>',
+    columns: '<path d="M3 9.5 12 3l9 6.5ZM5.5 9.5v8.5M10 9.5v8.5M14 9.5v8.5M18.5 9.5v8.5M3.5 18h17M2.5 21h19"/>',
+    wings: '<path d="M12 9C10 5.5 6 4.5 2 5.5c.8 4.5 4.5 7.5 9 7.5M12 9c2-3.5 6-4.5 10-3.5-.8 4.5-4.5 7.5-9 7.5M12 7v14M9 18l3 3 3-3"/><circle cx="12" cy="5" r="1.6"/>',
+    bolt: '<path d="M13.5 2 4 14h7l-1.5 8L19 10h-7l1.5-8Z"/>',
+    tornado: '<path d="M3 4h18M5 8h14M7.5 12h9M9.5 16h5M11 20h2"/>',
+    spiral: '<circle cx="12" cy="12" r="1.6"/><path d="M12 10.4c0-3.4 3-5.6 6.5-4.6M13.6 12c3.4 0 5.6 3 4.6 6.5M12 13.6c0 3.4-3 5.6-6.5 4.6M10.4 12c-3.4 0-5.6-3-4.6-6.5"/>',
+    burst: '<path d="m12 2 2 6 6-2-4 5 5 4-6 1 1 6-4-4-4 4 1-6-6-1 5-4-4-5 6 2Z"/>',
+    atom: '<ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>',
+    hourglass: '<path d="M6 2.5h12M6 21.5h12M7.5 2.5c0 5 9 5.5 9 9.5s-9 4.5-9 9.5M16.5 2.5c0 5-9 5.5-9 9.5s9 4.5 9 9.5M10 18.5h4"/>',
+    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+    flame: '<path d="M12 22c-4.2 0-7-3-7-7 0-4 3-6 4-9.5 1 2 2 3 3 3 0-3 1-5.5 3-7.5 0 4.5 4 7 4 13 0 4.5-3 8-7 8Z"/><path d="M12 22c-1.8 0-3-1.4-3-3.3 0-2 1.6-3.2 2.4-5 1.6 1.3 3.6 3 3.6 5.2 0 1.8-1.2 3.1-3 3.1Z"/>',
+    mountain: '<path d="M2 20 9 7l4 6 3-4 6 11ZM7.2 10.4 9 12l2-2"/>',
+    moon: '<path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.2 6.2 0 0 0 10 10Z"/><path d="M17 3v3M15.5 4.5h3"/>',
+    sunrise: '<path d="M3 18h18M6 18a6 6 0 0 1 12 0M12 4v4M4.5 9.5l2 2M19.5 9.5l-2 2M8 21h8"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+    fork: '<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2.5 2-3 7 0 9"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',
+    gamepad: '<path d="M6.5 8h11a4.5 4.5 0 0 1 4.3 5.8l-.4 1.3a3 3 0 0 1-5 1.2L15 15H9l-1.4 1.3a3 3 0 0 1-5-1.2l-.4-1.3A4.5 4.5 0 0 1 6.5 8Z"/><path d="M7.5 10.5v3M6 12h3"/><circle cx="16" cy="11" r=".9" fill="currentColor"/><circle cx="17.8" cy="13" r=".9" fill="currentColor"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8.5 15.5l2 2 4.5-4.5"/>',
+    clock24: '<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6M20.5 3.5v4.5H16"/><path d="M12 7.5V12l3 2"/>',
+    flag: '<path d="M5 21V3.5M5 4h13l-2.5 4.5L18 13H5"/><path d="M9 4v9M13 4v9M5 8.5h11"/>',
+    anchor: '<circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V21M4.5 13c0 4.5 3.5 8 7.5 8s7.5-3.5 7.5-8M8 11h8M4.5 13 3 14.5M19.5 13l1.5 1.5"/>',
+    twin: '<rect x="3" y="6" width="7.5" height="12" rx="1.5"/><rect x="13.5" y="6" width="7.5" height="12" rx="1.5"/><path d="M6.75 9.5v5M17.25 9.5v5"/>',
+    gift: '<rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M3 13h18M12 9v12M12 9C10 5 6 4.5 6 7.5c0 1.5 2 1.5 6 1.5ZM12 9c2-4 6-4.5 6-1.5 0 1.5-2 1.5-6 1.5Z"/>',
+    fireworks: '<path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M5.3 18.7l2.8-2.8M15.9 8.1l2.8-2.8"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><path d="m12 12 8-8M17 4h3v3"/>',
+    leaf: '<path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15ZM5 19l9-9M9.5 14.5h4M12 12V8.5"/>',
+    note: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M9 9l11-2"/>',
+    crown: '<path d="M3 18 2 7l5.5 4L12 4l4.5 7L22 7l-1 11ZM3.5 21h17"/><circle cx="12" cy="14" r="1.2" fill="currentColor"/>',
+    trinity: '<circle cx="12" cy="6.5" r="3.5"/><circle cx="6.5" cy="16.5" r="3.5"/><circle cx="17.5" cy="16.5" r="3.5"/><path d="M10 9.5 8.3 13.4M14 9.5l1.7 3.9M10 16.5h4"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
+    ring: '<circle cx="12" cy="15" r="6"/><path d="M9 5.5 12 3l3 2.5L12 9Z"/>',
+    tag: '<path d="M3 12V4h8l10 10-8 8Z"/><circle cx="7.5" cy="7.5" r="1.6"/>',
+    database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    chip: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx=".8"/><path d="M9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/>',
+    books: '<path d="M4 20.5V5M7.5 20.5V3.5M11 20.5V6.5M14 20.5l4-16 3 .8-4 15.7M2.5 20.5h19"/>',
+    setsquare: '<path d="M4 20V4l16 16ZM8 16v-4l4 4ZM4 8h2M4 12h2"/>',
+    openbook: '<path d="M2 5.5c3.3-1.2 7-1 10 1v14c-3-2-6.7-2.2-10-1ZM22 5.5c-3.3-1.2-7-1-10 1v14c3-2 6.7-2.2 10-1Z"/>',
+    cup: '<path d="M4 9h13v5a6.5 6.5 0 0 1-13 0ZM17 10h2a2.5 2.5 0 0 1 0 5h-2M8 2.5c-1 2 1 3 0 4.5M12 2.5c-1 2 1 3 0 4.5M3 22h15"/>',
+    coins: '<ellipse cx="9" cy="6" rx="6" ry="2.5"/><path d="M3 6v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V6M3 10v4c0 1.4 2.7 2.5 6 2.5"/><ellipse cx="15" cy="15" rx="6" ry="2.5"/><path d="M9 15v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4"/>',
+    tail: '<path d="M12 21v-7M12 14C9 14 4 12 3 5.5c3 0 6.5 1 9 5 2.5-4 6-5 9-5-1 6.5-6 8.5-9 8.5Z"/>',
+    play: '<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/>',
+    film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7.5 4v16M16.5 4v16M3 8h4.5M3 12h4.5M3 16h4.5M16.5 8H21M16.5 12H21M16.5 16H21"/>',
+    terminal: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m6 9 3.5 3L6 15M11.5 15H18"/>',
+    plane: '<path d="M2 21h20M3 13.5l3-1.2 4 2 9.3-5.3c1.2-.7 2.7.3 1.7 1.3l-9 6.2-6.3 1Z"/>',
+    stopwatch: '<circle cx="12" cy="14" r="8"/><path d="M12 10v4l2.5 2M10 2h4M12 2v4M19 6.5 17.5 8"/>',
+    camera: '<path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="13.5" r="4"/>',
+    monitors: '<rect x="2" y="3.5" width="12" height="9" rx="1.5"/><rect x="10" y="9" width="12" height="9" rx="1.5"/><path d="M14 21.5h6M17 18v3.5"/>',
+    road: '<path d="M8.5 3 4 21M15.5 3 20 21M12 4v3M12 10v4M12 17.5v3"/>',
+    antenna: '<path d="M12 12.5v9.5M8 22h8M8.5 8.5a5 5 0 0 1 7 0M5.5 5.5a9.2 9.2 0 0 1 13 0"/><circle cx="12" cy="11" r="1.6"/>',
+    medal1: '<path d="M7 2l3 7.5M17 2l-3 7.5"/><circle cx="12" cy="15.5" r="6"/><path d="M11 13.5 12.5 12.5V18.5"/>',
+    podium: '<path d="M2 21h20M9 21V8h6v13M3 21v-7.5h6M15 21v-10h6"/><path d="m12 2.5.8 1.7 1.9.2-1.4 1.3.4 1.9L12 6.7l-1.7.9.4-1.9-1.4-1.3 1.9-.2Z"/>',
+    trophy: '<path d="M7 3.5h10v5.5a5 5 0 0 1-10 0ZM7 5.5H4a3.2 3.2 0 0 0 3 4.5M17 5.5h3a3.2 3.2 0 0 1-3 4.5M12 14v3.5M8 21h8M9 17.5h6v3.5"/>',
+    star: '<path d="m12 2 3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6l-6.3 3.5 1.5-7L2 9.3l7-.8Z"/>',
+    shield: '<path d="M12 2.5 20 5.5v6c0 5-3.5 9-8 10.5-4.5-1.5-8-5.5-8-10.5v-6Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+    castle: '<path d="M3 21V9h3V6h2.5v3H11V4.5h2V9h2.5V6H18v3h3v12ZM10 21v-5h4v5"/>',
+    knight: '<path d="M6 21h12M7.5 18h9M8.5 18c0-3.5 1-5.5 3-7.5-2.3.4-4.5-.3-5-2.3L11.5 3c4 0 7 3.5 7 8.5V18"/><circle cx="12.3" cy="7.3" r=".9" fill="currentColor"/>',
+    key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.8 12.2 9.7-9.7M16 7l3 3M13.8 9.2l2 2"/>',
+    bulb: '<path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4.2 11.4c.7.6 1.2 1.5 1.2 2.6V18h6v-1.5c0-1.1.5-2 1.2-2.6A6.5 6.5 0 0 0 12 2.5Z"/><path d="M10 9.5 12 12l2-2.5"/>',
+    rings: '<circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/>',
+    spine: '<rect x="8" y="2" width="8" height="3.6" rx="1.5"/><rect x="7.5" y="7.4" width="9" height="3.6" rx="1.5"/><rect x="7.5" y="12.8" width="9" height="3.6" rx="1.5"/><rect x="8" y="18.2" width="8" height="3.6" rx="1.5"/>',
+    shooting: '<path d="m15 3 1.5 3.1 3.4.4-2.5 2.4.6 3.4-3-1.6-3 1.6.6-3.4-2.5-2.4 3.4-.4ZM10 13 3 20M12.5 16l-4 4M7 11.5 3.5 15"/>',
+    wave: '<path d="M2 7c2-3 4-3 6 0s4 3 6 0 4-3 6 0M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/>',
+    puzzle: '<path d="M4 7.5h4a2.2 2.2 0 1 1 4 0h4v4a2.2 2.2 0 1 1 0 4v4h-4a2.2 2.2 0 1 0-4 0H4v-4a2.2 2.2 0 1 0 0-4Z"/>',
+    secret: '<path d="M9 9a3 3 0 1 1 4.6 2.5c-1 .7-1.6 1.3-1.6 2.6"/><circle cx="12" cy="18" r="1.1" fill="currentColor"/>'
+  };
+  var BADGE_STYLE = {
+    bronze: { rim: ["#FBE3C6", "#D99D66", "#8D522A", "#E9B98D", "#6E3B1B"], field: ["#5A3119", "#1F1009"], ink: "#F7D2A8", rib: ["#D79A62", "#8D522A"], ribInk: "#FFF3E4" },
+    silver: { rim: ["#FFFFFF", "#DCE0E5", "#8F969F", "#F3F5F7", "#666D76"], field: ["#46505C", "#151920"], ink: "#F1F5F9", rib: ["#E3E7EB", "#8A929B"], ribInk: "#1C2127" },
+    gold: { rim: ["#FFF8DA", "#F6D15F", "#A8741A", "#FFE9A6", "#7A520E"], field: ["#24366A", "#0A1230"], ink: "#FFDB7E", rib: ["#F1C24C", "#9A6A14"], ribInk: "#2B1D04" },
+    legend: { rim: ["#FDE68A", "#F08A5D", "#D9486B", "#8E4FD1", "#3E8ED0", "#46C2A5", "#FDE68A"], field: ["#341552", "#06030C"], ink: "#FFFFFF", rib: ["#9B5BE0", "#3E1670"], ribInk: "#FFE7A3" }
+  };
+  var badgeSeq = 0;
+  function starPoints(n, ro, ri, cx, cy, rot) {
+    var pts = [];
+    for (var i = 0; i < n * 2; i++) {
+      var r = i % 2 ? ri : ro, a = (Math.PI * i) / n + (rot || 0);
+      pts.push((cx + r * Math.sin(a)).toFixed(2) + "," + (cy - r * Math.cos(a)).toFixed(2));
+    }
+    return pts.join(" ");
+  }
+  function laurel(id, side) {
+    // leaves along the lower half of the rim, right (side 1) or left (side -1)
+    var out = "";
+    for (var i = 0; i < 6; i++) {
+      var t = 12 + i * 14, a = t * Math.PI / 180, r = 44;
+      var x = 50 + side * r * Math.cos(a), y = 46 + r * Math.sin(a);
+      out += '<ellipse cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" rx="2.4" ry="6.2" fill="url(#' + id + 'm)" stroke="rgba(0,0,0,.25)" stroke-width=".5" transform="rotate(' + (side * t + side * 18).toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"/>';
+    }
+    return out;
+  }
+  function badgeSVG(b, size, still) {
+    var id = "bg" + (++badgeSeq), st = BADGE_STYLE[b.tier] || BADGE_STYLE.bronze;
+    var live = !still && !reduceMotion && b.tier === "legend";
+    var stops = function (cols) { return cols.map(function (c, i) { return '<stop offset="' + (i / (cols.length - 1)).toFixed(3) + '" stop-color="' + c + '"/>'; }).join(""); };
+    var s = '<svg class="badge-art" viewBox="0 0 100 100" width="' + size + '" height="' + size + '" aria-hidden="true"><defs>' +
+      '<linearGradient id="' + id + 'm" x1="0" y1="0" x2="1" y2="1">' + stops(st.rim) +
+      (live ? '<animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="7s" repeatCount="indefinite"/>' : "") + '</linearGradient>' +
+      '<radialGradient id="' + id + 'f" cx=".5" cy=".32" r=".8">' + stops(st.field) + '</radialGradient>' +
+      '<linearGradient id="' + id + 'r" x1="0" y1="0" x2="0" y2="1">' + stops(st.rib) + '</linearGradient>' +
+      '<linearGradient id="' + id + 'g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="' + id + 'v" x1=".15" y1=".1" x2=".85" y2=".9"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>' +
+      '</defs>';
+    var dark = 'rgba(0,0,0,.28)';
+    if (b.tier === "bronze") {
+      s += '<circle cx="50" cy="46" r="40" fill="url(#' + id + 'm)"/>' +
+        '<circle cx="50" cy="46" r="37" fill="none" stroke="' + dark + '" stroke-width="2.2" stroke-dasharray="1.3 2.1"/>';
+    } else if (b.tier === "silver") {
+      s += '<polygon points="' + starPoints(18, 45, 40, 50, 46) + '" fill="url(#' + id + 'm)" stroke="' + dark + '" stroke-width=".6"/>' +
+        '<circle cx="50" cy="46" r="36.5" fill="none" stroke="' + dark + '" stroke-width="1.2"/>';
+    } else if (b.tier === "gold") {
+      s += '<polygon points="' + starPoints(20, 49, 34, 50, 46, Math.PI / 20) + '" fill="url(#' + id + 'm)" opacity=".95"/>' +
+        laurel(id, 1) + laurel(id, -1) +
+        '<circle cx="50" cy="46" r="38.5" fill="url(#' + id + 'm)" stroke="' + dark + '" stroke-width=".8"/>' +
+        '<circle cx="50" cy="46" r="35.5" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1"/>';
+    } else {
+      s += '<g>' + (live ? '<animateTransform attributeName="transform" type="rotate" from="0 50 46" to="360 50 46" dur="26s" repeatCount="indefinite"/>' : "") +
+        '<polygon points="' + starPoints(16, 50, 30, 50, 46) + '" fill="url(#' + id + 'm)" opacity=".9"/></g>' +
+        '<path d="M31 16 28 4l9 6 6-9 7 9 7-9 6 9 9-6-3 12Z" fill="url(#' + id + 'm)" stroke="' + dark + '" stroke-width=".7"/>' +
+        '<circle cx="50" cy="46" r="40" fill="url(#' + id + 'm)"/>' +
+        '<circle cx="50" cy="46" r="36.6" fill="none" stroke="#FFE7A0" stroke-width="1.3"/>';
+    }
+    var fr = b.tier === "bronze" ? 33.5 : 32.5;
+    s += '<circle cx="50" cy="46" r="' + fr + '" fill="url(#' + id + 'f)"/>' +
+      '<circle cx="50" cy="46" r="' + (fr + 1.1) + '" fill="none" stroke="url(#' + id + 'v)" stroke-width="2.2" transform="rotate(180 50 46)"/>' +
+      '<circle cx="50" cy="46" r="' + (b.tier === "legend" ? 39.4 : b.tier === "gold" ? 37.9 : 39.4) + '" fill="none" stroke="url(#' + id + 'v)" stroke-width="1.4"/>';
+    if (b.tier === "legend") {
+      [[30, 30, 0], [70, 34, 1.1], [36, 62, 2.2], [66, 60, 0.6]].forEach(function (p) {
+        s += '<path d="M' + p[0] + ' ' + (p[1] - 2.6) + 'l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8Z" fill="#FFF6C9" opacity=".85">' +
+          (live ? '<animate attributeName="opacity" values=".1;1;.1" dur="2.4s" begin="' + p[2] + 's" repeatCount="indefinite"/>' : "") + '</path>';
+      });
+    }
+    var gy = b.label ? 23.5 : 28;
+    var glyph = GLYPH[b.glyph] || GLYPH.star;
+    s += '<g transform="translate(32 ' + (gy + 1.3) + ') scale(1.5)" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="rgba(0,0,0,.55)">' + glyph + '</g>';
+    s += '<g transform="translate(32 ' + gy + ') scale(1.5)" fill="none" stroke="' + st.ink + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="' + st.ink + '">' + glyph + '</g>';
+    s += '<ellipse cx="50" cy="30" rx="25" ry="13" fill="url(#' + id + 'g)"/>';
+    if (b.label) {
+      var fs = b.label.length > 3 ? 11.5 : 13.5;
+      s += '<path d="M12 74 21 69.5v19L12 93l3.5-9.5Z" fill="url(#' + id + 'r)" stroke="' + dark + '" stroke-width=".6"/>' +
+        '<path d="M88 74 79 69.5v19l9 4.5-3.5-9.5Z" fill="url(#' + id + 'r)" stroke="' + dark + '" stroke-width=".6"/>' +
+        '<path d="M18 70Q50 65 82 70V89Q50 84 18 89Z" fill="url(#' + id + 'r)" stroke="' + dark + '" stroke-width=".7"/>' +
+        '<path d="M20 71.6Q50 66.8 80 71.6" fill="none" stroke="rgba(255,255,255,.45)" stroke-width=".8"/>' +
+        '<text x="50" y="' + (80.6 + fs * 0.34).toFixed(1) + '" text-anchor="middle" font-family="Hanken Grotesk, system-ui, sans-serif" font-weight="800" font-size="' + fs + '" letter-spacing=".4" fill="' + st.ribInk + '">' + b.label.replace(/[<&]/g, "") + '</text>';
+    }
+    return s + '</svg>';
+  }
+  function medal(b, size, still) {
+    var m = el("span", "medal");
+    m.dataset.tier = b.tier;
+    m.innerHTML = badgeSVG(b, size || 64, still);
+    return m;
+  }
+  function badgeChip(r) {
+    if (!r.badges) return null;
+    var c = el("span", "streak bd-count");
+    c.innerHTML = MEDAL_ICON;
+    c.appendChild(document.createTextNode(String(r.badges)));
+    c.title = T(r.badges + (r.badges === 1 ? " badge" : " badges"), r.badges + " lencana");
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
+  function shortNum(n) { return n >= 1e9 ? (n / 1e9).toFixed(n % 1e9 ? 1 : 0) + T("B", " M") : n >= 1e6 ? (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + T("M", " jt") : n >= 1e3 ? Math.round(n / 1e3) + T("K", " rb") : String(Math.round(n)); }
+  function badgeInfo(b) {
+    var p = el("div", "bd-info");
+    var big = medal(b, 112);
+    if (!b.done) big.style.cssText = "filter:grayscale(1);opacity:.45";
+    p.appendChild(big);
+    var bt = el("div", "bt", b.name);
+    bt.appendChild(el("small", "", TIER_NAME[b.tier] + (b.done ? "" : T(", locked", ", terkunci"))));
+    p.appendChild(bt);
+    var bx = el("div", "bx", b.desc + " ");
+    p.appendChild(bx);
+    p = { root: p, appendChild: function (n) { bx.appendChild(n); } };
+    if (b.done && b.earned_at) p.appendChild(document.createTextNode(T("Unlocked ", "Dibuka ") + fmtDate(b.earned_at, lastData ? lastData.tz : undefined, { day: "numeric", month: "long", year: "numeric" }) + "."));
+    else if (b.target) p.appendChild(document.createTextNode(T("Progress: ", "Progres: ") + shortNum(b.cur) + " / " + shortNum(b.target) + "."));
+    else if (!b.done) p.appendChild(document.createTextNode(T("Not unlocked yet.", "Belum terbuka.")));
+    return p.root;
+  }
+  function renderBadges(d) {
+    var sec = el("section", "bd-sec");
+    var got = d.badges.filter(function (b) { return b.done; }).length;
+    var h = el("h3", "", T("Badges", "Lencana"));
+    h.appendChild(el("span", "", got + " / " + d.badges.length));
+    sec.appendChild(h);
+    var locked = d.badges.filter(function (b) { return !b.done; }).sort(function (a, b) {
+      return (b.target ? b.cur / b.target : 0) - (a.target ? a.cur / a.target : 0);
+    });
+    var list = d.badges.filter(function (b) { return b.done; }).concat(locked);
+    var limit = showAllBadges ? list.length : got + Math.min(locked.length, Math.max(6, 12 - got % 6));
+    var grid = el("div", "bd-grid");
+    var info = el("div");
+    list.slice(0, limit).forEach(function (b) {
+      var t = el("button", "bd" + (b.done ? "" : " locked"));
+      t.type = "button";
+      t.setAttribute("aria-pressed", String(b.id === openBadge));
+      t.title = b.name + ". " + b.desc;
+      t.appendChild(medal(b, 76, !b.done));
+      if (b.done && b.earned_at && Date.now() / 1000 - b.earned_at < 3 * 86400) t.appendChild(el("span", "bd-new", T("NEW", "BARU")));
+      t.appendChild(el("span", "bn", b.name));
+      if (!b.done && b.target) {
+        var bp = el("span", "bp"), fill = el("b");
+        fill.style.setProperty("--p", Math.min(100, 100 * b.cur / b.target).toFixed(1) + "%");
+        bp.appendChild(fill);
+        t.appendChild(bp);
+      }
+      t.addEventListener("click", function () {
+        openBadge = openBadge === b.id ? null : b.id;
+        grid.querySelectorAll(".bd").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+        t.setAttribute("aria-pressed", String(openBadge === b.id));
+        info.replaceChildren();
+        if (openBadge) info.appendChild(badgeInfo(b));
+      });
+      grid.appendChild(t);
+      if (b.id === openBadge) info.appendChild(badgeInfo(b));
+    });
+    sec.appendChild(grid);
+    sec.appendChild(info);
+    if (list.length > limit || showAllBadges) {
+      var more = el("button", "bd-more", showAllBadges ? T("Show fewer", "Tampilkan lebih sedikit") : T("Show all " + list.length + " badges", "Tampilkan semua " + list.length + " lencana"));
+      more.type = "button";
+      more.addEventListener("click", function () { showAllBadges = !showAllBadges; detailSig = ""; loadDetail(false); });
+      sec.appendChild(more);
+    }
+    return sec;
+  }
+  var showAllBadges = false, openBadge = null;
   function srcPill(row) { return row && row.router ? el("span", "src", "9router") : null; }
   function activity(r) {
     // 9router has no sessions, so its people show their request count instead
@@ -748,7 +1049,8 @@
       who.appendChild(el("div", "team", row.team || ""));
       var pill = srcPill(row);
       if (pill) who.appendChild(pill);
-      var chips = el("div", "chips"), sc = streakChip(row), mc = moveChip(row);
+      var chips = el("div", "chips"), sc = streakChip(row), mc = moveChip(row), bc = badgeChip(row);
+      if (bc) chips.appendChild(bc);
       if (sc) chips.appendChild(sc);
       if (mc) chips.appendChild(mc);
       who.appendChild(chips);
@@ -829,7 +1131,8 @@
       var rp = srcPill(r);
       if (rp) nm.appendChild(rp);
       if (r.output) {
-        var rs = streakChip(r), rm = moveChip(r);
+        var rs = streakChip(r), rm = moveChip(r), rb = badgeChip(r);
+        if (rb) nm.appendChild(rb);
         if (rs) nm.appendChild(rs);
         if (rm) nm.appendChild(rm);
       }
@@ -884,6 +1187,7 @@
   }
 
   function render(data, animate) {
+    badgeNotices(data);
     var srcs = $("sources");
     if (srcs.hidden === !!data.has_router) { srcs.hidden = !data.has_router; moveThumb(srcs); }
     $("srcNote").hidden = !data.has_router;
@@ -1176,6 +1480,7 @@
   });
   var opener = null;
   function openDetail(id, from) {
+    if (id !== detailId) { showAllBadges = false; openBadge = null; }
     detailId = id; detailSig = ""; opener = from || null;
     var body = $("dtBody");
     body.replaceChildren(el("p", "dt-empty", T("Loading details…", "Memuat detail…")));
@@ -1198,7 +1503,7 @@
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) {
         if (id !== detailId) return;
-        var sig = JSON.stringify([d.period, d.output, d.input, d.cache_read, d.sessions, d.rank, d.move, d.streak, d.streak_today, d.series, d.models, d.avatar]);
+        var sig = JSON.stringify([d.period, d.output, d.input, d.cache_read, d.sessions, d.rank, d.move, d.streak, d.streak_today, d.series, d.models, d.avatar, d.badges]);
         if (sig === detailSig) return;
         detailSig = sig;
         renderDetail(d, first);
@@ -1395,6 +1700,7 @@
       frag.appendChild(ms);
     }
 
+    if (d.badges && d.badges.length) frag.appendChild(renderBadges(d));
     var foot = [];
     if (d.output && d.move) foot.push(d.move > 0
       ? T("Up " + d.move + (d.move === 1 ? " place" : " places") + " since 24 hours ago", "Naik " + d.move + " peringkat dibanding 24 jam lalu")
@@ -1416,6 +1722,91 @@
     body.replaceChildren(frag);
     if (animate) countUp(big, 0, d.output, 700, 0); else big.textContent = compact(d.output);
     if (animate || hadFocus) x.focus();
+  }
+
+  // ---------- badge gallery ----------
+  var gallery = $("gallery");
+  function openGallery() {
+    var body = $("galBody");
+    body.replaceChildren(el("p", "dt-empty", T("Loading badges…", "Memuat lencana…")));
+    if (typeof gallery.showModal === "function") gallery.showModal(); else gallery.setAttribute("open", "");
+    fetch("/api/badges", { cache: "no-store", credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (g) {
+        var frag = document.createDocumentFragment();
+        var head = el("div", "dt-head");
+        var idt = el("div");
+        var h = el("h2", "", T("Badges", "Lencana"));
+        h.id = "galTitle";
+        idt.appendChild(h);
+        var unlocked = g.badges.filter(function (b) { return b.holders.length; }).length;
+        idt.appendChild(el("div", "sub", T(g.badges.length + " badges, " + unlocked + " unlocked by someone. Click a person to see their progress.",
+          g.badges.length + " lencana, " + unlocked + " sudah dibuka seseorang. Klik nama orang untuk melihat progresnya.")));
+        head.appendChild(idt);
+        var x = el("button", "x");
+        x.type = "button"; x.setAttribute("data-close", ""); x.setAttribute("aria-label", T("Close", "Tutup"));
+        x.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>';
+        head.appendChild(x);
+        frag.appendChild(head);
+        ["legend", "gold", "silver", "bronze"].forEach(function (tier) {
+          var list = g.badges.filter(function (b) { return b.tier === tier; });
+          if (!list.length) return;
+          var sec = el("section", "gal-tier");
+          sec.appendChild(el("h3", "", TIER_NAME[tier] + " (" + list.length + ")"));
+          list.sort(function (a, b) { return b.holders.length - a.holders.length; }).forEach(function (b) {
+            var row = el("div", "gal-row" + (b.holders.length ? "" : " locked"));
+            row.appendChild(medal(b, 64, !b.holders.length));
+            var txt = el("div");
+            txt.appendChild(el("div", "gn", b.name));
+            txt.appendChild(el("div", "gd", b.desc));
+            var gh = el("div", "gh");
+            if (b.holders.length) {
+              b.holders.slice(0, 8).forEach(function (p) {
+                var a = avatar(p.name, p.avatar, 24);
+                a.title = p.name;
+                a.style.cursor = "pointer";
+                a.addEventListener("click", function () { gallery.close(); openDetail(p.id, null); });
+                gh.appendChild(a);
+              });
+              var pct = g.people ? Math.round(100 * b.holders.length / g.people) : 0;
+              gh.appendChild(el("span", "cnt", T(b.holders.length + " of " + g.people + " people (" + pct + "%)", b.holders.length + " dari " + g.people + " orang (" + pct + "%)")));
+            } else {
+              gh.appendChild(el("span", "", T("Nobody yet. Be the first.", "Belum ada yang buka. Jadilah yang pertama.")));
+            }
+            txt.appendChild(gh);
+            row.appendChild(txt);
+            sec.appendChild(row);
+          });
+          frag.appendChild(sec);
+        });
+        body.replaceChildren(frag);
+        x.focus();
+      })
+      .catch(function () { body.replaceChildren(el("p", "dt-empty", T("Could not load the badges.", "Gagal memuat lencana."))); });
+  }
+  $("badgeBtn").addEventListener("click", openGallery);
+  gallery.addEventListener("click", function (e) {
+    if (e.target === gallery || (e.target.closest && e.target.closest("[data-close]"))) gallery.close();
+  });
+
+  // ---------- live notices for new badges ----------
+  var pageStart = Date.now() / 1000 - 5, shownBadges = {};
+  function badgeNotices(data) {
+    (data.recent_badges || []).forEach(function (u) {
+      if (shownBadges[u.key] || u.at < pageStart) { shownBadges[u.key] = true; return; }
+      shownBadges[u.key] = true;
+      var t = el("div", "toast");
+      t.appendChild(medal(u, 54));
+      var p = el("div");
+      p.appendChild(el("strong", "", u.name));
+      p.appendChild(document.createTextNode(T(" unlocked ", " membuka lencana ")));
+      p.appendChild(el("strong", "", u.badge));
+      t.appendChild(p);
+      t.style.cursor = "pointer";
+      t.addEventListener("click", function () { openDetail(u.id, null); });
+      $("toasts").appendChild(t);
+      setTimeout(function () { t.classList.add("out"); setTimeout(function () { t.remove(); }, 320); }, 6000);
+    });
   }
 
   // ---------- start ----------

@@ -93,6 +93,15 @@ CREATE TABLE IF NOT EXISTS backfill_runs (
     messages    INTEGER NOT NULL,
     PRIMARY KEY (employee_id, machine)
 );
+-- Badges, kept from the first time they are reached (earned_at: when, as far as the data tells;
+-- detected_at: when the server noticed, for the live "unlocked" notices).
+CREATE TABLE IF NOT EXISTS achievements (
+    employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    badge       TEXT NOT NULL,
+    earned_at   INTEGER NOT NULL,
+    detected_at INTEGER NOT NULL,
+    PRIMARY KEY (employee_id, badge)
+);
 -- Last seen value per series, only used if a client sends cumulative temporality.
 CREATE TABLE IF NOT EXISTS cumulative_state (
     series   TEXT PRIMARY KEY,
@@ -164,6 +173,7 @@ def delete_employee(conn, employee_id, avatars_dir):
     conn.execute("DELETE FROM usage_hourly WHERE employee_id = ?", (employee_id,))
     conn.execute("DELETE FROM usage_backfill WHERE employee_id = ?", (employee_id,))
     conn.execute("DELETE FROM backfill_runs WHERE employee_id = ?", (employee_id,))
+    conn.execute("DELETE FROM achievements WHERE employee_id = ?", (employee_id,))
     conn.execute("DELETE FROM cumulative_state WHERE series LIKE ?", ("[%d,%%" % employee_id,))
     conn.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
     for ext in ("jpg", "png", "webp"):

@@ -12,7 +12,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Compile
-        run: python -m py_compile server.py manage.py lbcommon.py accessauth.py
+        run: python -m py_compile server.py manage.py lbcommon.py accessauth.py achievements.py
       - name: Shell syntax
         run: bash -n static/install.sh run.sh run-tunnel.sh
       - name: Smoke test

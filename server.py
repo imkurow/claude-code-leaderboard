@@ -7,7 +7,8 @@ One process, standard library only:
   POST /v1/metrics/9router        hourly totals read from a 9router usage log (replaces that machine's rows)
   GET  /                  leaderboard page
   GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router)
-  GET  /api/participant   one participant's detail (?id=&period=&source=): series, models, token mix
+  GET  /api/participant   one participant's detail (?id=&period=&source=): series, models, token mix, badges
+  GET  /api/badges        every badge with who holds it
   GET  /install.sh        installer for macOS / Linux
   GET  /install.ps1       installer for Windows PowerShell
   GET  /api/me            who is viewing (email from Cloudflare Access) + linked participant
@@ -36,6 +37,8 @@ from urllib.parse import parse_qs, urlparse
 from zoneinfo import ZoneInfo
 
 from accessauth import AccessVerifier
+import achievements
+from collections import defaultdict
 from lbcommon import BASE, connect, delete_employee, hash_token, install_commands, load_config, new_token
 
 CFG = load_config()
@@ -492,6 +495,139 @@ def streaks():
         return out
 
 
+# ---------------------------------------------------------------- achievements
+
+_ACH = {"at": 0.0, "eval": {}}
+_ACH_LOCK = threading.Lock()
+
+
+def refresh_achievements(force=False):
+    """Evaluate every badge for everyone (at most once a minute) and store first unlocks."""
+    now = time.time()
+    with _ACH_LOCK:
+        if not force and now - _ACH["at"] < 60:
+            return _ACH["eval"]
+        with DB_LOCK:
+            emps = {r["id"]: {"team": r["team"], "created_at": r["created_at"], "avatar": bool(r["avatar_ext"] and r["avatar_ver"])}
+                    for r in DB.execute("SELECT id, team, created_at, avatar_ext, avatar_ver FROM employees WHERE active = 1")}
+            hourly = defaultdict(list)
+            for r in DB.execute("SELECT employee_id, hour, SUM(value) AS v FROM (" + ALL_USAGE + ") WHERE metric = "
+                                "'claude_code.token.usage' AND type = 'output' GROUP BY employee_id, hour"):
+                hourly[r["employee_id"]].append((r["hour"], r["v"]))
+            totals = defaultdict(dict)
+            names = {("claude_code.token.usage", "output"): "output", ("claude_code.token.usage", "input"): "input",
+                     ("claude_code.token.usage", "cacheRead"): "cache_read", ("claude_code.token.usage", "cacheCreation"): "cache_creation",
+                     ("claude_code.cost.usage", ""): "cost", ("claude_code.session.count", ""): "sessions",
+                     ("claude_code.active_time.total", ""): "active", ("router.request.count", ""): "requests"}
+            for r in DB.execute("SELECT employee_id, metric, type, SUM(value) AS v FROM (" + ALL_USAGE + ") GROUP BY employee_id, metric, type"):
+                key = names.get((r["metric"], r["type"])) or names.get((r["metric"], ""))
+                if key:
+                    totals[r["employee_id"]][key] = totals[r["employee_id"]].get(key, 0) + r["v"]
+            models = defaultdict(dict)
+            for r in DB.execute("SELECT employee_id, model, SUM(value) AS v FROM (" + ALL_USAGE + ") WHERE metric = "
+                                "'claude_code.token.usage' AND type = 'output' AND model != '' GROUP BY employee_id, model"):
+                models[r["employee_id"]][r["model"]] = r["v"]
+            machines = defaultdict(lambda: {"computers": 0, "router": False})
+            for r in DB.execute("SELECT employee_id, machine FROM backfill_runs"):
+                if r["machine"].startswith(ROUTER_PREFIX):
+                    machines[r["employee_id"]]["router"] = True
+                else:
+                    machines[r["employee_id"]]["computers"] += 1
+            have = {(r["employee_id"], r["badge"]) for r in DB.execute("SELECT employee_id, badge FROM achievements")}
+        result = achievements.evaluate(emps, hourly, totals, models, machines, TZ, now)
+        first_run = not have
+        new = [(e, b, int(v["at"] or now), 0 if first_run else int(now))
+               for e, badges in result.items() for b, v in badges.items() if v["done"] and (e, b) not in have]
+        if new:
+            with DB_LOCK:
+                DB.execute("BEGIN IMMEDIATE")
+                try:
+                    DB.executemany("INSERT OR IGNORE INTO achievements(employee_id, badge, earned_at, detected_at) VALUES (?,?,?,?)", new)
+                    DB.execute("COMMIT")
+                except Exception:
+                    DB.execute("ROLLBACK")
+                    raise
+            if not first_run:
+                log("achievements: %d unlocked (%s)" % (len(new), ", ".join("%s:%s" % (e, b) for e, b, _, _ in new[:10])))
+        _ACH["at"], _ACH["eval"] = now, result
+        return result
+
+
+def achievement_loop():
+    while True:
+        try:
+            refresh_achievements(force=True)
+        except Exception as exc:
+            log("achievements failed: %r" % exc)
+        time.sleep(60)
+
+
+def badge_view(badge_id, done):
+    """A badge in the viewer's language; a secret one nobody sees until it is unlocked."""
+    v = achievements.info(badge_id, lang())
+    if v["secret"] and not done:
+        v.update(glyph="secret", label="", name="???", desc=T("A secret badge. Keep going.", "Lencana rahasia. Terus pakai Claude."))
+    return v
+
+
+def badges_of(employee_id):
+    """Every badge for the detail card: unlocked ones with their date, the rest with progress."""
+    progress = refresh_achievements().get(employee_id, {})
+    with DB_LOCK:
+        got = {r["badge"]: r["earned_at"] for r in DB.execute(
+            "SELECT badge, earned_at FROM achievements WHERE employee_id = ?", (employee_id,))}
+    out = []
+    for b in achievements.CATALOG:
+        bid = b[0]
+        p = progress.get(bid, {})
+        v = badge_view(bid, bid in got)
+        v.update(done=bid in got, earned_at=got.get(bid))
+        if bid not in got and p.get("target") and not v["secret"]:
+            v.update(cur=p.get("cur"), target=p.get("target"))
+        out.append(v)
+    order = {t: i for i, t in enumerate(achievements.TIERS)}
+    out.sort(key=lambda v: (not v["done"], -(v["earned_at"] or 0) if v["done"] else 0,
+                            order[v["tier"]] if not v["done"] else 0))
+    return out
+
+
+def badge_board():
+    """All badges with who holds them, for the badge gallery."""
+    with DB_LOCK:
+        people = DB.execute("SELECT COUNT(*) FROM employees WHERE active = 1").fetchone()[0]
+        rows = DB.execute(
+            "SELECT a.badge, a.earned_at, e.id, e.name, e.avatar_ext, e.avatar_ver FROM achievements a "
+            "JOIN employees e ON e.id = a.employee_id WHERE e.active = 1 ORDER BY a.earned_at").fetchall()
+    holders = defaultdict(list)
+    for r in rows:
+        holders[r["badge"]].append({"id": r["id"], "name": r["name"], "avatar": avatar_url(r), "earned_at": r["earned_at"]})
+    out = []
+    for b in achievements.CATALOG:
+        v = badge_view(b[0], bool(holders.get(b[0])))
+        v.update(holders=holders.get(b[0], []))
+        out.append(v)
+    return {"people": people, "badges": out}
+
+
+def recent_unlocks():
+    """Badges noticed in the last 10 minutes, for the live notices on the board."""
+    with DB_LOCK:
+        rows = DB.execute(
+            "SELECT a.badge, a.detected_at, e.id, e.name FROM achievements a JOIN employees e ON e.id = a.employee_id "
+            "WHERE a.detected_at >= ? AND e.active = 1 ORDER BY a.detected_at", (int(time.time()) - 600,)).fetchall()
+    out = []
+    for r in rows:
+        v = badge_view(r["badge"], True)
+        out.append({"key": "%d:%s" % (r["id"], r["badge"]), "id": r["id"], "name": r["name"],
+                    "glyph": v["glyph"], "label": v["label"], "badge": v["name"], "tier": v["tier"], "at": r["detected_at"]})
+    return out
+
+
+def badge_counts():
+    with DB_LOCK:
+        return {r[0]: r[1] for r in DB.execute("SELECT employee_id, COUNT(*) FROM achievements GROUP BY employee_id")}
+
+
 ALL_USAGE = (
     "SELECT employee_id, hour, metric, type, model, value FROM usage_hourly "
     "UNION ALL SELECT employee_id, hour, metric, type, model, value FROM usage_backfill"
@@ -530,13 +666,15 @@ def leaderboard(period, me_id=None, source="all"):
         if hit is None or now - hit[0] >= 1.0:
             hit = (now, _leaderboard(period))
             _LB_CACHE[period] = hit
-    data = hit[1]
+    data = dict(hit[1], recent_badges=recent_unlocks(), badge_total=len(achievements.CATALOG))
+    counts = badge_counts()
     rows = []
     for r in data["rows"]:
         if source == "claude" and r["router"] or source == "9router" and not r["router"]:
             continue
         r = dict(r)
         r["me"] = r["id"] == me_id
+        r["badges"] = counts.get(r["id"], 0)
         rows.append(r)
     if source != "all":
         rank_rows(rows)
@@ -601,6 +739,7 @@ def participant(employee_id, period, me_id=None, source="all"):
             buckets[k] += h["v"]
         by_hour_of_day[datetime.fromtimestamp(h["hour"], TZ).hour] += h["v"]
     total_models = sum(m["v"] for m in models) or 1
+    badge_list = badges_of(employee_id)
     out = dict(row)
     out.pop("id", None)
     out.update({
@@ -617,6 +756,8 @@ def participant(employee_id, period, me_id=None, source="all"):
         "active_days": len({datetime.fromtimestamp(h["hour"], TZ).date() for h in hours if h["v"] > 0}),
         "peak_hour": max(range(24), key=lambda i: by_hour_of_day[i]) if any(by_hour_of_day) else None,
         "models": [{"model": m["model"], "output": int(m["v"]), "share": m["v"] / total_models} for m in models if m["v"] > 0],
+        "badges": badge_list,
+        "badge_total": len(badge_list),
     })
     return out
 
@@ -1079,7 +1220,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_template("install.sh", "text/x-shellscript; charset=utf-8")
             if path == "/install.ps1":
                 return self.send_template("install.ps1", "text/plain; charset=utf-8")
-            if path in ("/", "/index.html", "/join", "/api/leaderboard", "/api/participant"):
+            if path in ("/", "/index.html", "/join", "/api/leaderboard", "/api/participant", "/api/badges"):
                 if CFG["LB_VIEW_KEY"] and "key" in qs and path in ("/", "/index.html", "/join"):
                     if hmac.compare_digest(qs["key"][0], CFG["LB_VIEW_KEY"]):
                         return self.send(302, b"", "text/plain", {
@@ -1105,6 +1246,8 @@ class Handler(BaseHTTPRequestHandler):
                     if data is None:
                         return self.send_json(404, {"error": "not found"})
                     return self.send_json(200, data, {"Cache-Control": "no-store"})
+                if path == "/api/badges":
+                    return self.send_json(200, badge_board(), {"Cache-Control": "no-store"})
                 if path == "/api/leaderboard":
                     period = (qs.get("period") or ["7d"])[0]
                     if period not in PERIODS:
@@ -1320,6 +1463,7 @@ def main():
     server = ThreadingHTTPServer((CFG["LB_HOST"], int(CFG["LB_PORT"])), Handler)
     server.daemon_threads = True
     log("listening on %s:%s db=%s" % (CFG["LB_HOST"], CFG["LB_PORT"], CFG["LB_DB"]))
+    threading.Thread(target=achievement_loop, name="achievements", daemon=True).start()
     server.serve_forever()
 
 
