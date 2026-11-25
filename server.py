@@ -11,6 +11,7 @@ One process, standard library only:
   GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router|jrouter)
   GET  /api/participant   one participant's detail (?id=&period=&source=): series, models, token mix, badges
   GET  /api/badges        every badge with who holds it
+  GET  /api/feed          who is active now and recent events (badges, overtakes, streaks, joins)
   GET  /install.sh        installer for macOS / Linux
   GET  /install.ps1       installer for Windows PowerShell
   GET  /api/me            who is viewing (email from Cloudflare Access) + linked participant
@@ -562,6 +563,17 @@ def refresh_achievements(force=False):
                     raise
             if not first_run:
                 log("achievements: %d unlocked (%s)" % (len(new), ", ".join("%s:%s" % (e, b) for e, b, _, _ in new[:10])))
+                per = defaultdict(list)
+                for e, b, _, at in new:
+                    per[e].append(b)
+                order = {t: i for i, t in enumerate(achievements.TIERS)}
+                for e, bs in per.items():
+                    if len(bs) <= 2:
+                        for b in bs:
+                            record_event("badge", e, data={"badge": b})
+                    else:   # a first sync unlocks many at once: one line, led by the grandest
+                        best = max(bs, key=lambda b: order[achievements.BY_ID[b][1]])
+                        record_event("badges", e, data={"badge": best, "count": len(bs)})
         _ACH["at"], _ACH["eval"] = now, result
         return result
 
@@ -572,7 +584,75 @@ def achievement_loop():
             refresh_achievements(force=True)
         except Exception as exc:
             log("achievements failed: %r" % exc)
+        try:
+            watch_board()
+        except Exception as exc:
+            log("feed failed: %r" % exc)
         time.sleep(60)
+
+
+# ---------------------------------------------------------------- live feed
+
+def record_event(kind, employee_id, other_id=None, data=None, ts=None):
+    with DB_LOCK:
+        DB.execute("INSERT INTO events(ts, kind, employee_id, other_id, data) VALUES (?,?,?,?,?)",
+                   (int(ts or time.time()), kind, employee_id, other_id, json.dumps(data or {})))
+
+
+_PREV_TODAY = {}
+
+
+def watch_board():
+    """Once a minute: who overtook whom on today's board, and whose streak grew today."""
+    global _PREV_TODAY
+    rows = [r for r in _leaderboard("today")["rows"] if r["output"] > 0]
+    now_rank = {r["id"]: r["rank"] for r in rows}
+    if _PREV_TODAY:
+        moves = []
+        for a in rows:
+            for b in rows:
+                pa, pb = _PREV_TODAY.get(a["id"]), _PREV_TODAY.get(b["id"])
+                if a["id"] != b["id"] and pa and pb and pa > pb and now_rank[a["id"]] < now_rank[b["id"]]:
+                    moves.append((now_rank[a["id"]], a["id"], b["id"]))
+        for rank, a, b in sorted(moves)[:3]:   # the few that matter, never a flood
+            record_event("overtake", a, b, {"rank": rank})
+    _PREV_TODAY = now_rank
+    today = int(datetime.now(TZ).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+    with DB_LOCK:
+        done = {r[0] for r in DB.execute("SELECT employee_id FROM events WHERE kind = 'streak' AND ts >= ?", (today,))}
+    for e, st in streaks().items():
+        if st["today"] and st["streak"] >= 3 and e not in done:
+            record_event("streak", e, data={"days": st["streak"]})
+    with DB_LOCK:
+        DB.execute("DELETE FROM events WHERE ts < ?", (int(time.time()) - 30 * 86400,))
+
+
+def feed(limit=25):
+    """Who is active now and what happened lately, for the board's side panels."""
+    now = int(time.time())
+    with DB_LOCK:
+        people = {r["id"]: r for r in DB.execute(
+            "SELECT id, name, team, harness, last_seen, avatar_ext, avatar_ver FROM employees WHERE active = 1")}
+        hour_out = {r[0]: r[1] for r in DB.execute(
+            "SELECT employee_id, SUM(value) FROM (" + ALL_USAGE + ") WHERE metric = 'claude_code.token.usage' "
+            "AND type = 'output' AND hour >= ? GROUP BY employee_id", (now - now % 3600,))}
+        rows = DB.execute("SELECT ts, kind, employee_id, other_id, data FROM events ORDER BY ts DESC, id DESC LIMIT ?", (limit,)).fetchall()
+    who = lambda i: {"id": i, "name": people[i]["name"], "avatar": avatar_url(people[i])} if i in people else None
+    active = sorted(({**who(i), "team": p["team"], "harness": p["harness"], "last_seen": p["last_seen"],
+                      "hour_output": int(hour_out.get(i, 0))}
+                     for i, p in people.items() if p["last_seen"] and now - p["last_seen"] < 15 * 60),
+                    key=lambda a: -a["last_seen"])
+    events = []
+    for r in rows:
+        if r["employee_id"] not in people:
+            continue
+        ev = {"ts": r["ts"], "kind": r["kind"], "who": who(r["employee_id"]), "data": json.loads(r["data"] or "{}")}
+        if r["other_id"]:
+            ev["other"] = who(r["other_id"])
+        if r["kind"] in ("badge", "badges") and ev["data"].get("badge") in achievements.BY_ID:
+            ev["badge"] = badge_view(ev["data"]["badge"], True)
+        events.append(ev)
+    return {"now": now, "active": active, "events": events}
 
 
 def badge_view(badge_id, done):
@@ -681,6 +761,7 @@ def leaderboard(period, me_id=None, source="all"):
             hit = (now, _leaderboard(period))
             _LB_CACHE[period] = hit
     data = dict(hit[1], recent_badges=recent_unlocks(), badge_total=len(achievements.CATALOG))
+    by_emp = data.pop("_models")
     counts = badge_counts()
     rows = []
     for r in data["rows"]:
@@ -690,6 +771,11 @@ def leaderboard(period, me_id=None, source="all"):
         r["me"] = r["id"] == me_id
         r["badges"] = counts.get(r["id"], 0)
         rows.append(r)
+    mix = defaultdict(float)
+    for r in rows:
+        for m, v in by_emp.get(r["id"], {}).items():
+            mix[m] += v
+    data["top_models"] = [{"model": m, "output": int(v)} for m, v in sorted(mix.items(), key=lambda x: -x[1])[:5] if v > 0]
     if source != "all":
         rank_rows(rows)
         add_moves(rows, data["compared"])
@@ -815,6 +901,9 @@ def _leaderboard(period):
                 "WHERE metric='claude_code.token.usage' AND type='output' AND hour >= ? AND hour < ? "
                 "GROUP BY employee_id", window)}
     streak = streaks()
+    by_emp = defaultdict(dict)
+    for m in models:
+        by_emp[m["employee_id"]][m["model"]] = m["v"]
     top_model = {}
     for m in models:
         cur = top_model.get(m["employee_id"])
@@ -856,6 +945,7 @@ def _leaderboard(period):
         "generated_at": int(time.time()),
         "tz": CFG["LB_TZ"],
         "totals": totals,
+        "_models": by_emp,
         "has_router": any(x["router"] for x in out),
         "routers": sorted({k for x in out for k in x["router"].split(",") if k}),
         "compared": bool(window),
@@ -1009,6 +1099,7 @@ def admin_action(actor, method, parts, body, base_url):
             )
             new_id = cur.lastrowid
         log("admin %s: added %s (%s, %s)" % (actor, f["name"], new_id, f["harness"]))
+        record_event("join", new_id, data={"harness": f["harness"]})
         return {"id": new_id, "name": f["name"], "harness": f["harness"], "token": token, "commands": install_commands(CFG, token, base_url)}
 
     if len(parts) < 3 or parts[0] != "participants" or not parts[1].isdigit() or method != "POST":
@@ -1251,7 +1342,7 @@ class Handler(BaseHTTPRequestHandler):
                 # under /v1/metrics so the installers fetch it through the same Access app as telemetry
                 with open(os.path.join(STATIC, "router-sync.js"), encoding="utf-8") as fh:
                     return self.send(200, fh.read(), "text/javascript; charset=utf-8", {"Cache-Control": "no-store"})
-            if path in ("/", "/index.html", "/join", "/api/leaderboard", "/api/participant", "/api/badges"):
+            if path in ("/", "/index.html", "/join", "/api/leaderboard", "/api/participant", "/api/badges", "/api/feed"):
                 if CFG["LB_VIEW_KEY"] and "key" in qs and path in ("/", "/index.html", "/join"):
                     if hmac.compare_digest(qs["key"][0], CFG["LB_VIEW_KEY"]):
                         return self.send(302, b"", "text/plain", {
@@ -1277,6 +1368,8 @@ class Handler(BaseHTTPRequestHandler):
                     if data is None:
                         return self.send_json(404, {"error": "not found"})
                     return self.send_json(200, data, {"Cache-Control": "no-store"})
+                if path == "/api/feed":
+                    return self.send_json(200, feed(), {"Cache-Control": "no-store"})
                 if path == "/api/badges":
                     return self.send_json(200, badge_board(), {"Cache-Control": "no-store"})
                 if path == "/api/leaderboard":

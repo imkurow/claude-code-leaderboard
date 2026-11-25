@@ -102,6 +102,16 @@ CREATE TABLE IF NOT EXISTS achievements (
     detected_at INTEGER NOT NULL,
     PRIMARY KEY (employee_id, badge)
 );
+-- What happened on the board, for the live feed: badge unlocks, overtakes, streaks, people joining.
+CREATE TABLE IF NOT EXISTS events (
+    id          INTEGER PRIMARY KEY,
+    ts          INTEGER NOT NULL,
+    kind        TEXT NOT NULL,
+    employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    other_id    INTEGER,
+    data        TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS events_ts ON events(ts);
 -- Last seen value per series, only used if a client sends cumulative temporality.
 CREATE TABLE IF NOT EXISTS cumulative_state (
     series   TEXT PRIMARY KEY,
@@ -194,6 +204,7 @@ def delete_employee(conn, employee_id, avatars_dir):
     conn.execute("DELETE FROM usage_backfill WHERE employee_id = ?", (employee_id,))
     conn.execute("DELETE FROM backfill_runs WHERE employee_id = ?", (employee_id,))
     conn.execute("DELETE FROM achievements WHERE employee_id = ?", (employee_id,))
+    conn.execute("DELETE FROM events WHERE employee_id = ? OR other_id = ?", (employee_id, employee_id))
     conn.execute("DELETE FROM cumulative_state WHERE series LIKE ?", ("[%d,%%" % employee_id,))
     conn.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
     for ext in ("jpg", "png", "webp"):

@@ -8,6 +8,7 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 
 - **Podium and live ranking.** Output tokens per person for today, 7 days, 30 days, this month or all time. The page refreshes every second.
 - **Badges.** 73 achievements in four tiers (bronze, silver, gold, legend), drawn as medals: milestones, streaks, night owls and early birds, model and cache feats, daily, weekly and monthly titles, and a few secret ones. Each card shows what someone has unlocked and how close they are to the next, a gallery lists who holds what, and the board pops a notice when someone unlocks one.
+- **Side panels.** On wide screens the board gets a Live panel (who is active now, with their output this hour, and a feed of overtakes on today's board, streaks, badge unlocks and new people) and a Highlights panel (top teams, longest streaks, the model mix and the latest badges) that follow the chosen period and filter. On smaller screens they sit under the ranking.
 - **Rank changes and streaks.** Arrows show who moved up or down against 24 hours earlier, and a flame counts days in a row.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
 - **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.

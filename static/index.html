@@ -437,6 +437,71 @@
   .bp-rare .avs .av { margin-left: -6px; box-shadow: 0 0 0 2px var(--paper); cursor: pointer; }
   .bp-rare .tag { padding: 1px 9px; border-radius: 999px; font: 700 11px/1.6 var(--text); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: color-mix(in oklab, var(--glow) 28%, transparent); }
   @media (prefers-reduced-motion: reduce) { .toast, .toast.out, .bp-art .medal, .bp-rays { animation: none; } .medal { transition: none; } }
+
+  /* ---------- side panels: Live (left) and Highlights (right) ---------- */
+  .shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "main" "rails"; }
+  .shell > .wrap { grid-area: main; width: 100%; }
+  .rails { grid-area: rails; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 980px; margin: -32px auto 56px; padding: 0 16px; }
+  .rail { display: grid; gap: 16px; align-content: start; }
+  .rail-card { padding: 16px 16px 14px; border-radius: 18px; background: var(--paper); border: 1px solid var(--rule); box-shadow: 0 18px 40px -30px var(--shadow); }
+  .rail-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font: 600 12px/1.3 var(--text); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .rail-card h2 .sub { margin-left: auto; font-weight: 500; letter-spacing: 0; text-transform: none; }
+  .live-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #3FA56B; flex: none; }
+  .live-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #3FA56B; animation: live-ring 2.4s ease-out infinite; }
+  @keyframes live-ring { 0% { transform: scale(1); opacity: .55; } 70%, 100% { transform: scale(3); opacity: 0; } }
+  .rail-empty { margin: 0; font-size: 13.5px; color: var(--ink-3); }
+  /* who is active */
+  .act { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 4px; border-radius: 10px; cursor: pointer; }
+  .act:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
+  .act .who-av { position: relative; display: inline-grid; }
+  .act .who-av .dot { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #3FA56B; box-shadow: 0 0 0 2px var(--paper); }
+  .act .who-av .dot.idle { background: var(--silver); }
+  .act .nm { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .act .mt { font-size: 12.5px; color: var(--ink-3); }
+  .act .rate { font: 500 14px/1 var(--display); font-variant-numeric: tabular-nums; color: var(--ink-2); text-align: right; }
+  .act .rate small { display: block; margin-top: 3px; font: 500 11px/1 var(--text); color: var(--ink-3); }
+  /* what happened */
+  .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .ev { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; padding: 7px 4px; border-radius: 10px; font-size: 13.5px; line-height: 1.4; color: var(--ink-2); cursor: pointer; }
+  .ev:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
+  .ev strong { color: var(--ink); font-weight: 600; }
+  .ev .ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in oklab, var(--ink) 6%, transparent); color: var(--ink-2); }
+  .ev .ic svg { width: 15px; height: 15px; }
+  .ev .ic.up { color: var(--up); background: color-mix(in oklab, var(--up) 14%, transparent); }
+  .ev .ic.fire { color: var(--gold); background: color-mix(in oklab, var(--gold) 14%, transparent); }
+  .ev .ic.join { color: var(--signal); background: color-mix(in oklab, var(--signal) 14%, transparent); }
+  .ev .ic.medal-ic { background: none; }
+  .ev .when { display: block; margin-top: 1px; font-size: 12px; color: var(--ink-3); }
+  .ev.fresh { animation: ev-in .6s var(--ease-enter) both; }
+  @keyframes ev-in { from { opacity: 0; transform: translateX(-8px); background: color-mix(in oklab, var(--gold) 14%, transparent); } }
+  /* highlights */
+  .hl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; padding: 6px 0; font-size: 13.5px; }
+  .hl-row + .hl-row { border-top: 1px solid color-mix(in oklab, var(--rule) 60%, transparent); }
+  .hl-row .k { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hl-row .k small { font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+  .hl-row .v { font: 500 14px/1 var(--display); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .hl-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: color-mix(in oklab, var(--rule) 70%, transparent); overflow: hidden; }
+  .hl-bar b { display: block; height: 100%; width: var(--p); border-radius: 2px; background: var(--ink-3); }
+  .hl-row:first-of-type .hl-bar b { background: var(--gold); }
+  .hl-streak { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 10px; cursor: pointer; }
+  .hl-streak:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
+  .hl-streak .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hl-streak .streak { margin: 0; font-size: 14px; }
+  .hl-badges { display: grid; gap: 4px; }
+  .hl-badge { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px; border-radius: 10px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+  .hl-badge:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); }
+  .hl-badge strong { display: block; color: var(--ink); font-weight: 600; }
+  @media (min-width: 1500px) {
+    .shell { grid-template-columns: minmax(0, 1fr) 980px minmax(0, 1fr); grid-template-areas: "left main right"; column-gap: 24px; }
+    .rails { display: contents; }
+    .rail { position: sticky; top: 24px; width: min(260px, 100%); margin-top: 40px; }
+    .rail-left { grid-area: left; justify-self: end; }
+    .rail-right { grid-area: right; justify-self: start; }
+  }
+  @media (max-width: 760px) {
+    .rails { grid-template-columns: minmax(0, 1fr); margin-top: -24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .live-dot::after, .ev.fresh { animation: none; } }
   /* ---------- profile dialog ---------- */
   dialog {
     width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--rule); border-radius: 18px;
@@ -586,6 +651,7 @@
 </style>
 </head>
 <body>
+<div class="shell">
 <div class="wrap">
   <header class="top">
     <div>
@@ -631,6 +697,38 @@
     <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <span id="srcNote" hidden>⟦For people on another harness (9router, JRouter, Hermes, OpenRouter), tokens and costs come from that harness's own records; OpenRouter's arrive a day later.‖Untuk yang pakai harness lain (9router, JRouter, Hermes, OpenRouter), token dan biaya diambil dari catatan harness itu sendiri; data OpenRouter masuk sehari kemudian.⟧</span> <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
   </p>
 </div>
+<div class="rails">
+  <aside class="rail rail-left" aria-label="⟦Live‖Live⟧">
+    <section class="rail-card">
+      <h2><span class="live-dot" aria-hidden="true"></span>⟦Active now‖Sedang aktif⟧<span class="sub" id="actCount"></span></h2>
+      <div id="activeList"><p class="rail-empty">⟦Loading…‖Memuat…⟧</p></div>
+    </section>
+    <section class="rail-card">
+      <h2>⟦What happened‖Kabar terbaru⟧</h2>
+      <ul class="feed" id="feedList"><li class="rail-empty">⟦Loading…‖Memuat…⟧</li></ul>
+    </section>
+  </aside>
+  <aside class="rail rail-right" aria-label="⟦Highlights‖Sorotan⟧">
+    <section class="rail-card">
+      <h2>⟦Top teams‖Tim teratas⟧<span class="sub" id="teamPeriod"></span></h2>
+      <div id="teamList"></div>
+    </section>
+    <section class="rail-card">
+      <h2>⟦Longest streaks‖Streak terpanjang⟧</h2>
+      <div id="streakList"></div>
+    </section>
+    <section class="rail-card">
+      <h2>⟦Models in use‖Model yang dipakai⟧<span class="sub" id="modelPeriod"></span></h2>
+      <div id="modelList"></div>
+    </section>
+    <section class="rail-card">
+      <h2>⟦Latest badges‖Lencana terbaru⟧</h2>
+      <div class="hl-badges" id="badgeList"></div>
+    </section>
+  </aside>
+</div>
+</div>
+
 
 <dialog id="meDialog" aria-labelledby="dlgTitle">
   <div class="dlg">
@@ -1308,6 +1406,7 @@
 
   function render(data, animate) {
     badgeNotices(data);
+    renderHighlights(data);
     var srcs = $("sources");
     var kinds = (data.routers || []).join(",");
     if (srcs.hidden === !!data.has_router || srcs.dataset.kinds !== kinds) {
@@ -1947,10 +2046,194 @@
     });
   }
 
+  // ---------- side panels ----------
+  var PERIOD_SHORT = { today: T("today", "hari ini"), "7d": T("7 days", "7 hari"), "30d": T("30 days", "30 hari"), month: T("this month", "bulan ini"), all: T("all time", "semua") };
+  var ICON_UP = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l4-4 3 3 4-5"/><path d="M10 5h4v4"/></svg>';
+  var ICON_JOIN = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="5.5" r="2.8"/><path d="M2 14c.6-2.8 2.6-4.2 5-4.2M12.5 9v5M10 11.5h5"/></svg>';
+  function since(ts) {
+    var d = Math.max(0, Date.now() / 1000 - ts);
+    if (d < 60) return T("just now", "barusan");
+    if (d < 3600) return Math.round(d / 60) + T(" min ago", " mnt lalu");
+    if (d < 86400) return Math.round(d / 3600) + T(" h ago", " jam lalu");
+    return Math.round(d / 86400) + T(" d ago", " hari lalu");
+  }
+  function strongName(n) { return el("strong", "", n); }
+  var HARNESS_LABEL = { "claude-code": "Claude Code", "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter" };
+
+  function renderActive(f) {
+    var box = $("activeList");
+    box.replaceChildren();
+    $("actCount").textContent = f.active.length ? String(f.active.length) : "";
+    if (!f.active.length) { box.appendChild(el("p", "rail-empty", T("Nobody in the last 15 minutes.", "Belum ada yang aktif 15 menit terakhir."))); return; }
+    f.active.slice(0, 8).forEach(function (a) {
+      var row = el("div", "act");
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+      var av = el("span", "who-av");
+      av.appendChild(avatar(a.name, a.avatar, 32));
+      av.appendChild(el("span", "dot" + (f.now - a.last_seen < 300 ? "" : " idle")));
+      row.appendChild(av);
+      var mid = el("div");
+      mid.appendChild(el("div", "nm", a.name));
+      mid.appendChild(el("div", "mt", ago(a.last_seen) + (a.harness && a.harness !== "claude-code" ? " · " + HARNESS_LABEL[a.harness] : "")));
+      row.appendChild(mid);
+      var rate = el("div", "rate", a.hour_output ? "+" + compact(a.hour_output) : "");
+      if (a.hour_output) rate.appendChild(el("small", "", T("this hour", "jam ini")));
+      row.appendChild(rate);
+      row.addEventListener("click", function () { openDetail(a.id, null); });
+      row.addEventListener("keydown", function (e) { if (e.key === "Enter") openDetail(a.id, null); });
+      box.appendChild(row);
+    });
+  }
+
+  var feedSeen = null;
+  function renderFeed(f) {
+    var list = $("feedList");
+    var first = feedSeen === null;
+    var seen = feedSeen || {};
+    list.replaceChildren();
+    if (!f.events.length) { list.appendChild(el("li", "rail-empty", T("Nothing yet. Overtakes, streaks and badges show up here.", "Belum ada. Salip-menyalip, streak, dan lencana muncul di sini."))); feedSeen = {}; return; }
+    var now = {};
+    f.events.slice(0, 12).forEach(function (e) {
+      var key = e.ts + e.kind + e.who.id + (e.other ? e.other.id : "") + (e.data.badge || "");
+      now[key] = true;
+      var li = el("li", "ev" + (!first && !seen[key] ? " fresh" : ""));
+      var ic = el("span", "ic"), txt = el("div");
+      if (e.kind === "badges" && e.badge) {
+        ic.className = "ic medal-ic";
+        ic.appendChild(medal(e.badge, 34, true));
+        txt.appendChild(strongName(e.who.name));
+        txt.appendChild(document.createTextNode(T(" unlocked ", " membuka ")));
+        txt.appendChild(strongName(e.data.count + T(" badges", " lencana")));
+        txt.appendChild(document.createTextNode(T(", including ", ", termasuk ")));
+        txt.appendChild(strongName(e.badge.name));
+        li.addEventListener("click", function () { openDetail(e.who.id, null); });
+      } else if (e.kind === "badge" && e.badge) {
+        ic.className = "ic medal-ic";
+        ic.appendChild(medal(e.badge, 34, true));
+        txt.appendChild(strongName(e.who.name));
+        txt.appendChild(document.createTextNode(T(" unlocked ", " membuka ")));
+        txt.appendChild(strongName(e.badge.name));
+        li.addEventListener("click", function () { openBadgePop(Object.assign({}, e.badge, { done: true, earned_at: e.ts }), { name: e.who.name, me: false }); });
+      } else if (e.kind === "overtake" && e.other) {
+        ic.className = "ic up"; ic.innerHTML = ICON_UP;
+        txt.appendChild(strongName(e.who.name));
+        txt.appendChild(document.createTextNode(T(" overtook ", " menyalip ")));
+        txt.appendChild(strongName(e.other.name));
+        txt.appendChild(document.createTextNode(e.data.rank === 1 ? T(" and took #1 today", " dan merebut #1 hari ini") : T(" for #" + e.data.rank + " today", " ke #" + e.data.rank + " hari ini")));
+        li.addEventListener("click", function () { openDetail(e.who.id, null); });
+      } else if (e.kind === "streak") {
+        ic.className = "ic fire"; ic.innerHTML = FLAME;
+        txt.appendChild(strongName(e.who.name));
+        txt.appendChild(document.createTextNode(T(" is on a " + e.data.days + "-day streak", " streak " + e.data.days + " hari")));
+        li.addEventListener("click", function () { openDetail(e.who.id, null); });
+      } else if (e.kind === "join") {
+        ic.className = "ic join"; ic.innerHTML = ICON_JOIN;
+        txt.appendChild(strongName(e.who.name));
+        txt.appendChild(document.createTextNode(T(" joined", " bergabung") + (e.data.harness && e.data.harness !== "claude-code" ? T(" with ", " lewat ") + HARNESS_LABEL[e.data.harness] : "")));
+        li.addEventListener("click", function () { openDetail(e.who.id, null); });
+      } else return;
+      txt.appendChild(el("span", "when", since(e.ts)));
+      li.appendChild(ic);
+      li.appendChild(txt);
+      list.appendChild(li);
+    });
+    feedSeen = now;
+  }
+
+  function renderLatestBadges(f) {
+    var box = $("badgeList");
+    box.replaceChildren();
+    var got = f.events.filter(function (e) { return (e.kind === "badge" || e.kind === "badges") && e.badge; }).slice(0, 3);
+    if (!got.length) { box.appendChild(el("p", "rail-empty", T("No new badges lately.", "Belum ada lencana baru."))); return; }
+    got.forEach(function (e) {
+      var row = el("div", "hl-badge");
+      row.appendChild(medal(e.badge, 40, true));
+      var t = el("div");
+      t.appendChild(el("strong", "", e.badge.name));
+      t.appendChild(document.createTextNode(e.who.name + ", " + since(e.ts)));
+      row.appendChild(t);
+      row.addEventListener("click", function () { openBadgePop(Object.assign({}, e.badge, { done: true, earned_at: e.ts }), { name: e.who.name, me: false }); });
+      box.appendChild(row);
+    });
+  }
+
+  function renderHighlights(data) {
+    var active = data.rows.filter(function (r) { return r.output > 0; });
+    $("teamPeriod").textContent = PERIOD_SHORT[data.period];
+    $("modelPeriod").textContent = PERIOD_SHORT[data.period];
+    // teams
+    var teams = {};
+    active.forEach(function (r) {
+      var k = r.team || T("No team", "Tanpa tim");
+      teams[k] = teams[k] || { name: k, output: 0, people: 0 };
+      teams[k].output += r.output; teams[k].people += 1;
+    });
+    var tl = Object.keys(teams).map(function (k) { return teams[k]; }).sort(function (a, b) { return b.output - a.output; }).slice(0, 5);
+    var tb = $("teamList");
+    tb.replaceChildren();
+    if (!tl.length) tb.appendChild(el("p", "rail-empty", T("No usage in this period.", "Belum ada pemakaian di periode ini.")));
+    tl.forEach(function (t) {
+      var row = el("div", "hl-row");
+      var k = el("span", "k", t.name);
+      k.appendChild(el("small", "", t.people + T(t.people === 1 ? " person" : " people", " orang")));
+      row.appendChild(k);
+      row.appendChild(el("span", "v", compact(t.output)));
+      var bar = el("span", "hl-bar"), b = el("b");
+      b.style.setProperty("--p", (100 * t.output / tl[0].output).toFixed(1) + "%");
+      bar.appendChild(b); row.appendChild(bar);
+      tb.appendChild(row);
+    });
+    // streaks
+    var sl = data.rows.filter(function (r) { return r.streak >= 2; }).sort(function (a, b) { return b.streak - a.streak || b.output - a.output; }).slice(0, 5);
+    var sb = $("streakList");
+    sb.replaceChildren();
+    if (!sl.length) sb.appendChild(el("p", "rail-empty", T("No streaks yet. Two days in a row starts one.", "Belum ada streak. Dua hari berturut-turut sudah dihitung.")));
+    sl.forEach(function (r) {
+      var row = el("div", "hl-streak");
+      row.appendChild(avatar(r.name, r.avatar, 28));
+      row.appendChild(el("span", "nm", r.name));
+      row.appendChild(streakChip(r));
+      row.addEventListener("click", function () { openDetail(r.id, null); });
+      sb.appendChild(row);
+    });
+    // models
+    var ml = data.top_models || [], total = ml.reduce(function (a, m) { return a + m.output; }, 0);
+    var mb = $("modelList");
+    mb.replaceChildren();
+    if (!ml.length) mb.appendChild(el("p", "rail-empty", T("No usage in this period.", "Belum ada pemakaian di periode ini.")));
+    ml.forEach(function (m) {
+      var row = el("div", "hl-row");
+      var k = el("span", "k", modelName(m.model));
+      k.title = m.model;
+      row.appendChild(k);
+      var pct = total ? 100 * m.output / total : 0;
+      row.appendChild(el("span", "v", (pct >= 1 ? Math.round(pct) : "<1") + "%"));
+      var bar = el("span", "hl-bar"), b = el("b");
+      b.style.setProperty("--p", pct.toFixed(1) + "%");
+      bar.appendChild(b); row.appendChild(bar);
+      mb.appendChild(row);
+    });
+  }
+
+  var feedBusy = false;
+  function loadFeed() {
+    if (document.hidden || feedBusy) return;
+    feedBusy = true;
+    fetch("/api/feed", { cache: "no-store", credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (f) { renderActive(f); renderFeed(f); renderLatestBadges(f); })
+      .catch(function () { /* the board itself reports a lost connection */ })
+      .then(function () { feedBusy = false; });
+  }
+  setInterval(loadFeed, 5000);
+  document.addEventListener("visibilitychange", loadFeed);
+
   // ---------- start ----------
   if (!document.querySelector('.periods button[data-p="' + period + '"]')) period = "7d";
   select(period, true);
   setTimeout(poll, 1000);
+  loadFeed();
 })();
 </script>
 <script>
