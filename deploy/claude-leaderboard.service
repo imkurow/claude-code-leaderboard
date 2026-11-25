@@ -3,7 +3,7 @@
 #   sudo systemctl daemon-reload && sudo systemctl enable --now claude-leaderboard
 # Adjust User and WorkingDirectory to where you cloned the repo.
 [Unit]
-Description=Claude Code Leaderboard
+Description=Crownboard token leaderboard
 After=network-online.target
 Wants=network-online.target
 

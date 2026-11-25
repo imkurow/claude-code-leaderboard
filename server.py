@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Claude Code token leaderboard.
+"""Crownboard: a self-hosted token leaderboard for AI coding tools.
 
 One process, standard library only:
   POST /v1/metrics        OTLP/HTTP JSON receiver (Claude Code telemetry), auth by x-lb-token
@@ -1193,7 +1193,7 @@ def admin_action(actor, method, parts, body, base_url):
 # ---------------------------------------------------------------- HTTP
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "claude-leaderboard/1.0"
+    server_version = "crownboard/1.0"
     sys_version = ""
     protocol_version = "HTTP/1.1"
 

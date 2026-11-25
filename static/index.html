@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__LB_TITLE__</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141413'/%3E%3Crect x='5' y='15' width='6' height='12' rx='1' fill='%23B0AEA5'/%3E%3Crect x='13' y='8' width='6' height='19' rx='1' fill='%23D97757'/%3E%3Crect x='21' y='18' width='6' height='9' rx='1' fill='%23D4A27F'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23FBEDB8'/%3E%3Cstop offset='.45' stop-color='%23E2B654'/%3E%3Cstop offset='1' stop-color='%23A87B22'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='%23141413'/%3E%3Cpath transform='translate(5 8.8) scale(.324)' d='M8 44V35L3.5 13L18.5 24.5L34 6L49.5 24.5L64.5 13L60 35V44Z' fill='url(%23g)'/%3E%3Cg fill='%23E2B654'%3E%3Ccircle cx='6.1' cy='12.5' r='1.3'/%3E%3Ccircle cx='25.9' cy='12.5' r='1.3'/%3E%3Ccircle cx='16' cy='10.1' r='1.4'/%3E%3C/g%3E%3Ccircle cx='16' cy='21.6' r='1' fill='%23C2413B'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..600&family=Hanken+Grotesk:wght@400;500;600&display=swap">
@@ -990,7 +990,7 @@
     c.innerHTML = FLAME;
     c.appendChild(document.createTextNode(String(r.streak)));
     c.title = T(r.streak + " days in a row", r.streak + " hari berturut-turut") +
-      (r.streak_today ? "" : T(". Not yet today: use Claude today to keep it going.", ". Hari ini belum: pakai Claude hari ini biar gak putus."));
+      (r.streak_today ? "" : T(". Not yet today: use it today to keep it going.", ". Hari ini belum: pakai hari ini biar gak putus."));
     c.setAttribute("aria-label", c.title);
     return c;
   }
@@ -1580,7 +1580,7 @@
     if (!people) {
       lede.textContent = PERIOD_LEAD[data.period] + (ROUTER_NAME[data.source]
         ? T(", no " + ROUTER_NAME[data.source] + " usage has been recorded yet.", " belum ada pemakaian " + ROUTER_NAME[data.source] + " yang tercatat.")
-        : T(", no Claude Code usage has been recorded yet.", " belum ada pemakaian Claude Code yang tercatat."));
+        : T(", no usage has been recorded yet.", " belum ada pemakaian yang tercatat."));
       return;
     }
     // a router can send work to any model, so the board only says "Claude" when nobody uses one
@@ -2134,7 +2134,7 @@
       "Streak " + d.streak + " hari" + (d.streak_best > d.streak ? " (terpanjang " + d.streak_best + ")" : " (rekor pribadi)")) +
       (d.streak_today ? "" : T(", not yet today", ", hari ini belum")));
     else if (d.streak_best >= 2) foot.push(T("Best streak " + d.streak_best + " days", "Streak terpanjang " + d.streak_best + " hari"));
-    if (d.peak_hour != null && d.output) foot.push(T("Most active around ", "Paling sering pakai Claude sekitar jam ") + pad(d.peak_hour) + HM + "00–" + pad((d.peak_hour + 1) % 24) + HM + "00");
+    if (d.peak_hour != null && d.output) foot.push(T("Most active around ", "Paling aktif sekitar jam ") + pad(d.peak_hour) + HM + "00–" + pad((d.peak_hour + 1) % 24) + HM + "00");
     if (d.active_seconds) foot.push(T("Recorded active time ", "Waktu aktif tercatat ") + duration(d.active_seconds));
     foot.push(ago(d.last_seen).replace(/^a/, "A"));
     if (d.created_at) foot.push(T("Joined ", "Ikut sejak ") + fmtDate(d.created_at, d.tz, { day: "numeric", month: "long", year: "numeric" }));

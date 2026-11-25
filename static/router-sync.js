@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
-  Claude Code Leaderboard: send 9router, JRouter, Hermes or OpenRouter usage to the leaderboard
+  Crownboard: send 9router, JRouter, Hermes or OpenRouter usage to the leaderboard
   (Windows, macOS, Linux).
 
   --kind=hermes reads Hermes Agent's state.db (session_model_usage) in HERMES_HOME (~/.hermes,

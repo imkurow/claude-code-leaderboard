@@ -1,8 +1,10 @@
-# Claude Code Leaderboard
+# Crownboard
 
 **Website:** https://leaderboard.kurows.com
 
-A small, self-hosted leaderboard of who writes the most with [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) on your team. Each person's Claude Code reports its own token usage through OpenTelemetry. This works when everyone uses their **own personal account**: you need no shared organization and no admin API key.
+A small, self-hosted leaderboard of who writes the most with AI coding tools on your team. It counts output tokens from [Claude Code](https://docs.claude.com/en/docs/claude-code/overview), [9router](https://github.com/decolua/9router), [JRouter](https://github.com/Synthever/JRouter), [Hermes Agent](https://github.com/NousResearch/hermes-agent), [OpenCode](https://github.com/anomalyco/opencode) and [OpenRouter](https://openrouter.ai), whatever model is behind them, and puts a crown on whoever is first. Each person's own tool reports their usage, so it works when everyone has their **own personal account**: you need no shared organization and no admin API key.
+
+Crownboard was called Claude Code Leaderboard until it learned to count the other harnesses.
 
 ![Leaderboard](docs/dashboard.png)
 
@@ -11,8 +13,8 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 - **Side panels.** On wide screens the board gets a Live panel (who is active now, with their output this hour, and a feed of overtakes on today's board, streaks, badge unlocks and new people) and a Highlights panel (top teams, longest streaks, the model mix and the latest badges) that follow the chosen period and filter. On smaller screens they sit under the ranking.
 - **Rank changes and streaks.** Arrows show who moved up or down against 24 hours earlier, and a flame counts days in a row.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
-- **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.
-- **Other harnesses too.** Besides Claude Code, people can join with [9router](https://github.com/decolua/9router), its fork [JRouter](https://github.com/Synthever/JRouter), [Hermes Agent](https://github.com/NousResearch/hermes-agent), [OpenCode](https://github.com/anomalyco/opencode) or [OpenRouter](https://openrouter.ai), on Windows, macOS or Linux. The admin picks the harness when adding someone and gets the matching install command; usage is read from that harness's own records, labelled, and the board can be filtered by harness.
+- **History on day one.** The installer reads the last 30 days of local Claude Code transcripts, and the router sync sends up to 90 days, so the board isn't empty the day you start.
+- **Any harness.** Besides Claude Code, people can join with [9router](https://github.com/decolua/9router), its fork [JRouter](https://github.com/Synthever/JRouter), [Hermes Agent](https://github.com/NousResearch/hermes-agent), [OpenCode](https://github.com/anomalyco/opencode) or [OpenRouter](https://openrouter.ai), on Windows, macOS or Linux. The admin picks the harness when adding someone and gets the matching install command; usage is read from that harness's own records, labelled, and the board can be filtered by harness.
 - **Admin page.** Add people and copy a ready-made install message for each. You can also rename people, rotate tokens, remove one computer's history or a photo, and delete people.
 - **Profile photos.** Each person uploads their own, with a crop and zoom step.
 - **Light and dark themes, two languages.** English and Bahasa Indonesia, switched with a button on every page.
@@ -128,7 +130,7 @@ All settings live in `config.env`, and environment variables override it. See [c
 | `LB_HOST` / `LB_PORT` | `127.0.0.1` / `8790` | Where the server listens |
 | `LB_TZ` | `UTC` | Time zone for "today", "this month" and the charts |
 | `LB_LANG` | `en` | Default interface language: `en` or `id`. Each visitor can switch with the EN/ID button. |
-| `LB_TITLE` | `Claude Code Leaderboard` | Page title |
+| `LB_TITLE` | `Crownboard` | Page title |
 | `LB_PUBLIC_URL` | from request | Base URL used in install commands |
 | `LB_ADMIN_KEY` | – | Passphrase for `/admin` |
 | `LB_ADMIN_EMAILS` | – | With Cloudflare Access: emails that get `/admin` without the passphrase |
@@ -166,10 +168,10 @@ Please report security issues privately via GitHub's "Report a vulnerability".
 
 ## Limitations
 
-- **Claude Code or 9router only.** Usage on claude.ai or in the desktop chat doesn't produce these metrics.
+- **Coding harnesses only.** Usage in a chat app (claude.ai, ChatGPT, the desktop apps) produces none of these records, so it doesn't count.
 - **The routers' database layout.** The sync reads the internal `usageHistory` table (tested with 9router 0.5.69; JRouter 1.0.6 has the same table). A future 9router version could change it; the sync then stops with a clear message instead of sending wrong numbers.
 - **Self-reported numbers.** Someone could send fake numbers with their own token. This is a friendly leaderboard, not billing.
-- **Estimated cost.** The cost figure is Claude Code's own estimate at API prices. People on a subscription pay their plan instead.
+- **Estimated cost.** The cost figure is the estimate Claude Code or the harness logs, at API prices. People on a subscription pay their plan instead.
 - **Partial history.** The imported history has tokens but no cost or active time.
 - **Windows installer.** It is tested less than the macOS and Linux one. Bug reports are welcome.
 

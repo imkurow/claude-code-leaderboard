@@ -1,4 +1,4 @@
-"""Shared config + database helpers for the Claude Code token leaderboard."""
+"""Shared config + database helpers for Crownboard, the team token leaderboard."""
 import hashlib
 import os
 import secrets
@@ -32,7 +32,7 @@ def load_config():
     cfg.setdefault("LB_TZ", "UTC")
     cfg.setdefault("LB_PUBLIC_URL", "")
     cfg.setdefault("LB_VIEW_KEY", "")
-    cfg.setdefault("LB_TITLE", "Claude Code Leaderboard")
+    cfg.setdefault("LB_TITLE", "Crownboard")
     # Interface language: en or id.
     cfg.setdefault("LB_LANG", "en")
     # Cloudflare Access service token that Claude Code sends with every export (empty = no Access).

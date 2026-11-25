@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Claude Code Leaderboard: a self-hosted usage board for teams</title>
-<meta name="description" content="Rank your team's Claude Code, 9router, JRouter, Hermes Agent, OpenCode and OpenRouter output tokens on a server you run. Crowns, streaks and 91 badges; only numbers leave each laptop.">
+<title>Crownboard: a self-hosted AI coding leaderboard for teams</title>
+<meta name="description" content="Crownboard ranks your team's output tokens from Claude Code, 9router, JRouter, Hermes Agent, OpenCode and OpenRouter on a server you run. Crowns, streaks and 91 badges; only numbers leave each laptop.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://leaderboard.kurows.com/">
-<meta property="og:site_name" content="Claude Code Leaderboard">
-<meta property="og:title" content="Claude Code Leaderboard: a self-hosted usage board for teams">
-<meta property="og:description" content="Rank your team's Claude Code output tokens on a server you run. Free and MIT licensed.">
+<meta property="og:site_name" content="Crownboard">
+<meta property="og:title" content="Crownboard: a self-hosted AI coding leaderboard for teams">
+<meta property="og:description" content="Rank your team's AI coding output tokens, from any harness and any model, on a server you run. Free and MIT licensed.">
 <meta property="og:image" content="https://leaderboard.kurows.com/share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://leaderboard.kurows.com/share.jpg">
@@ -383,7 +383,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
 </style>
 </head>
 <body>
-<!-- type: software (site-kind software): a self-hosted Claude Code usage leaderboard for teams; open source, MIT
+<!-- type: software (site-kind software): Crownboard, a self-hosted AI coding usage leaderboard for teams; open source, MIT
      deal: hero collage (UI cut by its frame), nav-mega, close-type, footer-statement, rhythm surface-pairs (#features),
            buttons tonal, mark: the project's own icon (favicon.svg, from static/index.html) in place of the dealt arc;
            palette: the client's own colours through start.mjs brand (the product UI's paper #faf9f5, ink #141413,
@@ -404,7 +404,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
 <header class="nav">
   <div class="wrap nav__bar">
     <a class="skip-link" href="#top">Skip to content</a>
-    <a class="nav__logo" href="#top"><img src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px"><span><span class="lg-long">Claude Code </span>Leaderboard</span></a>
+    <a class="nav__logo" href="#top"><img src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px"><span>Crownboard</span></a>
     <nav class="nav__links" aria-label="Main">
       <div class="nav__item">
         <a class="nav__link" href="#board">Board <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
@@ -446,8 +446,8 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
   <section class="hero hero--collage" data-enter aria-labelledby="hero-h">
     <div class="wrap"><div class="hero-text grid hero__grid">
       <div class="hero__text span-5">
-        <h1 id="hero-h">Self-hosted Claude Code leaderboard for teams</h1>
-        <p class="hero__lead">Each laptop's Claude Code, or its 9router, JRouter, Hermes Agent, OpenCode or OpenRouter, sends token counts to one Python file you run. Everyone keeps their own account, and the board ranks output tokens live.</p>
+        <h1 id="hero-h">Self-hosted AI coding leaderboard for teams</h1>
+        <p class="hero__lead">Claude Code, 9router, JRouter, Hermes Agent, OpenCode or OpenRouter on each laptop sends token counts to one Python file you run. Every model counts, everyone keeps their own account, and first place gets the crown.</p>
         <div class="btn-row">
           <a class="btn btn--primary" href="https://github.com/imkurow/claude-code-leaderboard">Get it on GitHub</a>
           <a class="btn btn--secondary" href="#setup">See the setup</a>
@@ -456,10 +456,10 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
       </div>
       <div class="hero__art span-6 start-7" data-fx="grain-gradient" data-fx-seed="7" data-fx-params='{"calm":0.25,"calmX":0.4,"calmY":0.4,"speed":0,"grainMotion":0}' data-ui-pause-host role="img" aria-label="The leaderboard for the last 30 days: Ada Lovelace first with 7.41 million output tokens, Alan Turing second, Grace Hopper third, and Ada's detail card">
         <div class="ly-piece ly-piece--main lb lb-win" data-m-loop aria-hidden="true">
-          <div class="lb-win__bar"><i></i><i></i><i></i><span>Claude Code Leaderboard</span><span class="lb-live"><b></b>Live</span></div>
+          <div class="lb-win__bar"><i></i><i></i><i></i><span>Crownboard</span><span class="lb-live"><b></b>Live</span></div>
           <div class="lb-win__head">
-            <div class="lb-win__title">Claude Code Leaderboard</div>
-            <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
+            <div class="lb-win__title">Crownboard</div>
+            <div class="lb-lede">In the last 30 days, the AI wrote <b>26.8M</b> tokens for 7 people.</div>
             <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
           </div>
           <div class="lb-stage"><div class="lb-podium">
@@ -493,7 +493,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
       <div class="ui app frame lb" role="img" aria-label="The leaderboard for the last 30 days: the podium with Ada Lovelace, Alan Turing and Grace Hopper, the ranking with Katherine Johnson and Linus Torvalds, and Ada Lovelace's detail card with her output per day, cache, sessions, cost and models">
         <div class="app__pane app__pane--list" aria-hidden="true">
           <div class="lb-top">
-            <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
+            <div class="lb-lede">In the last 30 days, the AI wrote <b>26.8M</b> tokens for 7 people.</div>
             <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
           </div>
           <div class="lb-stage"><div class="lb-podium">
@@ -629,15 +629,15 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max:360px;--ax:max(24px, 50% - 180px);--ay:40px">
               <div class="ui lb lb-id" aria-hidden="true">
                 <div class="lb-lang"><span>EN</span><span>ID</span><i></i></div>
-                <div class="lb-win__title">Claude Code Leaderboard</div>
+                <div class="lb-win__title">Crownboard</div>
                 <div class="lb-faces">
                   <div class="lb-face lb-face--id">
-                    <div class="lb-lede">Dalam 30 hari terakhir, Claude menulis <b>26.8M</b> token untuk 7 orang.</div>
+                    <div class="lb-lede">Dalam 30 hari terakhir, AI menulis <b>26.8M</b> token untuk 7 orang.</div>
                     <div class="lb-periods"><span>Hari ini</span><span>7 hari</span><span class="on">30 hari</span><span>Bulan ini</span><span>Semua</span></div>
                     <div class="lb-dt-sub">329 sesi, estimasi $3,187.04 dengan harga API.</div>
                   </div>
                   <div class="lb-face lb-face--en">
-                    <div class="lb-lede">In the last 30 days, Claude wrote <b>26.8M</b> tokens for 7 people.</div>
+                    <div class="lb-lede">In the last 30 days, the AI wrote <b>26.8M</b> tokens for 7 people.</div>
                     <div class="lb-periods"><span>Today</span><span>7 days</span><span class="on">30 days</span><span>This month</span><span>All time</span></div>
                     <div class="lb-dt-sub">329 sessions, estimated $3,187.04 at API prices.</div>
                   </div>
@@ -705,8 +705,8 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
       </div>
       <div class="grid">
         <div class="faq span-6">
-          <div class="faq__item"><h3>Do we need a shared Claude organization?</h3><p>No. It works when everyone uses their own personal Claude account. You need no shared organization and no admin API key.</p></div>
-          <div class="faq__item"><h3>Does usage on claude.ai count?</h3><p>No. Claude Code and the five harnesses count; the desktop chat and claude.ai do not show up.</p></div>
+          <div class="faq__item"><h3>Do we need a shared team account?</h3><p>No. It works when everyone uses their own personal account, on Claude, OpenRouter or whatever their harness talks to. You need no shared organization and no admin API key.</p></div>
+          <div class="faq__item"><h3>Does usage in a chat app count?</h3><p>No. Claude Code and the five harnesses count; chat apps such as claude.ai or ChatGPT keep no record the board can read.</p></div>
           <div class="faq__item"><h3>Can someone send fake usage numbers?</h3><p>Yes, with their own token. It is a friendly leaderboard, not billing.</p></div>
           <div class="faq__item"><h3>Is the cost on the leaderboard what we pay?</h3><p>It is the estimate Claude Code or the harness logs, at API prices. People on a subscription pay their plan, so read the figure as a guide.</p></div>
         </div>
@@ -750,7 +750,7 @@ html.sr-on .app[data-sr]:not(.sr-in) .lb-track b { transform: scaleX(0); }
             </figure>
           </li>
           <li class="mo-pc__step">
-            <h3>Connect each laptop's Claude Code</h3>
+            <h3>Connect each laptop</h3>
             <p>Each person runs their command once in a terminal. Claude Code users restart it; harness users are done.</p>
             <figure class="mo-pc__visual mo-pc__visual--lit" role="img" aria-label="The install command for macOS and Linux, and the one for Windows PowerShell">
               <div class="ui term" aria-hidden="true"><div class="term__bar"><img loading="lazy" src="assets/icons/apple.svg" alt="" width="13" height="16" style="filter:invert(1)"><img loading="lazy" src="assets/icons/linux-tux.svg" alt="" width="14" height="16"><img loading="lazy" src="assets/icons/windows.svg" alt="" width="16" height="16">Install</div>
@@ -781,8 +781,8 @@ curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx -
     <div class="closing__links">
       <div class="grid">
         <div class="span-4 stack-4">
-          <a class="nav__logo" href="#top"><img loading="lazy" src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px">Claude Code Leaderboard</a>
-          <p class="footer__lede">A self-hosted Claude Code leaderboard for teams on personal accounts.</p>
+          <a class="nav__logo" href="#top"><img loading="lazy" src="favicon.svg" width="24" height="24" alt="" style="margin-right:10px">Crownboard</a>
+          <p class="footer__lede">A self-hosted AI coding leaderboard for teams on personal accounts.</p>
         </div>
         <div class="span-2 footer__col"><h3>Board</h3><ul><li><a href="#board">Ranking</a></li><li><a href="#badges">Badges</a></li><li><a href="#features">Features</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Setup</h3><ul><li><a href="#setup">Three steps</a></li><li><a href="#run">Hosting</a></li></ul></div>
@@ -790,7 +790,7 @@ curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx -
         <div class="span-2 footer__col"><h3>Help</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/imkurow/claude-code-leaderboard/issues">Issues</a></li></ul></div>
       </div>
       <div class="footer__legal">
-        <span>&copy; 2026 imkurow, built together with Claude. Not affiliated with Anthropic. &ldquo;Claude&rdquo; is a trademark of Anthropic.</span>
+        <span>&copy; 2026 imkurow, built together with Claude. Formerly Claude Code Leaderboard. Not affiliated with Anthropic. &ldquo;Claude&rdquo; is a trademark of Anthropic.</span>
         <span>Product names and logos are trademarks of their owners.</span>
       </div>
     </div>
