@@ -300,8 +300,12 @@
       <pre id="cmdPs"></pre>
     </div>
     <div class="cmd">
-      <div class="cmd-head"><span>⟦9router (on the Linux machine that runs it)‖9router (di mesin Linux yang menjalankannya)⟧</span><button class="btn ghost small" type="button" data-copy="router">⟦Copy‖Salin⟧</button></div>
+      <div class="cmd-head"><span>⟦9router on macOS / Linux‖9router di macOS / Linux⟧</span><button class="btn ghost small" type="button" data-copy="router">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdRouter"></pre>
+    </div>
+    <div class="cmd">
+      <div class="cmd-head"><span>⟦9router on Windows (PowerShell)‖9router di Windows (PowerShell)⟧</span><button class="btn ghost small" type="button" data-copy="router_ps">⟦Copy‖Salin⟧</button></div>
+      <pre id="cmdRouterPs"></pre>
     </div>
     <div class="warn">⟦These commands are shown only now. If they get lost, create a new token from the participant's menu.‖Perintah ini cuma muncul sekarang. Kalau hilang, buat token baru dari menu peserta.⟧</div>
     <div class="row-actions">
@@ -489,12 +493,14 @@
     $("cmdSh").textContent = j.commands.sh;
     $("cmdPs").textContent = j.commands.ps;
     $("cmdRouter").textContent = j.commands.router;
+    $("cmdRouterPs").textContent = j.commands.router_ps;
     tokenDlg.showModal();
   }
   function message(j) {
     var cmds = "macOS / Linux:\n" + j.commands.sh + "\n\nWindows (PowerShell):\n" + j.commands.ps + "\n\n" +
-      T("If you use 9router instead, run this once on the Linux machine where 9router runs (as the same user):\n",
-        "Kalau kamu pakai 9router, jalankan ini sekali di mesin Linux tempat 9router berjalan (dengan user yang sama):\n") + j.commands.router + "\n\n";
+      T("If you use 9router instead, run one of these once on the machine where 9router runs (as the same user):\n",
+        "Kalau kamu pakai 9router, jalankan salah satu ini sekali di mesin tempat 9router berjalan (dengan user yang sama):\n") +
+      "macOS / Linux:\n" + j.commands.router + "\n\nWindows (PowerShell):\n" + j.commands.router_ps + "\n\n";
     return T(
       "Hi " + j.name + ", here is how to join " + TITLE + ". Run this once in a terminal on the computer where you use Claude Code.\n\n" + cmds +
       "When it finishes, close and reopen Claude Code. Leaderboard: " + location.origin + "\n" +

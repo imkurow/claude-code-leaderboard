@@ -5,6 +5,7 @@ One process, standard library only:
   POST /v1/metrics        OTLP/HTTP JSON receiver (Claude Code telemetry), auth by x-lb-token
   GET|POST /v1/metrics/backfill   history from local transcripts (window, then upload)
   POST /v1/metrics/9router        hourly totals read from a 9router usage log (replaces that machine's rows)
+  GET  /v1/metrics/9router-sync.js  the sync script the installers set up on a 9router machine
   GET  /                  leaderboard page
   GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router)
   GET  /api/participant   one participant's detail (?id=&period=&source=): series, models, token mix, badges
@@ -566,7 +567,8 @@ def badge_view(badge_id, done):
     """A badge in the viewer's language; a secret one nobody sees until it is unlocked."""
     v = achievements.info(badge_id, lang())
     if v["secret"] and not done:
-        v.update(glyph="secret", label="", name="???", desc=T("A secret badge. Keep going.", "Lencana rahasia. Terus pakai Claude."))
+        v.update(glyph="secret", label="", name="???", desc=T("A secret badge. Keep going.", "Lencana rahasia. Terus pakai Claude."),
+                 flavor=T("Some things are better discovered than told.", "Ada hal yang lebih seru ditemukan sendiri."))
     return v
 
 
@@ -618,7 +620,7 @@ def recent_unlocks():
     out = []
     for r in rows:
         v = badge_view(r["badge"], True)
-        out.append({"key": "%d:%s" % (r["id"], r["badge"]), "id": r["id"], "name": r["name"],
+        out.append({"key": "%d:%s" % (r["id"], r["badge"]), "id": r["id"], "name": r["name"], "bid": r["badge"],
                     "glyph": v["glyph"], "label": v["label"], "badge": v["name"], "tier": v["tier"], "at": r["detected_at"]})
     return out
 
@@ -1220,6 +1222,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_template("install.sh", "text/x-shellscript; charset=utf-8")
             if path == "/install.ps1":
                 return self.send_template("install.ps1", "text/plain; charset=utf-8")
+            if path == "/v1/metrics/9router-sync.js":
+                # under /v1/metrics so the installers fetch it through the same Access app as telemetry
+                with open(os.path.join(STATIC, "9router-sync.js"), encoding="utf-8") as fh:
+                    return self.send(200, fh.read(), "text/javascript; charset=utf-8", {"Cache-Control": "no-store"})
             if path in ("/", "/index.html", "/join", "/api/leaderboard", "/api/participant", "/api/badges"):
                 if CFG["LB_VIEW_KEY"] and "key" in qs and path in ("/", "/index.html", "/join"):
                     if hmac.compare_digest(qs["key"][0], CFG["LB_VIEW_KEY"]):

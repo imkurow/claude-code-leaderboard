@@ -154,7 +154,7 @@ def new_token():
 
 def install_commands(cfg, token, url=None):
     """The install one-liners for a token (they carry the Access service-token headers):
-    sh (macOS/Linux), ps (Windows) and router (a Linux machine that runs 9router)."""
+    sh (macOS/Linux), ps (Windows), and router / router_ps for the machine that runs 9router."""
     url = (url or cfg["LB_PUBLIC_URL"] or "https://<DOMAIN-LEADERBOARD>").rstrip("/")
     cid, csec = cfg["LB_CF_CLIENT_ID"], cfg["LB_CF_CLIENT_SECRET"]
     sh_hdr = ps_hdr = ""
@@ -164,6 +164,7 @@ def install_commands(cfg, token, url=None):
     return {
         "sh": "curl -fsSL %s%s/install.sh | bash -s -- %s" % (sh_hdr, url, token),
         "router": "curl -fsSL %s%s/install.sh | bash -s -- %s --9router" % (sh_hdr, url, token),
+        "router_ps": "$env:LB_TOKEN='%s'; $env:LB_9ROUTER='1'; irm %s/install.ps1%s | iex" % (token, url, ps_hdr),
         "ps": "$env:LB_TOKEN='%s'; irm %s/install.ps1%s | iex" % (token, url, ps_hdr),
     }
 
