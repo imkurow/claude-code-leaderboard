@@ -368,8 +368,8 @@
   .bd.locked:hover .medal { opacity: .5; }
   .bd .bn { font-size: 11.5px; line-height: 1.25; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .bd.locked .bn { color: var(--ink-3); }
-  .bd .bp { width: 46px; height: 3px; border-radius: 2px; background: var(--rule); overflow: hidden; }
-  .bd .bp b { display: block; height: 100%; width: var(--p); background: var(--ink-3); border-radius: 2px; }
+  .bd .bprog { width: 46px; height: 3px; border-radius: 2px; background: var(--rule); overflow: hidden; }
+  .bd .bprog b { display: block; height: 100%; width: var(--p); background: var(--ink-3); border-radius: 2px; }
   .bd-more { margin: 12px 0 0; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; background: none; color: var(--ink-2); font: 500 13px/1.4 var(--text); cursor: pointer; }
   .bd-more:hover { border-color: var(--ink-3); }
   /* the gallery */
@@ -383,6 +383,41 @@
   .gal-row .gh .av { margin-right: -6px; box-shadow: 0 0 0 2px var(--paper); }
   .gal-row .gh .cnt { margin-left: 12px; }
   .gal-row.locked .gn { color: var(--ink-3); }
+  /* gallery: filters, rarity tags and the new-season highlight */
+  .gal-tools { position: sticky; top: -1px; z-index: 2; margin: 16px -4px 0; padding: 10px 4px; background: var(--paper); border-bottom: 1px solid var(--rule); display: grid; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--rule); background: none; color: var(--ink-2); font: 500 13px/1.3 var(--text); cursor: pointer; }
+  .chip:hover { border-color: var(--ink-3); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--fog); }
+  .chip .n { font-variant-numeric: tabular-nums; opacity: .65; }
+  .chip.season { border-color: transparent; background: linear-gradient(var(--paper), var(--paper)) padding-box, linear-gradient(90deg, #8E4FD1, #D9486B, #F08A5D) border-box; border: 1px solid transparent; }
+  .chip.season[aria-pressed="true"] { background: linear-gradient(90deg, #8E4FD1, #D9486B) border-box; color: #fff; }
+  .gal-view { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-3); }
+  .gal-view .chip { padding: 3px 9px; font-size: 12px; }
+  .season-banner {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; margin: 16px 0 0; padding: 12px 14px; border-radius: 16px;
+    color: var(--ink); background: linear-gradient(120deg, color-mix(in oklab, #8E4FD1 20%, transparent), color-mix(in oklab, #D9486B 16%, transparent) 55%, color-mix(in oklab, #F08A5D 14%, transparent));
+    border: 1px solid color-mix(in oklab, #B07BEA 40%, transparent);
+  }
+  .season-banner .stack { display: flex; }
+  .season-banner .stack .medal + .medal { margin-left: -14px; }
+  .season-banner strong { display: block; font: 500 17px/1.25 var(--display); }
+  .season-banner span { font-size: 13px; color: var(--ink-2); }
+  .season-banner .chip { white-space: nowrap; }
+  .rar { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 999px; vertical-align: 2px; font: 700 10px/1.7 var(--text); letter-spacing: .05em; text-transform: uppercase; }
+  .rar.r0 { color: var(--ink-2); border: 1px dashed var(--ink-3); }
+  .rar.r1 { color: #fff; background: linear-gradient(90deg, #B8860B, #E0B547); }
+  .rar.r2 { color: #fff; background: #8E4FD1; }
+  .rar.r3 { color: #fff; background: #3E7FC1; }
+  .rar.r4 { color: var(--ink-2); background: color-mix(in oklab, var(--ink) 10%, transparent); }
+  .gal-row.is-season { position: relative; margin: 6px -10px 0; padding: 12px 10px; border-top: 0; border-radius: 14px;
+    background: linear-gradient(var(--paper), var(--paper)) padding-box, linear-gradient(120deg, #8E4FD1, #D9486B, #F08A5D) border-box; border: 1px solid transparent;
+    box-shadow: 0 10px 26px -18px #8E4FD1; }
+  .gal-row.is-season + .gal-row:not(.is-season) { border-top: 0; }
+  .gal-count { margin: 18px 0 0; font-size: 12.5px; color: var(--ink-3); }
+  /* person card: season badges glow */
+  .bd.is-season::before { content: ""; position: absolute; inset: 0; border-radius: 12px; padding: 1px; pointer-events: none;
+    background: linear-gradient(120deg, #8E4FD1, #D9486B, #F08A5D); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: .8; }
   /* live notice when someone unlocks a badge */
   .toasts { position: fixed; z-index: 50; left: 50%; bottom: 20px; transform: translateX(-50%); display: grid; gap: 8px; width: min(420px, calc(100vw - 24px)); pointer-events: none; }
   .toast {
@@ -687,6 +722,7 @@
         <button type="button" data-s="jrouter" hidden>JRouter</button>
         <button type="button" data-s="hermes" hidden>Hermes</button>
         <button type="button" data-s="openrouter" hidden>OpenRouter</button>
+        <button type="button" data-s="opencode" hidden>OpenCode</button>
       </div>
     </div>
   </header>
@@ -696,7 +732,7 @@
 
   <p class="note">
     <span id="updated"></span>
-    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <span id="srcNote" hidden>⟦For people on another harness (9router, JRouter, Hermes, OpenRouter), tokens and costs come from that harness's own records; OpenRouter's arrive a day later.‖Untuk yang pakai harness lain (9router, JRouter, Hermes, OpenRouter), token dan biaya diambil dari catatan harness itu sendiri; data OpenRouter masuk sehari kemudian.⟧</span> <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
+    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <span id="srcNote" hidden>⟦For people on another harness (9router, JRouter, Hermes, OpenRouter, OpenCode), tokens and costs come from that harness's own records; OpenRouter's arrive a day later.‖Untuk yang pakai harness lain (9router, JRouter, Hermes, OpenRouter, OpenCode), token dan biaya diambil dari catatan harness itu sendiri; data OpenRouter masuk sehari kemudian.⟧</span> <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
   </p>
 </div>
 <div class="rails">
@@ -801,7 +837,7 @@
   try { period = localStorage.getItem("lb_period") || "7d"; } catch (e) {}
   var source = "all";
   try { source = localStorage.getItem("lb_source") || "all"; } catch (e) {}
-  if (["all", "claude", "9router", "jrouter", "hermes", "openrouter"].indexOf(source) < 0) source = "all";
+  if (["all", "claude", "9router", "jrouter", "hermes", "openrouter", "opencode"].indexOf(source) < 0) source = "all";
   var me = null;          // { email, participant }
   var lastData = null;
   var shownNums = {};     // name -> figure last shown on the podium (rolls again only when it changes)
@@ -1182,7 +1218,7 @@
     var limit = showAllBadges ? list.length : got + Math.min(locked.length, Math.max(6, 12 - got % 6));
     var grid = el("div", "bd-grid");
     list.slice(0, limit).forEach(function (b) {
-      var t = el("button", "bd" + (b.done ? "" : " locked"));
+      var t = el("button", "bd" + (b.done ? "" : " locked") + (b.since ? " is-season" : ""));
       t.type = "button";
       t.setAttribute("aria-haspopup", "dialog");
       t.title = b.name + ". " + b.desc;
@@ -1190,7 +1226,7 @@
       if (b.done && b.earned_at && Date.now() / 1000 - b.earned_at < 3 * 86400) t.appendChild(el("span", "bd-new", T("NEW", "BARU")));
       t.appendChild(el("span", "bn", b.name));
       if (!b.done && b.target) {
-        var bp = el("span", "bp"), fill = el("b");
+        var bp = el("span", "bprog"), fill = el("b");
         fill.style.setProperty("--p", Math.min(100, 100 * b.cur / b.target).toFixed(1) + "%");
         bp.appendChild(fill);
         t.appendChild(bp);
@@ -1208,7 +1244,7 @@
     return sec;
   }
   var showAllBadges = false;
-  var ROUTER_NAME = { "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter" };
+  var ROUTER_NAME = { "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter", opencode: "OpenCode" };
   function routerNames(row) { return (row && row.router ? row.router.split(",") : []).map(function (k) { return ROUTER_NAME[k] || k; }); }
   function srcPill(row) { var n = routerNames(row); return n.length ? el("span", "src", n.join(" + ")) : null; }
   function activity(r) {
@@ -1973,69 +2009,155 @@
 
   // ---------- badge gallery ----------
   var gallery = $("gallery");
+  // the gallery: sorted from rarest to most common, filters, and the new season up front
+  var galFilter = "all", galView = "rarity";
+  function rarityOf(b, people) {
+    var n = b.holders.length, pct = people ? 100 * n / people : 0;
+    if (!n) return { k: 0, name: T("Nobody yet", "Belum ada yang punya"), pct: 0 };
+    if (pct <= 10) return { k: 1, name: T("Very rare", "Sangat langka"), pct: pct };
+    if (pct <= 30) return { k: 2, name: T("Rare", "Langka"), pct: pct };
+    if (pct <= 60) return { k: 3, name: T("Uncommon", "Cukup langka"), pct: pct };
+    return { k: 4, name: T("Common", "Umum"), pct: pct };
+  }
+  var TIER_RANK = { legend: 0, gold: 1, silver: 2, bronze: 3 };
+  function galleryRow(b, g) {
+    var rr = rarityOf(b, g.people);
+    var row = el("div", "gal-row" + (b.holders.length ? "" : " locked") + (b.since ? " is-season" : ""));
+    row.style.cursor = "pointer";
+    row.setAttribute("role", "button");
+    row.tabIndex = 0;
+    row.addEventListener("click", function (e) { if (!e.target.closest(".av")) openBadgePop(b, null); });
+    row.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openBadgePop(b, null); } });
+    row.appendChild(medal(b, 64, !b.holders.length));
+    var txt = el("div");
+    var gn = el("div", "gn", b.name);
+    gn.appendChild(el("span", "rar r" + rr.k, rr.k ? rr.name : T("Unclaimed", "Belum dibuka")));
+    if (b.since) gn.appendChild(el("span", "season-tag", T("New season", "Musim baru")));
+    txt.appendChild(gn);
+    txt.appendChild(el("div", "gd", TIER_NAME[b.tier] + ". " + b.desc));
+    var gh = el("div", "gh");
+    if (b.holders.length) {
+      b.holders.slice(0, 8).forEach(function (p) {
+        var a = avatar(p.name, p.avatar, 24);
+        a.title = p.name;
+        a.style.cursor = "pointer";
+        a.addEventListener("click", function () { gallery.close(); openDetail(p.id, null); });
+        gh.appendChild(a);
+      });
+      gh.appendChild(el("span", "cnt", T(b.holders.length + " of " + g.people + " people (" + Math.round(rr.pct) + "%)", b.holders.length + " dari " + g.people + " orang (" + Math.round(rr.pct) + "%)")));
+    } else {
+      gh.appendChild(el("span", "", T("Nobody yet. Be the first.", "Belum ada yang buka. Jadilah yang pertama.")));
+    }
+    txt.appendChild(gh);
+    row.appendChild(txt);
+    return row;
+  }
+  function renderGallery(g) {
+    var body = $("galBody");
+    var keepScroll = gallery.scrollTop;
+    var frag = document.createDocumentFragment();
+    var head = el("div", "dt-head");
+    var idt = el("div");
+    var h = el("h2", "", T("Badges", "Lencana"));
+    h.id = "galTitle";
+    idt.appendChild(h);
+    var unlocked = g.badges.filter(function (b) { return b.holders.length; }).length;
+    idt.appendChild(el("div", "sub", T(g.badges.length + " badges, " + unlocked + " unlocked by someone. Rarest first.", g.badges.length + " lencana, " + unlocked + " sudah dibuka seseorang. Yang paling langka di atas.")));
+    head.appendChild(idt);
+    var x = el("button", "x");
+    x.type = "button"; x.setAttribute("data-close", ""); x.setAttribute("aria-label", T("Close", "Tutup"));
+    x.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>';
+    head.appendChild(x);
+    frag.appendChild(head);
+
+    // the new season, up front
+    var season = g.badges.filter(function (b) { return b.since; });
+    if (season.length) {
+      var ban = el("div", "season-banner");
+      var stack = el("div", "stack");
+      season.slice().sort(function (a, b) { return TIER_RANK[a.tier] - TIER_RANK[b.tier]; }).slice(0, 3).forEach(function (b) { stack.appendChild(medal(b, 44, true)); });
+      ban.appendChild(stack);
+      var bt = el("div");
+      var got = season.filter(function (b) { return b.holders.length; }).length;
+      bt.appendChild(el("strong", "", T(season.length + " new season badges", season.length + " lencana musim baru")));
+      bt.appendChild(el("span", "", T("Counting from ", "Dihitung sejak ") + fmtDate(season[0].since, lastData ? lastData.tz : undefined, { day: "numeric", month: "long" }) +
+        T(". " + got + " unlocked so far.", ". Baru " + got + " yang terbuka.")));
+      ban.appendChild(bt);
+      var go = el("button", "chip season", T("Show them", "Lihat"));
+      go.type = "button";
+      go.addEventListener("click", function () { galFilter = "season"; renderGallery(g); });
+      ban.appendChild(go);
+      frag.appendChild(ban);
+    }
+
+    // filters and view
+    var tools = el("div", "gal-tools");
+    var chips = el("div", "chips");
+    var counts = [0, 0, 0, 0, 0];
+    g.badges.forEach(function (b) { counts[rarityOf(b, g.people).k]++; });
+    [["all", T("All", "Semua"), g.badges.length], ["season", T("New season", "Musim baru"), season.length],
+     ["r1", T("Very rare", "Sangat langka"), counts[1]], ["r2", T("Rare", "Langka"), counts[2]], ["r3", T("Uncommon", "Cukup langka"), counts[3]],
+     ["r4", T("Common", "Umum"), counts[4]], ["r0", T("Unclaimed", "Belum dibuka"), counts[0]]].forEach(function (c) {
+      if (c[0] === "season" && !c[2]) return;
+      var b = el("button", "chip" + (c[0] === "season" ? " season" : ""));
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(galFilter === c[0]));
+      b.appendChild(document.createTextNode(c[1]));
+      b.appendChild(el("span", "n", String(c[2])));
+      b.addEventListener("click", function () { galFilter = c[0]; renderGallery(g); });
+      chips.appendChild(b);
+    });
+    tools.appendChild(chips);
+    var view = el("div", "gal-view");
+    view.appendChild(document.createTextNode(T("Order:", "Urutan:")));
+    [["rarity", T("Rarest first", "Paling langka dulu")], ["tier", T("By tier", "Per tingkat")]].forEach(function (v) {
+      var b = el("button", "chip", v[1]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(galView === v[0]));
+      b.addEventListener("click", function () { galView = v[0]; renderGallery(g); });
+      view.appendChild(b);
+    });
+    tools.appendChild(view);
+    frag.appendChild(tools);
+
+    var list = g.badges.filter(function (b) {
+      if (galFilter === "all") return true;
+      if (galFilter === "season") return !!b.since;
+      return "r" + rarityOf(b, g.people).k === galFilter;
+    });
+    var groups = [];
+    if (galView === "tier") {
+      ["legend", "gold", "silver", "bronze"].forEach(function (t) {
+        var items = list.filter(function (b) { return b.tier === t; }).sort(function (a, b) { return a.holders.length - b.holders.length; });
+        if (items.length) groups.push([TIER_NAME[t], items]);
+      });
+    } else {
+      // rarest first: held by the fewest people (but by someone), then nobody yet; within a group the grander tier first
+      var order = [1, 2, 3, 4, 0];
+      order.forEach(function (k) {
+        var items = list.filter(function (b) { return rarityOf(b, g.people).k === k; })
+          .sort(function (a, b) { return a.holders.length - b.holders.length || (b.since ? 1 : 0) - (a.since ? 1 : 0) || TIER_RANK[a.tier] - TIER_RANK[b.tier]; });
+        if (items.length) groups.push([[T("Unclaimed", "Belum dibuka"), T("Very rare", "Sangat langka"), T("Rare", "Langka"), T("Uncommon", "Cukup langka"), T("Common", "Umum")][k], items]);
+      });
+    }
+    groups.forEach(function (gr) {
+      var sec = el("section", "gal-tier");
+      sec.appendChild(el("h3", "", gr[0] + " (" + gr[1].length + ")"));
+      gr[1].forEach(function (b) { sec.appendChild(galleryRow(b, g)); });
+      frag.appendChild(sec);
+    });
+    if (!list.length) frag.appendChild(el("p", "gal-count", T("No badges in this filter.", "Tidak ada lencana di filter ini.")));
+    body.replaceChildren(frag);
+    gallery.scrollTop = keepScroll && galFilter === renderGallery.lastFilter && galView === renderGallery.lastView ? keepScroll : 0;
+    renderGallery.lastFilter = galFilter; renderGallery.lastView = galView;
+  }
   function openGallery() {
     var body = $("galBody");
     body.replaceChildren(el("p", "dt-empty", T("Loading badges…", "Memuat lencana…")));
     if (typeof gallery.showModal === "function") gallery.showModal(); else gallery.setAttribute("open", "");
     fetch("/api/badges", { cache: "no-store", credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (g) {
-        var frag = document.createDocumentFragment();
-        var head = el("div", "dt-head");
-        var idt = el("div");
-        var h = el("h2", "", T("Badges", "Lencana"));
-        h.id = "galTitle";
-        idt.appendChild(h);
-        var unlocked = g.badges.filter(function (b) { return b.holders.length; }).length;
-        idt.appendChild(el("div", "sub", T(g.badges.length + " badges, " + unlocked + " unlocked by someone. Click a person to see their progress.",
-          g.badges.length + " lencana, " + unlocked + " sudah dibuka seseorang. Klik nama orang untuk melihat progresnya.")));
-        head.appendChild(idt);
-        var x = el("button", "x");
-        x.type = "button"; x.setAttribute("data-close", ""); x.setAttribute("aria-label", T("Close", "Tutup"));
-        x.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>';
-        head.appendChild(x);
-        frag.appendChild(head);
-        ["legend", "gold", "silver", "bronze"].forEach(function (tier) {
-          var list = g.badges.filter(function (b) { return b.tier === tier; });
-          if (!list.length) return;
-          var sec = el("section", "gal-tier");
-          sec.appendChild(el("h3", "", TIER_NAME[tier] + " (" + list.length + ")"));
-          list.sort(function (a, b) { return b.holders.length - a.holders.length; }).forEach(function (b) {
-            var row = el("div", "gal-row" + (b.holders.length ? "" : " locked"));
-            row.style.cursor = "pointer";
-            row.setAttribute("role", "button");
-            row.tabIndex = 0;
-            row.addEventListener("click", function (e) { if (!e.target.closest(".av")) openBadgePop(b, null); });
-            row.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openBadgePop(b, null); } });
-            row.appendChild(medal(b, 64, !b.holders.length));
-            var txt = el("div");
-            var gn = el("div", "gn", b.name);
-            if (b.since) gn.appendChild(el("span", "season-tag", T("New season", "Musim baru")));
-            txt.appendChild(gn);
-            txt.appendChild(el("div", "gd", b.desc));
-            var gh = el("div", "gh");
-            if (b.holders.length) {
-              b.holders.slice(0, 8).forEach(function (p) {
-                var a = avatar(p.name, p.avatar, 24);
-                a.title = p.name;
-                a.style.cursor = "pointer";
-                a.addEventListener("click", function () { gallery.close(); openDetail(p.id, null); });
-                gh.appendChild(a);
-              });
-              var pct = g.people ? Math.round(100 * b.holders.length / g.people) : 0;
-              gh.appendChild(el("span", "cnt", T(b.holders.length + " of " + g.people + " people (" + pct + "%)", b.holders.length + " dari " + g.people + " orang (" + pct + "%)")));
-            } else {
-              gh.appendChild(el("span", "", T("Nobody yet. Be the first.", "Belum ada yang buka. Jadilah yang pertama.")));
-            }
-            txt.appendChild(gh);
-            row.appendChild(txt);
-            sec.appendChild(row);
-          });
-          frag.appendChild(sec);
-        });
-        body.replaceChildren(frag);
-        x.focus();
-      })
+      .then(function (g) { renderGallery(g); var x = body.querySelector(".x"); if (x) x.focus(); })
       .catch(function () { body.replaceChildren(el("p", "dt-empty", T("Could not load the badges.", "Gagal memuat lencana."))); });
   }
   $("badgeBtn").addEventListener("click", openGallery);
@@ -2081,7 +2203,7 @@
     return Math.round(d / 86400) + T(" d ago", " hari lalu");
   }
   function strongName(n) { return el("strong", "", n); }
-  var HARNESS_LABEL = { "claude-code": "Claude Code", "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter" };
+  var HARNESS_LABEL = { "claude-code": "Claude Code", "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter", opencode: "OpenCode" };
 
   function renderActive(f) {
     var box = $("activeList");

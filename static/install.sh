@@ -6,6 +6,7 @@
 #   9router : bash -s -- <TOKEN> --9router   (⟦on the macOS or Linux machine that runs 9router; remove with‖di mesin macOS atau Linux yang menjalankan 9router; hapus dengan⟧ --uninstall --9router)
 #   JRouter : bash -s -- <TOKEN> --jrouter   (⟦the same for JRouter‖sama, untuk JRouter⟧)
 #   Hermes  : bash -s -- <TOKEN> --hermes    (⟦on the machine that runs Hermes Agent‖di mesin yang menjalankan Hermes Agent⟧)
+#   OpenCode: bash -s -- <TOKEN> --opencode    (⟦on the machine that runs OpenCode; needs Node.js 22.5+‖di mesin yang menjalankan OpenCode; butuh Node.js 22.5+⟧)
 #   OpenRouter: bash -s -- <TOKEN> --openrouter  (⟦asks for an OpenRouter management key, which stays on this machine‖meminta management key OpenRouter, yang tetap di mesin ini⟧)
 #
 # ⟦What changes: the "env" block in ~/.claude/settings.json (a backup is made first).‖Yang diubah: blok "env" di ~/.claude/settings.json (backup dibuat dulu).⟧
@@ -33,9 +34,10 @@ for arg in "$@"; do
     --jrouter) ROUTER=jrouter ;;
     --hermes) ROUTER=hermes ;;
     --openrouter) ROUTER=openrouter ;;
+    --opencode) ROUTER=opencode ;;
     --harness=claude-code) ROUTER="" ;;
     --harness=*) ROUTER="${arg#--harness=}"
-      case "$ROUTER" in 9router|jrouter|hermes|openrouter) ;; *) echo "⟦Unknown harness‖Harness tidak dikenal⟧: $ROUTER" >&2; exit 2 ;; esac ;;
+      case "$ROUTER" in 9router|jrouter|hermes|openrouter|opencode) ;; *) echo "⟦Unknown harness‖Harness tidak dikenal⟧: $ROUTER" >&2; exit 2 ;; esac ;;
     -*) echo "⟦Unknown option‖Opsi tidak dikenal⟧: $arg" >&2; exit 2 ;;
     *) TOKEN="$arg" ;;
   esac
@@ -74,7 +76,7 @@ fi
 # ---------------------------------------------------------------------------
 if [ -n "$ROUTER" ]; then
   R_KIND="$ROUTER"
-  case "$R_KIND" in jrouter) R_NAME=JRouter ;; hermes) R_NAME=Hermes ;; openrouter) R_NAME=OpenRouter ;; *) R_NAME=9router ;; esac
+  case "$R_KIND" in jrouter) R_NAME=JRouter ;; hermes) R_NAME=Hermes ;; openrouter) R_NAME=OpenRouter ;; opencode) R_NAME=OpenCode ;; *) R_NAME=9router ;; esac
   R_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude-leaderboard"
   R_SCRIPT="$R_DIR/router-sync.js"
   R_CONF="$R_DIR/$R_KIND.json"
@@ -120,6 +122,11 @@ if [ -n "$ROUTER" ]; then
   if [ "$R_KIND" = hermes ]; then
     R_DATA="${LB_ROUTER_DIR:-${HERMES_HOME:-$HOME/.hermes}}"
     R_DB="${LB_ROUTER_DB:-$R_DATA/state.db}"
+  elif [ "$R_KIND" = opencode ]; then
+    R_DATA="${LB_ROUTER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/opencode}"
+    R_DB="${LB_ROUTER_DB:-${OPENCODE_DB:-}}"
+    if [ -z "$R_DB" ] && command -v opencode >/dev/null 2>&1; then R_DB=$(opencode debug paths db 2>/dev/null | tail -1 || true); fi
+    [ -n "$R_DB" ] || R_DB="$R_DATA/opencode.db"
   elif [ "$R_KIND" = openrouter ]; then
     R_DATA=""; R_DB=""
     R_KEY="${LB_OPENROUTER_KEY:-}"

@@ -272,7 +272,7 @@ def as_count(v, cap):
 
 # Harnesses whose usage the sync script reads on the person's machine (9router and its fork
 # JRouter share one usage log; Hermes keeps its own; OpenRouter is read from its activity API).
-ROUTER_KINDS = ("9router", "jrouter", "hermes", "openrouter")
+ROUTER_KINDS = ("9router", "jrouter", "hermes", "openrouter", "opencode")
 
 
 SYNC_PATHS = tuple("/v1/metrics/" + k for k in ROUTER_KINDS)   # where router-sync.js posts (all the same handler)

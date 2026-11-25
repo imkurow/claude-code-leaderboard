@@ -175,8 +175,9 @@ def new_token():
 
 # Harnesses a participant can use. Claude Code sends OpenTelemetry; the others are read by
 # static/router-sync.js on the person's machine (--kind=<id>).
-HARNESSES = ("claude-code", "9router", "jrouter", "hermes", "openrouter")
-HARNESS_NAMES = {"claude-code": "Claude Code", "9router": "9router", "jrouter": "JRouter", "hermes": "Hermes", "openrouter": "OpenRouter"}
+HARNESSES = ("claude-code", "9router", "jrouter", "hermes", "openrouter", "opencode")
+HARNESS_NAMES = {"claude-code": "Claude Code", "9router": "9router", "jrouter": "JRouter", "hermes": "Hermes", "openrouter": "OpenRouter",
+                 "opencode": "OpenCode"}
 
 
 def install_commands(cfg, token, url=None):

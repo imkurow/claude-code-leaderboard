@@ -275,6 +275,7 @@
           <option value="jrouter">JRouter</option>
           <option value="hermes">Hermes</option>
           <option value="openrouter">OpenRouter</option>
+          <option value="opencode">OpenCode</option>
         </select></label>
       <label class="f f-email"><span>⟦Login email‖Email login⟧ <span class="opt">⟦(optional)‖(opsional)⟧</span></span>
         <input type="email" name="email" maxlength="120" placeholder="name@example.com" title="⟦The email they sign in with, so they can add a photo‖Email login peserta, supaya dia bisa pasang foto⟧"></label>
@@ -496,13 +497,15 @@
 
   // ---------- install commands ----------
   var tokenDlg = $("tokenDlg");
-  var HARNESS_NAME = { "claude-code": "Claude Code", "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter" };
+  var HARNESS_NAME = { "claude-code": "Claude Code", "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter", opencode: "OpenCode" };
   function harnessOf(j) { return j && HARNESS_NAME[j.harness] ? j.harness : "claude-code"; }
   function hkey(j, k) { return "harness:" + harnessOf(j) + (k === "ps" ? ":ps" : ""); }
   function harnessNote(h) {
     if (h === "claude-code") return "";
     if (h === "openrouter") return T("Run it on any computer with Node.js 18+. It asks for an OpenRouter management key (openrouter.ai/settings/management-keys), which stays on that computer. OpenRouter reports whole days, so usage shows up the day after.",
       "Jalankan di komputer mana saja yang punya Node.js 18+. Perintah ini meminta management key OpenRouter (openrouter.ai/settings/management-keys), yang tetap di komputer itu. OpenRouter melaporkan per hari, jadi pemakaian baru muncul besoknya.");
+    if (h === "opencode") return T("Run it on the machine where OpenCode runs, as the same user. It needs Node.js 22.5 or newer and reads OpenCode's own database every minute.",
+      "Jalankan di mesin tempat OpenCode berjalan, dengan user yang sama. Butuh Node.js 22.5 atau lebih baru, dan membaca database OpenCode tiap menit.");
     return T("Run it on the machine where " + HARNESS_NAME[h] + " runs, as the same user. It reads " + HARNESS_NAME[h] + "'s own usage log every minute.",
       "Jalankan di mesin tempat " + HARNESS_NAME[h] + " berjalan, dengan user yang sama. Perintah ini membaca log pemakaian " + HARNESS_NAME[h] + " tiap menit.");
   }

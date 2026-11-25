@@ -33,7 +33,7 @@ const HERE = __dirname;
 const DAYS = 90;
 const RESEND = 1800;
 const KIND = ((process.argv.find(a => a.startsWith('--kind=')) || '--kind=9router').slice(7) || '9router').toLowerCase();
-const NAMES = { '9router': '9router', jrouter: 'JRouter', hermes: 'Hermes', openrouter: 'OpenRouter' };
+const NAMES = { '9router': '9router', jrouter: 'JRouter', hermes: 'Hermes', openrouter: 'OpenRouter', opencode: 'OpenCode' };
 const NAME = NAMES[KIND] || KIND;
 const FORCE = process.argv.includes('--force');
 const DRY = process.argv.includes('--dry-run');
@@ -50,6 +50,7 @@ function settings() {
 }
 
 function defaultDataDir() {
+  if (KIND === 'opencode') return path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'opencode');
   if (KIND === 'hermes') {
     if (process.env.HERMES_HOME) return process.env.HERMES_HOME;
     return process.platform === 'win32'
@@ -171,6 +172,44 @@ function collectHermes(cfg) {
   }
 }
 
+// OpenCode: session_v2 keeps each session's token and cost totals (counters that grow while it
+// runs), counted in the hour the session was last updated. Its database is opencode.db in OpenCode's
+// data folder (`opencode debug paths db` prints it; OPENCODE_DB overrides it).
+function collectOpenCode(cfg) {
+  const dataDir = cfg.dataDir || defaultDataDir();
+  const file = cfg.db || process.env.OPENCODE_DB || path.join(dataDir, 'opencode.db');
+  if (!fs.existsSync(file)) throw new Error('OpenCode database not found at ' + file);
+  const db = openDb(file, dataDir);
+  try {
+    const cols = new Set(db.all('PRAGMA table_info(session_v2)').map(r => r.name));
+    for (const c of ['tokens_input', 'tokens_output', 'time_updated']) {
+      if (!cols.has(c)) throw new Error(cols.size ? 'session_v2 has an unknown layout; this OpenCode version is not supported yet' : 'no session_v2 table in ' + file + ' (OpenCode before 2026 is not supported)');
+    }
+    const has = c => cols.has(c) ? c : '0';
+    const msgs = new Set(db.all('PRAGMA table_info(session_message)').map(r => r.name)).has('type');
+    const since = Date.now() / 1000 - DAYS * 86400;
+    const agg = new Map();
+    let first = null, last = null, n = 0;
+    const sql = 'SELECT s.tokens_input AS i, s.tokens_output AS o, ' + has('tokens_reasoning') + ' AS r, ' + has('tokens_cache_read') + ' AS cr, ' +
+      has('tokens_cache_write') + ' AS cw, ' + has('cost') + ' AS cost, ' + (cols.has('model') ? 's.model' : "''") + ' AS model, s.time_updated AS t' +
+      (msgs ? ", (SELECT COUNT(*) FROM session_message m WHERE m.session_id = s.id AND m.type = 'assistant') AS calls" : ', 1 AS calls') +
+      ' FROM session_v2 s WHERE s.time_updated >= ?';
+    for (const r of db.all(sql, since * 1000)) {
+      const ts = toTs(r.t);
+      if (ts == null || ts < since || !(num(r.i) || num(r.o))) continue;
+      let model = 'unknown';
+      try { const m = JSON.parse(r.model || '{}'); model = m.id || m.modelID || model; } catch (e) { model = String(r.model || model); }
+      bucket(agg, ts, model, num(r.i), num(r.o) + num(r.r), num(r.cr), num(r.cw), num(r.cost), num(r.calls) || 1);
+      first = first == null ? ts : Math.min(first, ts);
+      last = last == null ? ts : Math.max(last, ts);
+      n += num(r.calls) || 1;
+    }
+    return finish(agg, first, last, machineId(file), n);
+  } finally {
+    db.close();
+  }
+}
+
 // OpenRouter: daily totals per model for the last 30 completed UTC days (activity API, management key).
 async function collectOpenRouter(cfg) {
   if (!cfg.apiKey) throw new Error('no OpenRouter management key in ' + KIND + '.json');
@@ -199,6 +238,7 @@ async function collectOpenRouter(cfg) {
 
 function collect(cfg) {
   if (KIND === 'hermes') return collectHermes(cfg);
+  if (KIND === 'opencode') return collectOpenCode(cfg);
   if (KIND === 'openrouter') return collectOpenRouter(cfg);
   const dataDir = cfg.dataDir || defaultDataDir();
   const file = cfg.db || path.join(dataDir, 'db', 'data.sqlite');

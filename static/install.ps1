@@ -4,7 +4,7 @@
 #   ⟦Remove‖Hapus⟧  : $env:LB_UNINSTALL='1'; ⟦then the same‖lalu perintah⟧ irm ... | iex ⟦command‖yang sama⟧
 #   9router : $env:LB_9ROUTER='1' ⟦before the command, on the Windows PC that runs 9router (it sets up a sync instead of Claude Code telemetry)‖sebelum perintahnya, di PC Windows yang menjalankan 9router (memasang sinkron, bukan telemetry Claude Code)⟧
 #   JRouter : $env:LB_JROUTER='1' ⟦the same for JRouter‖sama, untuk JRouter⟧
-#   ⟦Any harness‖Harness lain⟧: $env:LB_HARNESS='9router' | 'jrouter' | 'hermes' | 'openrouter'   (OpenRouter ⟦asks for a management key‖meminta management key⟧)
+#   ⟦Any harness‖Harness lain⟧: $env:LB_HARNESS='9router' | 'jrouter' | 'hermes' | 'openrouter' | 'opencode'   (OpenRouter ⟦asks for a management key‖meminta management key⟧)
 #
 # ⟦What changes: the "env" block in %USERPROFILE%\.claude\settings.json (a backup is made first).‖Yang diubah: blok "env" di %USERPROFILE%\.claude\settings.json (backup dibuat dulu).⟧
 # ⟦What Claude Code sends: metric numbers only. Prompt contents, code, and files are NOT sent.‖Yang dikirim Claude Code: angka metrik saja. Isi prompt, kode, dan file TIDAK ikut terkirim.⟧
@@ -16,7 +16,7 @@
   if ($CfSecret.StartsWith('__')) { $CfSecret = '' }
   $Uninstall = ($env:LB_UNINSTALL -eq '1')
   $Router = if ($env:LB_HARNESS -and $env:LB_HARNESS -ne 'claude-code') { "$env:LB_HARNESS".ToLower() } elseif ($env:LB_JROUTER -eq '1') { 'jrouter' } elseif ($env:LB_9ROUTER -eq '1') { '9router' } else { '' }
-  if ($Router -and @('9router', 'jrouter', 'hermes', 'openrouter') -notcontains $Router) { Write-Host "⟦Unknown harness‖Harness tidak dikenal⟧: $Router" -ForegroundColor Red; return }
+  if ($Router -and @('9router', 'jrouter', 'hermes', 'openrouter', 'opencode') -notcontains $Router) { Write-Host "⟦Unknown harness‖Harness tidak dikenal⟧: $Router" -ForegroundColor Red; return }
   $Token = "$env:LB_TOKEN"
   $Dir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $HOME '.claude' }
   $Path = Join-Path $Dir 'settings.json'
@@ -49,7 +49,7 @@
   # script; both routers run on Node, so Node is there.
   # ---------------------------------------------------------------------------
   if ($Router) {
-    $RName = @{ '9router' = '9router'; 'jrouter' = 'JRouter'; 'hermes' = 'Hermes'; 'openrouter' = 'OpenRouter' }[$Router]
+    $RName = @{ '9router' = '9router'; 'jrouter' = 'JRouter'; 'hermes' = 'Hermes'; 'openrouter' = 'OpenRouter'; 'opencode' = 'OpenCode' }[$Router]
     $RDir = Join-Path $env:LOCALAPPDATA 'claude-leaderboard'
     $RTask = "ClaudeLeaderboard$Router"
     $RScript = Join-Path $RDir 'router-sync.js'
@@ -78,6 +78,12 @@
     if ($Router -eq 'hermes') {
       $RData = if ($env:LB_ROUTER_DIR) { $env:LB_ROUTER_DIR } else { $HermesHome }
       $RDb = if ($env:LB_ROUTER_DB) { $env:LB_ROUTER_DB } else { Join-Path $RData 'state.db' }
+    } elseif ($Router -eq 'opencode') {
+      $xdg = if ($env:XDG_DATA_HOME) { $env:XDG_DATA_HOME } else { Join-Path $HOME '.local\share' }
+      $RData = if ($env:LB_ROUTER_DIR) { $env:LB_ROUTER_DIR } else { Join-Path $xdg 'opencode' }
+      $RDb = if ($env:LB_ROUTER_DB) { $env:LB_ROUTER_DB } elseif ($env:OPENCODE_DB) { $env:OPENCODE_DB } else { '' }
+      if (-not $RDb -and (Get-Command opencode -ErrorAction SilentlyContinue)) { $RDb = (& opencode debug paths db 2>$null | Select-Object -Last 1) }
+      if (-not $RDb) { $RDb = Join-Path $RData 'opencode.db' }
     } elseif ($Router -eq 'openrouter') {
       $RData = ''; $RDb = ''
       $RKey = "$env:LB_OPENROUTER_KEY"

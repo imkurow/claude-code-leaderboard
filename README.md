@@ -12,7 +12,7 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 - **Rank changes and streaks.** Arrows show who moved up or down against 24 hours earlier, and a flame counts days in a row.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
 - **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.
-- **Other harnesses too.** Besides Claude Code, people can join with [9router](https://github.com/decolua/9router), its fork [JRouter](https://github.com/Synthever/JRouter), [Hermes Agent](https://github.com/NousResearch/hermes-agent) or [OpenRouter](https://openrouter.ai), on Windows, macOS or Linux. The admin picks the harness when adding someone and gets the matching install command; usage is read from that harness's own records, labelled, and the board can be filtered by harness.
+- **Other harnesses too.** Besides Claude Code, people can join with [9router](https://github.com/decolua/9router), its fork [JRouter](https://github.com/Synthever/JRouter), [Hermes Agent](https://github.com/NousResearch/hermes-agent), [OpenCode](https://github.com/anomalyco/opencode) or [OpenRouter](https://openrouter.ai), on Windows, macOS or Linux. The admin picks the harness when adding someone and gets the matching install command; usage is read from that harness's own records, labelled, and the board can be filtered by harness.
 - **Admin page.** Add people and copy a ready-made install message for each. You can also rename people, rotate tokens, remove one computer's history or a photo, and delete people.
 - **Profile photos.** Each person uploads their own, with a crop and zoom step.
 - **Light and dark themes, two languages.** English and Bahasa Indonesia, switched with a button on every page.
@@ -95,19 +95,20 @@ Running it again with `--uninstall` (bash) or `$env:LB_UNINSTALL='1'` (PowerShel
 
 To add a photo, a person clicks "Add photo" on the board and pastes their token once.
 
-### People on another harness (9router, JRouter, Hermes, OpenRouter)
+### People on another harness (9router, JRouter, Hermes, OpenCode, OpenRouter)
 
 When adding someone, pick their harness in the admin form; the install message then carries the matching command:
 
 ```bash
 # macOS / Linux
-curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --hermes     # --9router, --jrouter, --hermes or --openrouter
+curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --hermes     # --9router, --jrouter, --hermes, --opencode or --openrouter
 # Windows (PowerShell)
 $env:LB_TOKEN='lb_xxxxxxxx'; $env:LB_HARNESS='hermes'; irm https://leaderboard.example.com/install.ps1 | iex
 ```
 
 - **9router and JRouter** (a 9router fork) keep the same usage log in `~/.9router` or `~/.jrouter` (`%APPDATA%` on Windows). Run the command on the machine where the router runs, as its user.
 - **Hermes Agent** keeps per-session, per-model token counts in `state.db` under `HERMES_HOME` (`~/.hermes`, or `%LOCALAPPDATA%\hermes` on Windows). Run the command on the machine where Hermes runs; the installer uses the Node.js that Hermes ships if none is on `PATH`.
+- **OpenCode** keeps each session's token and cost totals in `opencode.db` (`session_v2`), in `~/.local/share/opencode` or wherever `opencode debug paths db` points. Run the command on the machine where OpenCode runs; it needs Node.js 22.5 or newer, because OpenCode ships no SQLite reader of its own.
 - **OpenRouter** has no local log, so the sync asks OpenRouter's [activity API](https://openrouter.ai/docs/api/api-reference/analytics/get-user-activity) with the person's **management key**. The installer asks for the key (or takes `LB_OPENROUTER_KEY`) and keeps it on that computer only; the leaderboard server never sees it. The API reports whole UTC days for the last 30 days, so OpenRouter usage appears the day after. Any computer with Node.js 18+ will do, and running it on two computers does not count twice.
 
 - **What it installs.** A small Node.js script (`router-sync.js`, fetched from your server) plus its settings, scheduled every minute: launchd on macOS, cron on Linux, Task Scheduler on Windows. The installer finds the `node` the harness runs on if it is not on `PATH` (or set `LB_NODE`). It reads SQLite with `node:sqlite` (Node 22.5+) or the router's own `better-sqlite3`, and changes nothing in the harness. One machine can run several.
