@@ -259,9 +259,11 @@
   .streak { color: var(--gold); }
   .streak svg { width: 12px; height: 13px; }
   .streak.cold { color: var(--ink-3); }
-  .who .chips { display: flex; justify-content: center; gap: 2px; margin-top: 6px; min-height: 18px; }
-  .who .chips .mv, .who .chips .streak { margin-left: 0; vertical-align: 0; }
-  .who .chips > * + * { margin-left: 8px; }
+  /* podium: streak and badges in one quiet line under the team; the rank change sits on the plinth */
+  .who .chips { display: flex; justify-content: center; gap: 12px; margin-top: 6px; min-height: 18px; }
+  .who .chips .streak { margin-left: 0; vertical-align: 0; }
+  .plinth { flex-direction: column; align-items: center; }
+  .plinth .mv { margin: 2px 0 0; padding: 1px 7px; border-radius: 999px; font-size: 11.5px; background: color-mix(in oklab, var(--paper) 70%, transparent); }
 
   .plinth {
     position: relative; height: var(--plinth); margin-top: 14px;
@@ -314,16 +316,25 @@
   .rest { margin-top: 0; background: var(--paper); border: 1px solid var(--rule); border-radius: 0 0 18px 18px; position: relative; }
   .rest:empty { display: none; }
   .row {
-    display: grid; grid-template-columns: 2.2ch 40px minmax(0, 1fr) auto; gap: 4px 14px; align-items: center;
+    display: grid; grid-template-columns: 3.6ch 40px minmax(0, 1fr) auto auto; gap: 4px 14px; align-items: center;
     padding: 14px 20px; border-top: 1px solid var(--rule);
   }
   .row:first-child { border-top: 0; }
-  .row .pos { color: var(--ink-3); font: 500 16px/1 var(--display); text-align: right; }
+  .row .pos { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; color: var(--ink-3); font: 500 16px/1 var(--display); }
+  /* the rank change under the rank, like a league table */
+  .row .pos .mv { margin: 0; font-size: 11px; line-height: 1; vertical-align: 0; gap: 2px; }
+  .row .pos .mv svg { width: 7px; height: 7px; }
+  .row .pos .mv.new { padding: 1px 5px; font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
+  /* streak and badges: one aligned column of quiet figures before the total */
+  .row-stats { display: grid; grid-template-columns: 3.2em 3.2em; gap: 6px; justify-items: end; font-variant-numeric: tabular-nums; }
+  .row-stats .streak { margin: 0; vertical-align: 0; font-size: 13px; color: var(--ink-3); }
+  .row-stats .streak:not(.cold):not(.bd-count) { color: var(--gold); }
+  .row-stats .bd-count { grid-column: 2; }
   .row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row .team { font-weight: 400; color: var(--ink-3); margin-left: 8px; font-size: 14px; }
   .row .meta { display: flex; flex-wrap: wrap; column-gap: 16px; font-size: 13px; color: var(--ink-3); margin-top: 1px; }
   .row .num { font: 500 19px/1 var(--display); text-align: right; }
-  .row .track { grid-column: 3 / 5; height: 3px; border-radius: 2px; background: color-mix(in oklab, var(--rule) 70%, transparent); overflow: hidden; }
+  .row .track { grid-column: 3 / 6; height: 3px; border-radius: 2px; background: color-mix(in oklab, var(--rule) 70%, transparent); overflow: hidden; }
   .row .track b { display: block; height: 100%; width: var(--p); background: var(--ink-3); border-radius: 2px; }
   .row.me { background: color-mix(in oklab, var(--signal) 7%, var(--paper)); box-shadow: inset 3px 0 0 var(--signal); }
   .row.me .track b { background: var(--signal); }
@@ -562,7 +573,9 @@
     .plinth { padding-top: 12px; }
     .plinth .rank { font-size: 40px; }
     .seat[data-pos="1"] .plinth .rank { font-size: 52px; }
-    .row { grid-template-columns: 2ch 34px minmax(0, 1fr) auto; padding: 12px 14px; gap: 4px 10px; }
+    .row { grid-template-columns: 3ch 34px minmax(0, 1fr) auto; padding: 12px 14px; gap: 4px 10px; }
+    .row-stats { grid-column: 3; grid-row: 2; display: flex; gap: 14px; justify-items: start; }
+    .row .track { grid-column: 3 / 5; grid-row: 3; }
     .row .av { --size: 34px; }
     .row .num { font-size: 16px; }
     .row .team { display: block; margin-left: 0; font-size: 13px; }
@@ -1145,10 +1158,9 @@
       who.appendChild(el("div", "team", row.team || ""));
       var pill = srcPill(row);
       if (pill) who.appendChild(pill);
-      var chips = el("div", "chips"), sc = streakChip(row), mc = moveChip(row), bc = badgeChip(row);
-      if (bc) chips.appendChild(bc);
+      var chips = el("div", "chips"), sc = streakChip(row), bc = badgeChip(row);
       if (sc) chips.appendChild(sc);
-      if (mc) chips.appendChild(mc);
+      if (bc) chips.appendChild(bc);
       who.appendChild(chips);
       if (row.me) who.appendChild(el("span", "badge", T("You", "Kamu")));
       var n = el("div", "num");
@@ -1171,6 +1183,8 @@
     s.appendChild(who);
     var plinth = el("div", "plinth");
     plinth.appendChild(el("div", "rank", String(row ? row.rank : pos)));
+    var pm = row ? moveChip(row) : null;
+    if (pm) plinth.appendChild(pm);
     s.appendChild(plinth);
     return s;
   }
@@ -1219,19 +1233,17 @@
     rest.forEach(function (r) {
       var li = el("li", "row" + (r.output ? "" : " idle") + (r.me ? " me" : ""));
       clickable(li, r);
-      li.appendChild(el("span", "pos", r.output ? String(r.rank) : ""));
+      var pos = el("span", "pos");
+      pos.appendChild(el("span", "", r.output ? String(r.rank) : ""));
+      var rm = r.output ? moveChip(r) : null;
+      if (rm) pos.appendChild(rm);
+      li.appendChild(pos);
       li.appendChild(avatar(r.name, r.avatar));
       var mid = el("div", "");
       var nm = el("div", "name", r.name);
       if (r.team) nm.appendChild(el("span", "team", r.team));
       var rp = srcPill(r);
       if (rp) nm.appendChild(rp);
-      if (r.output) {
-        var rs = streakChip(r), rm = moveChip(r), rb = badgeChip(r);
-        if (rb) nm.appendChild(rb);
-        if (rs) nm.appendChild(rs);
-        if (rm) nm.appendChild(rm);
-      }
       if (r.me) nm.appendChild(el("span", "badge", T("You", "Kamu")));
       mid.appendChild(nm);
       var meta = el("div", "meta");
@@ -1245,6 +1257,11 @@
       meta.appendChild(el("span", "", ago(r.last_seen)));
       mid.appendChild(meta);
       li.appendChild(mid);
+      var stats = el("span", "row-stats");
+      var rs = r.output ? streakChip(r) : null, rb = badgeChip(r);
+      stats.appendChild(rs || el("span"));
+      if (rb) stats.appendChild(rb);
+      li.appendChild(stats);
       var n = el("span", "num", compact(r.output));
       n.title = num(r.output) + " token";
       li.appendChild(n);
