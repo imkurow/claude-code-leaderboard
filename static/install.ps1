@@ -3,6 +3,7 @@
 #   ⟦Install‖Pasang⟧ : ⟦get the full command (with -Headers CF-Access-*) from the admin‖perintah lengkap (dengan -Headers CF-Access-*) didapat dari admin⟧
 #   ⟦Remove‖Hapus⟧  : $env:LB_UNINSTALL='1'; ⟦then the same‖lalu perintah⟧ irm ... | iex ⟦command‖yang sama⟧
 #   9router : $env:LB_9ROUTER='1' ⟦before the command, on the Windows PC that runs 9router (it sets up a sync instead of Claude Code telemetry)‖sebelum perintahnya, di PC Windows yang menjalankan 9router (memasang sinkron, bukan telemetry Claude Code)⟧
+#   JRouter : $env:LB_JROUTER='1' ⟦the same for JRouter‖sama, untuk JRouter⟧
 #
 # ⟦What changes: the "env" block in %USERPROFILE%\.claude\settings.json (a backup is made first).‖Yang diubah: blok "env" di %USERPROFILE%\.claude\settings.json (backup dibuat dulu).⟧
 # ⟦What Claude Code sends: metric numbers only. Prompt contents, code, and files are NOT sent.‖Yang dikirim Claude Code: angka metrik saja. Isi prompt, kode, dan file TIDAK ikut terkirim.⟧
@@ -13,7 +14,7 @@
   if ($CfId.StartsWith('__')) { $CfId = '' }
   if ($CfSecret.StartsWith('__')) { $CfSecret = '' }
   $Uninstall = ($env:LB_UNINSTALL -eq '1')
-  $Router = ($env:LB_9ROUTER -eq '1')
+  $Router = if ($env:LB_JROUTER -eq '1') { 'jrouter' } elseif ($env:LB_9ROUTER -eq '1') { '9router' } else { '' }
   $Token = "$env:LB_TOKEN"
   $Dir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $HOME '.claude' }
   $Path = Join-Path $Dir 'settings.json'
@@ -41,57 +42,65 @@
   }
 
   # ---------------------------------------------------------------------------
-  # 9router: read 9router's own usage log every minute (Task Scheduler) and send hourly
-  # totals per model. The sync is a Node.js script; 9router runs on Node, so Node is there.
+  # 9router or JRouter (a 9router fork with the same usage log): read the router's own usage log
+  # every minute (Task Scheduler) and send hourly totals per model. The sync is a Node.js
+  # script; both routers run on Node, so Node is there.
   # ---------------------------------------------------------------------------
   if ($Router) {
+    $RName = if ($Router -eq 'jrouter') { 'JRouter' } else { '9router' }
     $RDir = Join-Path $env:LOCALAPPDATA 'claude-leaderboard'
-    $RTask = 'ClaudeLeaderboard9router'
-    $RFiles = @('9router-sync.js', '9router.json', '9router.state', '9router.lock', '9router-sync.log', 'run-hidden.vbs') | ForEach-Object { Join-Path $RDir $_ }
+    $RTask = "ClaudeLeaderboard$Router"
+    $RScript = Join-Path $RDir 'router-sync.js'
+    $RVbs = Join-Path $RDir "run-$Router.vbs"
+    $RFiles = @("$Router.json", "$Router.state", "$Router.lock", "$Router-sync.log", "run-$Router.vbs", '9router-sync.js', 'run-hidden.vbs') | ForEach-Object { Join-Path $RDir $_ }
     if ($Uninstall) {
       Unregister-ScheduledTask -TaskName $RTask -Confirm:$false -ErrorAction SilentlyContinue
       Remove-Item -Force -ErrorAction SilentlyContinue $RFiles
-      Write-Host '⟦9router sync removed. Data already on the leaderboard stays.‖Sinkron 9router dihapus. Data yang sudah ada di leaderboard tetap.⟧'
-      Remove-Item Env:LB_TOKEN, Env:LB_UNINSTALL, Env:LB_9ROUTER -ErrorAction SilentlyContinue
+      if (-not (Get-ChildItem -Path $RDir -Filter '*.json' -ErrorAction SilentlyContinue)) { Remove-Item -Force -ErrorAction SilentlyContinue $RScript }
+      Write-Host "$RName ⟦sync removed. Data already on the leaderboard stays.‖sinkron dihapus. Data yang sudah ada di leaderboard tetap.⟧"
+      Remove-Item Env:LB_TOKEN, Env:LB_UNINSTALL, Env:LB_9ROUTER, Env:LB_JROUTER -ErrorAction SilentlyContinue
       return
     }
     $Node = $env:LB_NODE
     if (-not $Node) { $cmd = Get-Command node.exe -ErrorAction SilentlyContinue; if ($cmd) { $Node = $cmd.Source } }
     if (-not $Node) {
-      $proc = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match '9router' } | Select-Object -First 1
+      $proc = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match $Router } | Select-Object -First 1
       if ($proc) { $Node = $proc.ExecutablePath }
     }
     if (-not $Node -or -not (Test-Path $Node)) {
-      Write-Host "⟦Node.js was not found. Point to the node.exe that runs 9router first:‖Node.js tidak ditemukan. Tunjukkan dulu node.exe yang menjalankan 9router:⟧ `$env:LB_NODE='C:\path\node.exe'" -ForegroundColor Red; return
+      Write-Host "⟦Node.js was not found. Point to the node.exe that runs‖Node.js tidak ditemukan. Tunjukkan dulu node.exe yang menjalankan⟧ ${RName}: `$env:LB_NODE='C:\path\node.exe'" -ForegroundColor Red; return
     }
-    $RData = if ($env:LB_9R_DIR) { $env:LB_9R_DIR } elseif ($env:DATA_DIR -and $env:DATA_DIR -notmatch '^/') { $env:DATA_DIR } else { Join-Path $env:APPDATA '9router' }
-    $RDb = if ($env:LB_9R_DB) { $env:LB_9R_DB } else { Join-Path $RData 'db\data.sqlite' }
+    $RData = if ($env:LB_ROUTER_DIR) { $env:LB_ROUTER_DIR } elseif ($env:LB_9R_DIR) { $env:LB_9R_DIR } elseif ($env:DATA_DIR -and $env:DATA_DIR -notmatch '^/') { $env:DATA_DIR } else { Join-Path $env:APPDATA $Router }
+    $RDb = if ($env:LB_ROUTER_DB) { $env:LB_ROUTER_DB } elseif ($env:LB_9R_DB) { $env:LB_9R_DB } else { Join-Path $RData 'db\data.sqlite' }
     if (-not (Test-Path $RDb)) {
-      Write-Host "⟦9router's database was not found at‖Database 9router tidak ditemukan di⟧ $RDb. ⟦Run this as the Windows user that runs 9router, or set‖Jalankan sebagai user Windows yang menjalankan 9router, atau set⟧ `$env:LB_9R_DB='C:\path\data.sqlite'" -ForegroundColor Red; return
+      Write-Host "$RName ⟦database was not found at‖database tidak ditemukan di⟧ $RDb. ⟦Run this as the Windows user that runs it, or set‖Jalankan sebagai user Windows yang menjalankannya, atau set⟧ `$env:LB_ROUTER_DB='C:\path\data.sqlite'" -ForegroundColor Red; return
     }
     New-Item -ItemType Directory -Force -Path $RDir | Out-Null
-    $RScript = Join-Path $RDir '9router-sync.js'
     try {
-      Invoke-WebRequest -UseBasicParsing -Uri "$Endpoint/9router-sync.js" -Headers $Hdr -OutFile $RScript -MaximumRedirection 0
+      Invoke-WebRequest -UseBasicParsing -Uri "$Endpoint/router-sync.js" -Headers $Hdr -OutFile $RScript -MaximumRedirection 0
     } catch {
-      Write-Host "⟦Could not download the 9router sync from the server.‖Gagal mengunduh sinkron 9router dari server.⟧ ($($_.Exception.Message))" -ForegroundColor Red; return
+      Write-Host "⟦Could not download the router sync from the server.‖Gagal mengunduh sinkron router dari server.⟧ ($($_.Exception.Message))" -ForegroundColor Red; return
     }
-    $cfg = [ordered]@{ url = '__LB_URL__'; token = $Token; cfId = $CfId; cfSecret = $CfSecret; db = $RDb; dataDir = $RData; keys = "$env:LB_9R_KEYS" }
-    [IO.File]::WriteAllText((Join-Path $RDir '9router.json'), ($cfg | ConvertTo-Json))
-    Write-Host -NoNewline '⟦Sending 9router usage (up to 90 days)... ‖Kirim pemakaian 9router (maks. 90 hari)... ⟧'
-    & $Node --no-warnings $RScript --force
+    $keys = if ($env:LB_ROUTER_KEYS) { $env:LB_ROUTER_KEYS } else { "$env:LB_9R_KEYS" }
+    $cfg = [ordered]@{ url = '__LB_URL__'; token = $Token; cfId = $CfId; cfSecret = $CfSecret; db = $RDb; dataDir = $RData; keys = $keys }
+    [IO.File]::WriteAllText((Join-Path $RDir "$Router.json"), ($cfg | ConvertTo-Json))
+    if ($Router -eq '9router') {
+      # an earlier 9router sync: same task name and machine id, so it is replaced and nothing counts twice
+      Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $RDir '9router-sync.js'), (Join-Path $RDir 'run-hidden.vbs')
+    }
+    Write-Host -NoNewline "⟦Sending‖Kirim pemakaian⟧ $RName ⟦usage (up to 90 days)... ‖(maks. 90 hari)... ⟧"
+    & $Node --no-warnings $RScript "--kind=$Router" --force
     if ($LASTEXITCODE -ne 0) { Write-Host '⟦failed, see the message above.‖gagal, lihat pesan di atas.⟧' -ForegroundColor Red; return }
     # wscript runs node without flashing a console window every minute
     $q = '"'
-    $vbs = Join-Path $RDir 'run-hidden.vbs'
-    [IO.File]::WriteAllText($vbs, 'CreateObject("WScript.Shell").Run ' + $q + $q + $q + $Node + $q + $q + ' --no-warnings ' + $q + $q + $RScript + $q + $q + $q + ', 0, False' + "`r`n")
-    $action = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument ($q + $vbs + $q)
+    [IO.File]::WriteAllText($RVbs, 'CreateObject("WScript.Shell").Run ' + $q + $q + $q + $Node + $q + $q + ' --no-warnings ' + $q + $q + $RScript + $q + $q + ' --kind=' + $Router + $q + ', 0, False' + "`r`n")
+    $action = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument ($q + $RVbs + $q)
     $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 3650)
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
     Register-ScheduledTask -TaskName $RTask -Action $action -Trigger $trigger -Settings $settings -Force `
-      -Description '__LB_TITLE__: send 9router usage every minute' | Out-Null
-    Write-Host "⟦Done. 9router usage now reaches‖Selesai. Pemakaian 9router sekarang masuk ke⟧ __LB_URL__ ⟦every minute (Task Scheduler: $RTask).‖tiap menit (Task Scheduler: $RTask).⟧"
-    Remove-Item Env:LB_TOKEN, Env:LB_9ROUTER -ErrorAction SilentlyContinue
+      -Description "__LB_TITLE__: send $RName usage every minute" | Out-Null
+    Write-Host "⟦Done.‖Selesai.⟧ $RName ⟦usage now reaches‖sekarang masuk ke⟧ __LB_URL__ ⟦every minute (Task Scheduler: $RTask).‖tiap menit (Task Scheduler: $RTask).⟧"
+    Remove-Item Env:LB_TOKEN, Env:LB_9ROUTER, Env:LB_JROUTER -ErrorAction SilentlyContinue
     return
   }
 

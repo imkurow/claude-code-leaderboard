@@ -168,6 +168,10 @@
   .pill.on { color: var(--signal); background: color-mix(in oklab, var(--signal) 12%, transparent); }
   .pill.offp { color: var(--ink-3); background: color-mix(in oklab, var(--ink-3) 14%, transparent); }
   .pill.wait { color: var(--bronze); background: color-mix(in oklab, var(--bronze) 15%, transparent); }
+  .router-pick { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 18px 0 8px; font-size: 14px; color: var(--ink-2); }
+  .seg { display: inline-flex; padding: 3px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper); }
+  .seg button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; font: 500 13px/1.3 inherit; color: var(--ink-2); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--fog); }
   .pill.src { margin-left: 6px; padding: 0 7px; font-size: 11px; vertical-align: 1px; color: var(--ink-2); border: 1px solid var(--rule); }
   .empty { padding: 28px 22px; color: var(--ink-3); }
 
@@ -299,12 +303,19 @@
       <div class="cmd-head"><span>Windows (PowerShell)</span><button class="btn ghost small" type="button" data-copy="ps">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdPs"></pre>
     </div>
+    <div class="router-pick">
+      <span>⟦Uses a router instead of plain Claude Code?‖Pakai router, bukan Claude Code biasa?⟧</span>
+      <div class="seg" role="group" aria-label="Router">
+        <button type="button" data-router="9router" aria-pressed="true">9router</button>
+        <button type="button" data-router="jrouter" aria-pressed="false">JRouter</button>
+      </div>
+    </div>
     <div class="cmd">
-      <div class="cmd-head"><span>⟦9router on macOS / Linux‖9router di macOS / Linux⟧</span><button class="btn ghost small" type="button" data-copy="router">⟦Copy‖Salin⟧</button></div>
+      <div class="cmd-head"><span><b class="rname">9router</b> ⟦on macOS / Linux‖di macOS / Linux⟧</span><button class="btn ghost small" type="button" data-copy="router">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdRouter"></pre>
     </div>
     <div class="cmd">
-      <div class="cmd-head"><span>⟦9router on Windows (PowerShell)‖9router di Windows (PowerShell)⟧</span><button class="btn ghost small" type="button" data-copy="router_ps">⟦Copy‖Salin⟧</button></div>
+      <div class="cmd-head"><span><b class="rname">9router</b> ⟦on Windows (PowerShell)‖di Windows (PowerShell)⟧</span><button class="btn ghost small" type="button" data-copy="router_ps">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdRouterPs"></pre>
     </div>
     <div class="warn">⟦These commands are shown only now. If they get lost, create a new token from the participant's menu.‖Perintah ini cuma muncul sekarang. Kalau hilang, buat token baru dari menu peserta.⟧</div>
@@ -441,7 +452,7 @@
       who.appendChild(avatar(p.name, p.avatar));
       var t = el("div"); t.style.minWidth = "0";
       var nmv = el("div", "nm", p.name);
-      if (p.router) nmv.appendChild(el("span", "pill src", "9router"));
+      if (p.router) p.router.split(",").forEach(function (k) { nmv.appendChild(el("span", "pill src", k === "jrouter" ? "JRouter" : "9router")); });
       t.appendChild(nmv);
       t.appendChild(el("div", "em", p.email || T("No login email yet", "Email belum terhubung")));
       who.appendChild(t); td.appendChild(who); tr.appendChild(td);
@@ -492,15 +503,28 @@
     $("tokTitle").textContent = title;
     $("cmdSh").textContent = j.commands.sh;
     $("cmdPs").textContent = j.commands.ps;
-    $("cmdRouter").textContent = j.commands.router;
-    $("cmdRouterPs").textContent = j.commands.router_ps;
+    showRouter();
     tokenDlg.showModal();
   }
+  // which router the two router commands are for
+  var routerKind = "9router";
+  function rkey(k) { return routerKind === "jrouter" ? (k === "router" ? "jrouter" : k === "router_ps" ? "jrouter_ps" : k) : k; }
+  function showRouter() {
+    if (!lastCmd) return;
+    $("cmdRouter").textContent = lastCmd.commands[rkey("router")];
+    $("cmdRouterPs").textContent = lastCmd.commands[rkey("router_ps")];
+    document.querySelectorAll(".rname").forEach(function (n) { n.textContent = routerKind === "jrouter" ? "JRouter" : "9router"; });
+    document.querySelectorAll("[data-router]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.router === routerKind)); });
+  }
+  document.querySelectorAll("[data-router]").forEach(function (b) {
+    b.addEventListener("click", function () { routerKind = b.dataset.router; showRouter(); });
+  });
   function message(j) {
     var cmds = "macOS / Linux:\n" + j.commands.sh + "\n\nWindows (PowerShell):\n" + j.commands.ps + "\n\n" +
-      T("If you use 9router instead, run one of these once on the machine where 9router runs (as the same user):\n",
-        "Kalau kamu pakai 9router, jalankan salah satu ini sekali di mesin tempat 9router berjalan (dengan user yang sama):\n") +
-      "macOS / Linux:\n" + j.commands.router + "\n\nWindows (PowerShell):\n" + j.commands.router_ps + "\n\n";
+      T("If you use 9router or JRouter instead, run the matching command once on the machine where it runs (as the same user):\n\n",
+        "Kalau kamu pakai 9router atau JRouter, jalankan perintah yang sesuai sekali di mesin tempat router itu berjalan (dengan user yang sama):\n\n") +
+      "9router, macOS / Linux:\n" + j.commands.router + "\n\n9router, Windows (PowerShell):\n" + j.commands.router_ps + "\n\n" +
+      "JRouter, macOS / Linux:\n" + j.commands.jrouter + "\n\nJRouter, Windows (PowerShell):\n" + j.commands.jrouter_ps + "\n\n";
     return T(
       "Hi " + j.name + ", here is how to join " + TITLE + ". Run this once in a terminal on the computer where you use Claude Code.\n\n" + cmds +
       "When it finishes, close and reopen Claude Code. Leaderboard: " + location.origin + "\n" +
@@ -513,7 +537,7 @@
     var b = e.target.closest && e.target.closest("[data-copy]");
     if (!b || !lastCmd) return;
     var k = b.dataset.copy;
-    copyText(k === "msg" ? message(lastCmd) : lastCmd.commands[k]).then(function () {
+    copyText(k === "msg" ? message(lastCmd) : lastCmd.commands[rkey(k)]).then(function () {
       toast(k === "msg" ? T("Full message copied", "Pesan lengkap disalin") : T("Command copied", "Perintah disalin"));
     });
   });
@@ -618,8 +642,9 @@
       var ul = el("ul", "machines");
       p.machines.forEach(function (m) {
         var li = el("li"), info = el("div");
-        var r9 = m.machine.indexOf("9router-") === 0;
-        info.appendChild(el("div", "code", r9 ? "9router " + m.machine.slice(8, 16) : T("Computer ", "Laptop ") + m.machine.slice(0, 8)));
+        var rk = m.machine.indexOf("9router-") === 0 ? "9router" : m.machine.indexOf("jrouter-") === 0 ? "JRouter" : "";
+        var r9 = !!rk;
+        info.appendChild(el("div", "code", r9 ? rk + " " + m.machine.slice(8, 16) : T("Computer ", "Laptop ") + m.machine.slice(0, 8)));
         info.appendChild(el("div", "meta", r9
           ? T(compact(m.output) + " output tokens from " + num(m.messages) + " requests. Last sync " + fullDate(m.at) + ".", compact(m.output) + " output token dari " + num(m.messages) + " request. Sinkron terakhir " + fullDate(m.at) + ".")
           : T(compact(m.output) + " output tokens from " + num(m.messages) + " messages. Uploaded " + fullDate(m.at) + ".", compact(m.output) + " output token dari " + num(m.messages) + " pesan. Diunggah " + fullDate(m.at) + ".")));

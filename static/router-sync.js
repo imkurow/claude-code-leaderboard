@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 /*
-  Claude Code Leaderboard: send 9router usage to the leaderboard (Windows, macOS and Linux).
+  Claude Code Leaderboard: send 9router or JRouter usage to the leaderboard (Windows, macOS, Linux).
 
-  Reads 9router's usage log (usageHistory in <9router data dir>/db/data.sqlite) read-only and
-  sends hourly totals per model: tokens, cost and the request count. Prompts and responses are
-  never read or sent. Settings live in 9router.json beside this file (written by the installer).
-  The installer schedules it every minute (cron, launchd or Task Scheduler); it only sends when
-  the totals changed, and at least every 30 minutes.
+  JRouter is a fork of 9router with the same usage log (usageHistory in <data dir>/db/data.sqlite);
+  only the data folder differs (~/.9router or ~/.jrouter, %APPDATA%\9router or %APPDATA%\jrouter).
+  This reads that log read-only and sends hourly totals per model: tokens, cost and the request
+  count. Prompts and responses are never read or sent. Settings live in <kind>.json beside this
+  file (written by the installer). The installer schedules it every minute (cron, launchd or Task
+  Scheduler); it only sends when the totals changed, and at least every 30 minutes.
 
-    node 9router-sync.js            normal run (quiet; the last result goes to 9router-sync.log)
-    node 9router-sync.js --force    send now and print the result
-    node 9router-sync.js --dry-run  read and summarise, send nothing
+    node router-sync.js --kind=9router            normal run (quiet; the last result goes to <kind>-sync.log)
+    node router-sync.js --kind=jrouter --force    send now and print the result
+    node router-sync.js --kind=jrouter --dry-run  read and summarise, send nothing
 
-  It needs Node.js 18 or newer (9router itself runs on Node) and reads SQLite with node:sqlite
-  (Node 22.5+) or the better-sqlite3 copy 9router keeps in its runtime folder.
+  It needs Node.js 18 or newer (both routers run on Node) and reads SQLite with node:sqlite
+  (Node 22.5+) or the better-sqlite3 copy the router keeps in its runtime folder.
 */
 'use strict';
 const fs = require('fs');
@@ -25,27 +26,30 @@ const { spawnSync } = require('child_process');
 const HERE = __dirname;
 const DAYS = 90;
 const RESEND = 1800;
+const KIND = ((process.argv.find(a => a.startsWith('--kind=')) || '--kind=9router').slice(7) || '9router').toLowerCase();
+const NAME = KIND === 'jrouter' ? 'JRouter' : '9router';
 const FORCE = process.argv.includes('--force');
 const DRY = process.argv.includes('--dry-run');
 const LOUD = FORCE || DRY || process.stdout.isTTY;
 
 function report(msg, failed) {
-  try { fs.writeFileSync(path.join(HERE, '9router-sync.log'), new Date().toISOString() + ' ' + msg + '\n'); } catch (e) { /* none */ }
+  try { fs.writeFileSync(path.join(HERE, KIND + '-sync.log'), new Date().toISOString() + ' ' + msg + '\n'); } catch (e) { /* none */ }
   if (LOUD || failed) (failed ? process.stderr : process.stdout).write(msg + '\n');
 }
 
 function settings() {
-  return JSON.parse(fs.readFileSync(path.join(HERE, '9router.json'), 'utf8'));
+  if (!/^(9router|jrouter)$/.test(KIND)) throw new Error('unknown --kind ' + KIND + ' (9router or jrouter)');
+  return JSON.parse(fs.readFileSync(path.join(HERE, KIND + '.json'), 'utf8'));
 }
 
 function defaultDataDir() {
   if (process.env.DATA_DIR) return process.env.DATA_DIR;
   return process.platform === 'win32'
-    ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), '9router')
-    : path.join(os.homedir(), '.9router');
+    ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), KIND)
+    : path.join(os.homedir(), '.' + KIND);
 }
 
-// SQLite: node:sqlite when this Node has it, else the better-sqlite3 that 9router keeps itself.
+// SQLite: node:sqlite when this Node has it, else the better-sqlite3 that the router keeps itself.
 function openDb(file, dataDir) {
   let sqlite = null;
   try { sqlite = require('node:sqlite'); } catch (e) { /* older Node */ }
@@ -63,7 +67,11 @@ function openDb(file, dataDir) {
     try { db = new sqlite.DatabaseSync(file, { readOnly: true }); } catch (e) { db = new sqlite.DatabaseSync(file); }
     return { all: (sql, ...a) => db.prepare(sql).all(...a), close: () => db.close() };
   }
-  const tries = [path.join(dataDir, 'runtime', 'node_modules', 'better-sqlite3'), path.join(dataDir, 'runtime', 'better-sqlite3'), 'better-sqlite3'];
+  // the router's own runtime copy; JRouter keeps it under 9router's folder on Windows
+  const appdata = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+  const tries = [path.join(dataDir, 'runtime', 'node_modules', 'better-sqlite3'), path.join(dataDir, 'runtime', 'better-sqlite3'),
+    path.join(appdata, '9router', 'runtime', 'node_modules', 'better-sqlite3'), path.join(os.homedir(), '.9router', 'runtime', 'node_modules', 'better-sqlite3'),
+    'better-sqlite3'];
   for (const t of tries) {
     try {
       const B = require(t);
@@ -87,13 +95,13 @@ const num = v => { const f = Number(v || 0); return f > 0 && Number.isFinite(f) 
 function collect(cfg) {
   const dataDir = cfg.dataDir || defaultDataDir();
   const file = cfg.db || path.join(dataDir, 'db', 'data.sqlite');
-  if (!fs.existsSync(file)) throw new Error('9router database not found at ' + file);
+  if (!fs.existsSync(file)) throw new Error(NAME + ' database not found at ' + file);
   const db = openDb(file, dataDir);
   try {
     const cols = new Set(db.all('PRAGMA table_info(usageHistory)').map(r => r.name));
     for (const c of ['timestamp', 'model', 'promptTokens', 'completionTokens']) {
       if (!cols.has(c)) {
-        throw new Error(cols.size ? 'usageHistory has an unknown layout (' + [...cols].sort().join(', ') + '); this 9router version is not supported yet'
+        throw new Error(cols.size ? 'usageHistory has an unknown layout (' + [...cols].sort().join(', ') + '); this ' + NAME + ' version is not supported yet'
           : 'no usageHistory table in ' + file);
       }
     }
@@ -144,7 +152,7 @@ function collect(cfg) {
     const now = Math.floor(Date.now() / 1000);
     let user = '';
     try { user = os.userInfo().username; } catch (e) { user = process.env.USER || process.env.USERNAME || ''; }
-    const machine = '9router-' + crypto.createHash('sha256').update(os.hostname() + '|' + user + '|' + file).digest('hex').slice(0, 16);
+    const machine = KIND + '-' + crypto.createHash('sha256').update(os.hostname() + '|' + user + '|' + file).digest('hex').slice(0, 16);
     const rows = [...agg.values()].sort((a, b) => a.hour - b.hour || (a.model < b.model ? -1 : 1));
     return {
       payload: {
@@ -161,9 +169,9 @@ function collect(cfg) {
 }
 
 async function send(cfg, payload) {
-  const headers = { 'Content-Type': 'application/json', 'x-lb-token': cfg.token, 'User-Agent': 'claude-leaderboard-9router-sync' };
+  const headers = { 'Content-Type': 'application/json', 'x-lb-token': cfg.token, 'User-Agent': 'claude-leaderboard-' + KIND + '-sync' };
   if (cfg.cfId) { headers['CF-Access-Client-Id'] = cfg.cfId; headers['CF-Access-Client-Secret'] = cfg.cfSecret || ''; }
-  const res = await fetch(String(cfg.url).replace(/\/+$/, '') + '/v1/metrics/9router', {
+  const res = await fetch(String(cfg.url).replace(/\/+$/, '') + '/v1/metrics/' + KIND, {
     method: 'POST', headers, body: JSON.stringify(payload), redirect: 'manual', signal: AbortSignal.timeout(30000),
   });
   const text = await res.text();
@@ -172,7 +180,7 @@ async function send(cfg, payload) {
 }
 
 function lock() {
-  const file = path.join(HERE, '9router.lock');
+  const file = path.join(HERE, KIND + '.lock');
   for (let i = 0; i < 2; i++) {
     try {
       const fd = fs.openSync(file, 'wx');
@@ -199,7 +207,7 @@ async function main() {
     return 0;
   }
   if (!lock()) return 0;
-  const statePath = path.join(HERE, '9router.state');
+  const statePath = path.join(HERE, KIND + '.state');
   const digest = crypto.createHash('sha256').update(JSON.stringify(payload.rows)).digest('hex');
   let state = {};
   try { state = JSON.parse(fs.readFileSync(statePath, 'utf8')); } catch (e) { state = {}; }
@@ -210,4 +218,4 @@ async function main() {
   return 0;
 }
 
-main().then(code => process.exit(code), err => { report('9router sync failed: ' + (err && err.message || err), true); process.exit(1); });
+main().then(code => process.exit(code), err => { report(NAME + ' sync failed: ' + (err && err.message || err), true); process.exit(1); });

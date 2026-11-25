@@ -4,6 +4,7 @@
 #   ⟦Install‖Pasang⟧ : ⟦get the full command (with CF-Access-* headers) from the admin‖perintah lengkap (dengan header CF-Access-*) didapat dari admin⟧
 #   ⟦Remove‖Hapus⟧  : bash -s -- --uninstall  (⟦use the same download command‖pakai perintah download yang sama⟧)
 #   9router : bash -s -- <TOKEN> --9router   (⟦on the macOS or Linux machine that runs 9router; remove with‖di mesin macOS atau Linux yang menjalankan 9router; hapus dengan⟧ --uninstall --9router)
+#   JRouter : bash -s -- <TOKEN> --jrouter   (⟦the same for JRouter‖sama, untuk JRouter⟧)
 #
 # ⟦What changes: the "env" block in ~/.claude/settings.json (a backup is made first).‖Yang diubah: blok "env" di ~/.claude/settings.json (backup dibuat dulu).⟧
 # ⟦What Claude Code sends: metric numbers (token counts per type & model, cost estimate,
@@ -21,12 +22,13 @@ case "$CF_ID" in __*) CF_ID="" ;; esac
 case "$CF_SECRET" in __*) CF_SECRET="" ;; esac
 SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 MODE=install
-ROUTER=0
+ROUTER=""
 TOKEN=""
 for arg in "$@"; do
   case "$arg" in
     --uninstall) MODE=uninstall ;;
-    --9router) ROUTER=1 ;;
+    --9router) ROUTER=9router ;;
+    --jrouter) ROUTER=jrouter ;;
     -*) echo "⟦Unknown option‖Opsi tidak dikenal⟧: $arg" >&2; exit 2 ;;
     *) TOKEN="$arg" ;;
   esac
@@ -57,16 +59,19 @@ if [ "$MODE" = install ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 9router: instead of Claude Code telemetry, read 9router's own usage log on this machine
-# every minute and send hourly totals per model. Prompts and responses are not read.
-# The sync is a Node.js script (9router runs on Node, so Node is there); macOS schedules it
-# with launchd, Linux with cron.
+# 9router or JRouter (a 9router fork with the same usage log): instead of Claude Code telemetry,
+# read the router's own usage log on this machine every minute and send hourly totals per model.
+# Prompts and responses are not read. The sync is a Node.js script (both routers run on Node, so
+# Node is there); macOS schedules it with launchd, Linux with cron.
 # ---------------------------------------------------------------------------
-if [ "$ROUTER" = 1 ]; then
+if [ -n "$ROUTER" ]; then
+  R_KIND="$ROUTER"
+  if [ "$R_KIND" = jrouter ]; then R_NAME=JRouter; else R_NAME=9router; fi
   R_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude-leaderboard"
-  R_SCRIPT="$R_DIR/9router-sync.js"
-  R_TAG="# claude-leaderboard 9router sync"
-  R_LABEL="com.claude-leaderboard.9router"
+  R_SCRIPT="$R_DIR/router-sync.js"
+  R_CONF="$R_DIR/$R_KIND.json"
+  R_TAG="# claude-leaderboard $R_KIND sync"
+  R_LABEL="com.claude-leaderboard.$R_KIND"
   R_PLIST="$HOME/Library/LaunchAgents/$R_LABEL.plist"
   r_unschedule() {
     if [ "$(uname -s)" = Darwin ]; then
@@ -79,43 +84,50 @@ if [ "$ROUTER" = 1 ]; then
       fi
     fi
   }
+  r_cleanup_old() {   # files of the first 9router sync (Python, then 9router-sync.js)
+    rm -f "$R_DIR/9router-sync.py" "$R_DIR/9router.env" "$R_DIR/9router-sync.js"
+  }
   if [ "$MODE" = uninstall ]; then
     r_unschedule
-    rm -f "$R_SCRIPT" "$R_DIR/9router.json" "$R_DIR/9router.state" "$R_DIR/9router.lock" "$R_DIR/9router-sync.log" \
-          "$R_DIR/9router-sync.py" "$R_DIR/9router.env"
-    echo "⟦9router sync removed. Data already on the leaderboard stays.‖Sinkron 9router dihapus. Data yang sudah ada di leaderboard tetap.⟧"
+    rm -f "$R_CONF" "$R_DIR/$R_KIND.state" "$R_DIR/$R_KIND.lock" "$R_DIR/$R_KIND-sync.log"
+    r_cleanup_old
+    ls "$R_DIR"/*.json >/dev/null 2>&1 || rm -f "$R_SCRIPT"
+    echo "$R_NAME ⟦sync removed. Data already on the leaderboard stays.‖sinkron dihapus. Data yang sudah ada di leaderboard tetap.⟧"
     exit 0
   fi
-  # Node.js: LB_NODE, else the node on PATH, else the one running 9router right now
+  # Node.js: LB_NODE, else the node on PATH, else the one running the router right now
   R_NODE="${LB_NODE:-$(command -v node 2>/dev/null || true)}"
   if [ -z "$R_NODE" ]; then
-    R_NODE=$(ps -eo args 2>/dev/null | awk '/9router/ && $1 ~ /\/node$/ {print $1; exit}')
+    R_NODE=$(ps -eo args 2>/dev/null | awk -v k="$R_KIND" 'index($0, k) && $1 ~ /\/node$/ {print $1; exit}')
   fi
   if [ -z "$R_NODE" ] || ! "$R_NODE" -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' 2>/dev/null; then
-    echo "⟦Node.js 18 or newer was not found. Point to the node that runs 9router:‖Node.js 18 atau lebih baru tidak ditemukan. Tunjukkan node yang menjalankan 9router:⟧ ... | LB_NODE=/path/to/node bash -s -- <TOKEN> --9router" >&2
+    echo "⟦Node.js 18 or newer was not found. Point to the node that runs‖Node.js 18 atau lebih baru tidak ditemukan. Tunjukkan node yang menjalankan⟧ $R_NAME: ... | LB_NODE=/path/to/node bash -s -- <TOKEN> --$R_KIND" >&2
     exit 1
   fi
   case "$R_NODE" in /*) ;; *) R_NODE="$(cd "$(dirname "$R_NODE")" && pwd)/$(basename "$R_NODE")" ;; esac
-  R_DATA="${LB_9R_DIR:-${DATA_DIR:-$HOME/.9router}}"
-  R_DB="${LB_9R_DB:-$R_DATA/db/data.sqlite}"
+  R_DATA="${LB_ROUTER_DIR:-${LB_9R_DIR:-${DATA_DIR:-$HOME/.$R_KIND}}}"
+  R_DB="${LB_ROUTER_DB:-${LB_9R_DB:-$R_DATA/db/data.sqlite}}"
   if [ ! -f "$R_DB" ]; then
-    echo "⟦9router's database was not found at‖Database 9router tidak ditemukan di⟧ $R_DB" >&2
-    echo "⟦Run this as the user that runs 9router, or give its path:‖Jalankan sebagai user yang menjalankan 9router, atau sebutkan lokasinya:⟧ ... | LB_9R_DB=/path/to/data.sqlite bash -s -- <TOKEN> --9router" >&2
+    echo "$R_NAME ⟦database was not found at‖database tidak ditemukan di⟧ $R_DB" >&2
+    echo "⟦Run this as the user that runs‖Jalankan sebagai user yang menjalankan⟧ $R_NAME, ⟦or give its path:‖atau sebutkan lokasinya:⟧ ... | LB_ROUTER_DB=/path/to/data.sqlite bash -s -- <TOKEN> --$R_KIND" >&2
     exit 1
   fi
   mkdir -p "$R_DIR"
   chmod 700 "$R_DIR"
   umask 077
-  if ! curl -fsS ${cf_args[@]+"${cf_args[@]}"} -H "x-lb-token: $TOKEN" "$LB_ENDPOINT/9router-sync.js" -o "$R_SCRIPT.tmp"; then
-    rm -f "$R_SCRIPT.tmp"; echo "⟦Could not download the 9router sync from the server.‖Gagal mengunduh sinkron 9router dari server.⟧" >&2; exit 1
+  if ! curl -fsS ${cf_args[@]+"${cf_args[@]}"} -H "x-lb-token: $TOKEN" "$LB_ENDPOINT/router-sync.js" -o "$R_SCRIPT.tmp"; then
+    rm -f "$R_SCRIPT.tmp"; echo "⟦Could not download the router sync from the server.‖Gagal mengunduh sinkron router dari server.⟧" >&2; exit 1
   fi
   mv "$R_SCRIPT.tmp" "$R_SCRIPT"
-  LB_C_URL="__LB_URL__" LB_C_TOKEN="$TOKEN" LB_C_CFID="$CF_ID" LB_C_CFSECRET="$CF_SECRET" LB_C_DB="$R_DB" LB_C_DATA="$R_DATA" LB_C_KEYS="${LB_9R_KEYS:-}" \
+  LB_C_URL="__LB_URL__" LB_C_TOKEN="$TOKEN" LB_C_CFID="$CF_ID" LB_C_CFSECRET="$CF_SECRET" LB_C_DB="$R_DB" LB_C_DATA="$R_DATA" \
+  LB_C_KEYS="${LB_ROUTER_KEYS:-${LB_9R_KEYS:-}}" \
     "$R_NODE" -e 'const e = process.env; require("fs").writeFileSync(process.argv[1], JSON.stringify({ url: e.LB_C_URL, token: e.LB_C_TOKEN,
-      cfId: e.LB_C_CFID, cfSecret: e.LB_C_CFSECRET, db: e.LB_C_DB, dataDir: e.LB_C_DATA, keys: e.LB_C_KEYS }, null, 2) + "\n", { mode: 0o600 })' "$R_DIR/9router.json"
-  rm -f "$R_DIR/9router-sync.py" "$R_DIR/9router.env"
-  printf '⟦Sending 9router usage (up to 90 days)... ‖Kirim pemakaian 9router (maks. 90 hari)... ⟧'
-  "$R_NODE" --no-warnings "$R_SCRIPT" --force || { echo "⟦failed, see the message above.‖gagal, lihat pesan di atas.⟧" >&2; exit 1; }
+      cfId: e.LB_C_CFID, cfSecret: e.LB_C_CFSECRET, db: e.LB_C_DB, dataDir: e.LB_C_DATA, keys: e.LB_C_KEYS }, null, 2) + "\n", { mode: 0o600 })' "$R_CONF"
+  # an earlier 9router sync used the same schedule tag and machine id: its schedule is replaced
+  # below and its old files go, so nothing counts twice
+  r_cleanup_old
+  printf '%s' "⟦Sending‖Kirim pemakaian⟧ $R_NAME ⟦usage (up to 90 days)... ‖(maks. 90 hari)... ⟧"
+  "$R_NODE" --no-warnings "$R_SCRIPT" --kind="$R_KIND" --force || { echo "⟦failed, see the message above.‖gagal, lihat pesan di atas.⟧" >&2; exit 1; }
   r_unschedule
   if [ "$(uname -s)" = Darwin ]; then
     mkdir -p "$(dirname "$R_PLIST")"
@@ -126,7 +138,7 @@ if [ "$ROUTER" = 1 ]; then
 <dict>
   <key>Label</key><string>$R_LABEL</string>
   <key>ProgramArguments</key>
-  <array><string>$R_NODE</string><string>--no-warnings</string><string>$R_SCRIPT</string></array>
+  <array><string>$R_NODE</string><string>--no-warnings</string><string>$R_SCRIPT</string><string>--kind=$R_KIND</string></array>
   <key>StartInterval</key><integer>60</integer>
   <key>ProcessType</key><string>Background</string>
   <key>StandardOutPath</key><string>/dev/null</string>
@@ -136,13 +148,13 @@ if [ "$ROUTER" = 1 ]; then
 EOF
     chmod 644 "$R_PLIST"
     launchctl bootstrap "gui/$(id -u)" "$R_PLIST" 2>/dev/null || launchctl load -w "$R_PLIST"
-    echo "⟦Done. 9router usage now reaches‖Selesai. Pemakaian 9router sekarang masuk ke⟧ __LB_URL__ ⟦every minute (launchd).‖tiap menit (launchd).⟧"
+    echo "⟦Done.‖Selesai.⟧ $R_NAME ⟦usage now reaches‖sekarang masuk ke⟧ __LB_URL__ ⟦every minute (launchd).‖tiap menit (launchd).⟧"
   elif command -v crontab >/dev/null 2>&1; then
-    line="* * * * * \"$R_NODE\" --no-warnings \"$R_SCRIPT\" >/dev/null 2>&1 $R_TAG"
+    line="* * * * * \"$R_NODE\" --no-warnings \"$R_SCRIPT\" --kind=$R_KIND >/dev/null 2>&1 $R_TAG"
     { crontab -l 2>/dev/null | grep -vF "$R_TAG" || true; echo "$line"; } | crontab -
-    echo "⟦Done. 9router usage now reaches‖Selesai. Pemakaian 9router sekarang masuk ke⟧ __LB_URL__ ⟦every minute (cron).‖tiap menit (cron).⟧"
+    echo "⟦Done.‖Selesai.⟧ $R_NAME ⟦usage now reaches‖sekarang masuk ke⟧ __LB_URL__ ⟦every minute (cron).‖tiap menit (cron).⟧"
   else
-    echo "⟦crontab is not available here. Run this every minute with your own scheduler:‖crontab tidak tersedia. Jalankan ini tiap menit lewat scheduler lain:⟧ \"$R_NODE\" \"$R_SCRIPT\"" >&2
+    echo "⟦crontab is not available here. Run this every minute with your own scheduler:‖crontab tidak tersedia. Jalankan ini tiap menit lewat scheduler lain:⟧ \"$R_NODE\" \"$R_SCRIPT\" --kind=$R_KIND" >&2
   fi
   exit 0
 fi

@@ -137,9 +137,9 @@ CATALOG = [
     ("two_machines", "bronze", "monitors|", False, "Two Machines", "Dua Laptop",
      "Send history from two different computers.", "Kirim riwayat dari dua komputer berbeda."),
     ("back_roads", "bronze", "road|", False, "Back Roads", "Jalan Tikus",
-     "Join through 9router.", "Ikut lewat 9router."),
+     "Join through 9router or JRouter.", "Ikut lewat 9router atau JRouter."),
     ("router_rider", "silver", "antenna|1K", False, "Router Rider", "Penunggang Router",
-     "Send 1,000 requests through 9router.", "Kirim 1.000 request lewat 9router."),
+     "Send 1,000 requests through 9router or JRouter.", "Kirim 1.000 request lewat 9router atau JRouter."),
     # ---- standing against the others (completed days, weeks and months only)
     ("daily_champion", "silver", "medal1|", False, "Champion of the Day", "Juara Harian",
      "Finish a day in first place.", "Selesai di peringkat 1 pada suatu hari."),

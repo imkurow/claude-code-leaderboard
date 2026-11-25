@@ -4,10 +4,11 @@
 One process, standard library only:
   POST /v1/metrics        OTLP/HTTP JSON receiver (Claude Code telemetry), auth by x-lb-token
   GET|POST /v1/metrics/backfill   history from local transcripts (window, then upload)
-  POST /v1/metrics/9router        hourly totals read from a 9router usage log (replaces that machine's rows)
-  GET  /v1/metrics/9router-sync.js  the sync script the installers set up on a 9router machine
+  POST /v1/metrics/9router        hourly totals read from a 9router or JRouter usage log (replaces that machine's rows;
+                                  /v1/metrics/jrouter is the same)
+  GET  /v1/metrics/router-sync.js the sync script the installers set up on a 9router or JRouter machine
   GET  /                  leaderboard page
-  GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router)
+  GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router|jrouter)
   GET  /api/participant   one participant's detail (?id=&period=&source=): series, models, token mix, badges
   GET  /api/badges        every badge with who holds it
   GET  /install.sh        installer for macOS / Linux
@@ -267,13 +268,18 @@ def as_count(v, cap):
     return float(v)
 
 
-ROUTER_PREFIX = "9router-"
+ROUTER_KINDS = ("9router", "jrouter")   # 9router and its fork JRouter keep the same usage log
+
+
+def router_kind(machine):
+    """9router or jrouter for a router machine id ("9router-<hash>"), else None."""
+    return next((k for k in ROUTER_KINDS if machine.startswith(k + "-")), None)
 ROUTER_FIELDS = dict(BACKFILL_FIELDS, cost=("", 5_000), requests=("", 1_000_000))
 
 
 def store_backfill(employee_id, payload):
     machine = payload.get("machine")
-    if not valid_machine(machine) or machine.startswith(ROUTER_PREFIX):
+    if not valid_machine(machine) or router_kind(machine):
         raise ValueError("bad machine id")
     rows = payload.get("rows") or []
     sessions = payload.get("sessions") or []
@@ -331,11 +337,11 @@ def store_backfill(employee_id, payload):
 
 
 def store_router(employee_id, payload):
-    """Hourly totals from a 9router usage log. Each sync sends every hour from `from` on and
+    """Hourly totals from a 9router or JRouter usage log. Each sync sends every hour from `from` on and
     replaces that machine's rows for those hours, so a repeat never counts twice and hours the
     log no longer holds (if 9router ever trims it) stay as they were."""
     machine = payload.get("machine")
-    if not valid_machine(machine) or not machine.startswith(ROUTER_PREFIX):
+    if not valid_machine(machine) or not router_kind(machine):
         raise ValueError("bad machine id")
     rows = payload.get("rows") or []
     if not isinstance(rows, list) or len(rows) > BACKFILL_MAX_ROWS:
@@ -530,7 +536,7 @@ def refresh_achievements(force=False):
                 models[r["employee_id"]][r["model"]] = r["v"]
             machines = defaultdict(lambda: {"computers": 0, "router": False})
             for r in DB.execute("SELECT employee_id, machine FROM backfill_runs"):
-                if r["machine"].startswith(ROUTER_PREFIX):
+                if router_kind(r["machine"]):
                     machines[r["employee_id"]]["router"] = True
                 else:
                     machines[r["employee_id"]]["computers"] += 1
@@ -646,7 +652,7 @@ _LB_CACHE = {}
 _LB_CACHE_LOCK = threading.Lock()
 
 
-SOURCES = ("all", "claude", "9router")
+SOURCES = ("all", "claude") + ROUTER_KINDS
 TOTAL_KEYS = ("output", "input", "cache_read", "cache_creation", "cost", "sessions", "requests")
 
 
@@ -661,7 +667,7 @@ def rank_rows(rows):
 
 def leaderboard(period, me_id=None, source="all"):
     """Every open dashboard polls once a second, so the result is shared for up to a second.
-    source narrows the board to people on Claude Code or on 9router; ranks follow the filter."""
+    source narrows the board to people on Claude Code, 9router or JRouter; ranks follow the filter."""
     now = time.time()
     with _LB_CACHE_LOCK:
         hit = _LB_CACHE.get(period)
@@ -672,7 +678,7 @@ def leaderboard(period, me_id=None, source="all"):
     counts = badge_counts()
     rows = []
     for r in data["rows"]:
-        if source == "claude" and r["router"] or source == "9router" and not r["router"]:
+        if source == "claude" and r["router"] or source in ROUTER_KINDS and source not in r["router"].split(","):
             continue
         r = dict(r)
         r["me"] = r["id"] == me_id
@@ -778,7 +784,9 @@ def _leaderboard(period):
               COALESCE(SUM(CASE WHEN u.metric='claude_code.session.count' THEN u.value END),0) AS sessions,
               COALESCE(SUM(CASE WHEN u.metric='claude_code.active_time.total' THEN u.value END),0) AS active_seconds,
               COALESCE(SUM(CASE WHEN u.metric='router.request.count' THEN u.value END),0) AS requests,
-              EXISTS(SELECT 1 FROM backfill_runs r WHERE r.employee_id = e.id AND r.machine LIKE '9router-%') AS router
+              (SELECT GROUP_CONCAT(DISTINCT CASE WHEN r.machine LIKE '9router-%' THEN '9router'
+                                                 WHEN r.machine LIKE 'jrouter-%' THEN 'jrouter' END)
+                 FROM backfill_runs r WHERE r.employee_id = e.id) AS router
             FROM employees e
             LEFT JOIN ({all_usage}) u ON u.employee_id = e.id AND u.hour >= ?
             WHERE e.active = 1
@@ -819,7 +827,7 @@ def _leaderboard(period):
             "sessions": int(r["sessions"]),
             "active_seconds": int(r["active_seconds"]),
             "requests": int(r["requests"]),
-            "router": bool(r["router"]),
+            "router": ",".join(sorted((r["router"] or "").split(","))).strip(","),   # "", "9router", "jrouter" or both
             "prev_output": int(prev_out.get(r["id"], 0)),
             "streak": (streak.get(r["id"]) or {}).get("streak", 0),
             "streak_best": (streak.get(r["id"]) or {}).get("best", 0),
@@ -839,6 +847,7 @@ def _leaderboard(period):
         "tz": CFG["LB_TZ"],
         "totals": totals,
         "has_router": any(x["router"] for x in out),
+        "routers": sorted({k for x in out for k in x["router"].split(",") if k}),
         "compared": bool(window),
         "rows": out,
     }
@@ -935,7 +944,7 @@ def admin_list():
             "id": r["id"], "name": r["name"], "team": r["team"], "email": r["email"], "active": bool(r["active"]),
             "created_at": r["created_at"], "last_seen": r["last_seen"], "first_otel_at": r["first_otel_at"],
             "avatar": avatar_url(r), "output": int(totals.get(r["id"], 0)), "machines": machines.get(r["id"], []),
-            "router": any(m["machine"].startswith(ROUTER_PREFIX) for m in machines.get(r["id"], [])),
+            "router": ",".join(sorted({router_kind(m["machine"]) for m in machines.get(r["id"], []) if router_kind(m["machine"])})),
         } for r in rows],
     }
 
@@ -1222,9 +1231,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_template("install.sh", "text/x-shellscript; charset=utf-8")
             if path == "/install.ps1":
                 return self.send_template("install.ps1", "text/plain; charset=utf-8")
-            if path == "/v1/metrics/9router-sync.js":
+            if path in ("/v1/metrics/router-sync.js", "/v1/metrics/9router-sync.js"):
                 # under /v1/metrics so the installers fetch it through the same Access app as telemetry
-                with open(os.path.join(STATIC, "9router-sync.js"), encoding="utf-8") as fh:
+                with open(os.path.join(STATIC, "router-sync.js"), encoding="utf-8") as fh:
                     return self.send(200, fh.read(), "text/javascript; charset=utf-8", {"Cache-Control": "no-store"})
             if path in ("/", "/index.html", "/join", "/api/leaderboard", "/api/participant", "/api/badges"):
                 if CFG["LB_VIEW_KEY"] and "key" in qs and path in ("/", "/index.html", "/join"):
@@ -1386,7 +1395,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:
                 log("POST %s failed: %r" % (path, exc))
                 return self.send_json(500, {"error": T("Could not save. Try again.", "Gagal menyimpan, coba lagi.")})
-        if path not in ("/v1/metrics", "/v1/metrics/backfill", "/v1/metrics/9router"):
+        if path not in ("/v1/metrics", "/v1/metrics/backfill", "/v1/metrics/9router", "/v1/metrics/jrouter"):
             return self.send(404, "not found\n", "text/plain")
         token = self.headers.get("x-lb-token") or ""
         auth = self.headers.get("Authorization") or ""
@@ -1417,14 +1426,14 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(body or b"{}")
         except (OSError, ValueError, zlib.error):
             return self.send_json(400, {"error": "bad json"})
-        if path == "/v1/metrics/9router":
+        if path in ("/v1/metrics/9router", "/v1/metrics/jrouter"):
             try:
                 result = store_router(employee_id, payload if isinstance(payload, dict) else {})
             except ValueError as exc:
                 return self.send_json(400, {"error": str(exc)})
             except Exception as exc:
-                log("9router sync failed for employee %s: %r" % (employee_id, exc))
-                return self.send_json(500, {"error": "9router sync failed"})
+                log("router sync failed for employee %s: %r" % (employee_id, exc))
+                return self.send_json(500, {"error": "router sync failed"})
             return self.send_json(200, result)
         if path == "/v1/metrics/backfill":
             try:

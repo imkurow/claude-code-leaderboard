@@ -11,7 +11,7 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 - **Rank changes and streaks.** Arrows show who moved up or down against 24 hours earlier, and a flame counts days in a row.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
 - **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.
-- **9router users too.** People who use [9router](https://github.com/decolua/9router) on Windows, macOS or Linux join with the same token. Their usage is read from 9router's own log every minute and marked with a "9router" label, and the board can be filtered to Claude Code or 9router users.
+- **9router and JRouter users too.** People who use [9router](https://github.com/decolua/9router) or its fork [JRouter](https://github.com/Synthever/JRouter) on Windows, macOS or Linux join with the same token. Their usage is read from the router's own log every minute and marked with a "9router" or "JRouter" label, and the board can be filtered by Claude Code, 9router or JRouter.
 - **Admin page.** Add people and copy a ready-made install message for each. You can also rename people, rotate tokens, remove one computer's history or a photo, and delete people.
 - **Profile photos.** Each person uploads their own, with a crop and zoom step.
 - **Light and dark themes, two languages.** English and Bahasa Indonesia, switched with a button on every page.
@@ -94,23 +94,23 @@ Running it again with `--uninstall` (bash) or `$env:LB_UNINSTALL='1'` (PowerShel
 
 To add a photo, a person clicks "Add photo" on the board and pastes their token once.
 
-### People who use 9router
+### People who use 9router or JRouter
 
-9router keeps its own usage log, so for its users the leaderboard reads that log instead of Claude Code's telemetry. Run the 9router command from the admin page once on the machine where 9router runs, as the user that runs it:
+9router and its fork JRouter keep their own usage log (the same table), so for their users the leaderboard reads that log instead of Claude Code's telemetry. Run the router command from the admin page once on the machine where the router runs, as the user that runs it:
 
 ```bash
 # macOS / Linux
-curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --9router
+curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --9router    # or --jrouter
 # Windows (PowerShell)
-$env:LB_TOKEN='lb_xxxxxxxx'; $env:LB_9ROUTER='1'; irm https://leaderboard.example.com/install.ps1 | iex
+$env:LB_TOKEN='lb_xxxxxxxx'; $env:LB_9ROUTER='1'; irm https://leaderboard.example.com/install.ps1 | iex    # or $env:LB_JROUTER='1'
 ```
 
-- **What it installs.** A small Node.js script (`9router-sync.js`, fetched from your server) plus its settings, scheduled every minute: launchd on macOS, cron on Linux, Task Scheduler on Windows. 9router runs on Node, so nothing else is needed; the installer finds the `node` that runs 9router if it is not on `PATH` (or set `LB_NODE`). It reads SQLite with `node:sqlite` (Node 22.5+) or the `better-sqlite3` copy in 9router's runtime folder, and changes nothing in 9router.
-- **What it sends.** It reads 9router's database read-only (`~/.9router/db/data.sqlite`, or `%APPDATA%\9router\db\data.sqlite` on Windows, or under `DATA_DIR`) and sends hourly totals per model: input, output and cache tokens, 9router's cost estimate and the request count. Prompts and responses are never read. The first run sends up to 90 days of history.
-- **Every model counts.** 9router can route to Claude, GPT, Gemini, Qwen and others, and all of them count toward the person's total. The detail card shows the split per model.
-- **On the board** these people get a "9router" label and a request count instead of sessions. A filter (Everyone, Claude Code, 9router) appears once someone sends 9router data, and ranks follow the filter.
-- **Options.** If the database is somewhere else, set `LB_9R_DB` to its path. If several people share one 9router, set `LB_9R_KEYS=name1,name2` (9router API key names) so each person only sends their own keys. On macOS and Linux put them before `bash`; on Windows set them as `$env:` variables first.
-- **Removing it.** Run the command with `--uninstall --9router` on macOS and Linux, or with `$env:LB_UNINSTALL='1'` added on Windows. Usage already on the board stays.
+- **What it installs.** A small Node.js script (`router-sync.js`, fetched from your server) plus its settings, scheduled every minute: launchd on macOS, cron on Linux, Task Scheduler on Windows. Both routers run on Node, so nothing else is needed; the installer finds the `node` that runs the router if it is not on `PATH` (or set `LB_NODE`). It reads SQLite with `node:sqlite` (Node 22.5+) or the `better-sqlite3` copy in the router's runtime folder, and changes nothing in the router. One machine can run both.
+- **What it sends.** It reads the router's database read-only (`~/.9router/db/data.sqlite` or `~/.jrouter/db/data.sqlite`; `%APPDATA%\9router` or `%APPDATA%\jrouter` on Windows; or under `DATA_DIR`) and sends hourly totals per model: input, output and cache tokens, 9router's cost estimate and the request count. Prompts and responses are never read. The first run sends up to 90 days of history.
+- **Every model counts.** The routers can send work to Claude, GPT, Gemini, Qwen and others, and all of them count toward the person's total. The detail card shows the split per model.
+- **On the board** these people get a "9router" or "JRouter" label and a request count instead of sessions. A filter (Everyone, Claude Code, 9router, JRouter) appears once someone sends router data, with a button for each router in use, and ranks follow the filter.
+- **Options.** If the database is somewhere else, set `LB_ROUTER_DB` to its path. If several people share one router, set `LB_ROUTER_KEYS=name1,name2` (the router's API key names) so each person only sends their own keys. On macOS and Linux put them before `bash`; on Windows set them as `$env:` variables first.
+- **Removing it.** Run the command with `--uninstall --9router` (or `--jrouter`) on macOS and Linux, or with `$env:LB_UNINSTALL='1'` added on Windows. Usage already on the board stays.
 - **Counting twice.** If the same requests also go through Claude Code with telemetry installed, they count twice. Use one or the other for that person.
 
 ## Configuration
@@ -161,7 +161,7 @@ Please report security issues privately via GitHub's "Report a vulnerability".
 ## Limitations
 
 - **Claude Code or 9router only.** Usage on claude.ai or in the desktop chat doesn't produce these metrics.
-- **9router's database layout.** The 9router sync reads 9router's internal `usageHistory` table (tested with 9router 0.5.69). A future 9router version could change it; the sync then stops with a clear message instead of sending wrong numbers.
+- **The routers' database layout.** The sync reads the internal `usageHistory` table (tested with 9router 0.5.69; JRouter 1.0.6 has the same table). A future 9router version could change it; the sync then stops with a clear message instead of sending wrong numbers.
 - **Self-reported numbers.** Someone could send fake numbers with their own token. This is a friendly leaderboard, not billing.
 - **Estimated cost.** The cost figure is Claude Code's own estimate at API prices. People on a subscription pay their plan instead.
 - **Partial history.** The imported history has tokens but no cost or active time.

@@ -40,10 +40,11 @@ def print_instructions(name, token):
     print("Windows (PowerShell):")
     print("  " + cmds["ps"])
     print()
-    print(t("9router (run on the machine where 9router runs, as the same user):",
-            "9router (jalankan di mesin tempat 9router berjalan, dengan user yang sama):"))
-    print("  macOS / Linux:        " + cmds["router"])
-    print("  Windows (PowerShell): " + cmds["router_ps"])
+    for name, sh, ps in (("9router", "router", "router_ps"), ("JRouter", "jrouter", "jrouter_ps")):
+        print(t("%s (run on the machine where it runs, as the same user):", "%s (jalankan di mesin tempat router itu berjalan, dengan user yang sama):") % name)
+        print("  macOS / Linux:        " + cmds[sh])
+        print("  Windows (PowerShell): " + cmds[ps])
+        print()
     print()
 
 

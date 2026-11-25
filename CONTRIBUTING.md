@@ -44,8 +44,8 @@ python3 server.py             # http://127.0.0.1:8790, admin at /admin with "dev
 | `static/index.html` | Leaderboard page: podium, list, detail card, photo upload |
 | `static/admin.html`, `static/admin-login.html` | Admin page and its passphrase sign-in |
 | `static/join.html` | "How to join" page |
-| `static/install.sh`, `static/install.ps1` | Installers for macOS/Linux and Windows (Claude Code telemetry, or the 9router sync) |
-| `static/9router-sync.js` | The 9router sync (Node.js) the installers set up on a 9router machine |
+| `static/install.sh`, `static/install.ps1` | Installers for macOS/Linux and Windows (Claude Code telemetry, or the 9router / JRouter sync) |
+| `static/router-sync.js` | The 9router / JRouter sync (Node.js) the installers set up on a router machine |
 | `deploy/`, `Dockerfile`, `docker-compose.yml`, `run*.sh` | Ways to keep it running |
 
 ## Ground rules
