@@ -24,6 +24,8 @@
     --av-bg: 0.89;
     --av-fg: 0.36;
     --err: #B5482B;
+    --up: #2F7A4D;
+    --down: #B5482B;
     --shadow: rgba(20, 20, 19, .28);
     --stage: #ECE9E0;
     --glow: #FFFFFF;
@@ -57,6 +59,8 @@
       --av-bg: 0.38;
       --av-fg: 0.9;
       --err: #F09A7C;
+      --up: #7CC79A;
+      --down: #F09A7C;
       --shadow: rgba(0, 0, 0, .55);
       --stage: #232321;
       --glow: rgba(255, 238, 220, .075);
@@ -84,6 +88,8 @@
         --av-bg: 0.38;
         --av-fg: 0.9;
         --err: #F09A7C;
+      --up: #7CC79A;
+      --down: #F09A7C;
         --shadow: rgba(0, 0, 0, .55);
       --stage: #232321;
       --glow: rgba(255, 238, 220, .075);
@@ -241,6 +247,21 @@
   .who .src { margin: 6px 0 0; }
   .who .src + .badge { margin-left: 4px; }
   .sources[hidden] { display: none; }
+  /* rank change against 24 hours ago, and days in a row */
+  .mv, .streak {
+    display: inline-flex; align-items: center; gap: 3px; vertical-align: 2px; margin-left: 6px;
+    font: 600 12px/1.5 var(--text); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .mv.up { color: var(--up); }
+  .mv.down { color: var(--down); }
+  .mv.new { color: var(--signal); padding: 0 7px; border-radius: 999px; background: color-mix(in oklab, var(--signal) 12%, transparent); font-size: 11.5px; }
+  .mv svg { width: 9px; height: 9px; }
+  .streak { color: var(--gold); }
+  .streak svg { width: 12px; height: 13px; }
+  .streak.cold { color: var(--ink-3); }
+  .who .chips { display: flex; justify-content: center; gap: 2px; margin-top: 6px; min-height: 18px; }
+  .who .chips .mv, .who .chips .streak { margin-left: 0; vertical-align: 0; }
+  .who .chips > * + * { margin-left: 8px; }
 
   .plinth {
     position: relative; height: var(--plinth); margin-top: 14px;
@@ -625,6 +646,35 @@
     var parts = m.split("-"), fam = parts.shift() || "";
     return fam.charAt(0).toUpperCase() + fam.slice(1) + (parts.length ? " " + parts.join(".") : "");
   }
+  var FLAME = '<svg viewBox="0 0 12 14" aria-hidden="true"><path fill="currentColor" d="M6.4.3c.3 2-.9 3.1-2 4.3C3.3 5.8 2 7.2 2 9.2 2 11.8 3.9 13.7 6 13.7s4-1.7 4-4.4c0-1.6-.7-2.8-1.4-3.7-.2 1-.8 1.7-1.5 2 .3-2.5-.5-5.4-.7-7.3ZM6 12.4c-1 0-1.8-.8-1.8-1.9 0-1.2 1-1.9 1.6-2.8.2.9.7 1.4 1.3 1.8.5.4.8.8.8 1.2 0 1-.9 1.7-1.9 1.7Z"/></svg>';
+  var ARROW_UP = '<svg viewBox="0 0 10 10" aria-hidden="true"><path fill="currentColor" d="M5 1.2 9.2 8H.8z"/></svg>';
+  var ARROW_DOWN = '<svg viewBox="0 0 10 10" aria-hidden="true"><path fill="currentColor" d="M5 8.8.8 2h8.4z"/></svg>';
+  function moveChip(r) {
+    if (r.new) {
+      var n = el("span", "mv new", T("new", "baru"));
+      n.title = T("No output 24 hours ago", "Belum ada output 24 jam lalu");
+      return n;
+    }
+    if (!r.move) return null;
+    var up = r.move > 0, c = el("span", "mv " + (up ? "up" : "down"));
+    c.innerHTML = up ? ARROW_UP : ARROW_DOWN;
+    c.appendChild(document.createTextNode(String(Math.abs(r.move))));
+    c.title = up
+      ? T("Up " + r.move + (r.move === 1 ? " place" : " places") + " since 24 hours ago", "Naik " + r.move + " peringkat dibanding 24 jam lalu")
+      : T("Down " + -r.move + (r.move === -1 ? " place" : " places") + " since 24 hours ago", "Turun " + -r.move + " peringkat dibanding 24 jam lalu");
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
+  function streakChip(r) {
+    if (!r.streak || r.streak < 2) return null;
+    var c = el("span", "streak" + (r.streak_today ? "" : " cold"));
+    c.innerHTML = FLAME;
+    c.appendChild(document.createTextNode(String(r.streak)));
+    c.title = T(r.streak + " days in a row", r.streak + " hari berturut-turut") +
+      (r.streak_today ? "" : T(". Not yet today: use Claude today to keep it going.", ". Hari ini belum: pakai Claude hari ini biar gak putus."));
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
   function srcPill(row) { return row && row.router ? el("span", "src", "9router") : null; }
   function activity(r) {
     // 9router has no sessions, so its people show their request count instead
@@ -698,6 +748,10 @@
       who.appendChild(el("div", "team", row.team || ""));
       var pill = srcPill(row);
       if (pill) who.appendChild(pill);
+      var chips = el("div", "chips"), sc = streakChip(row), mc = moveChip(row);
+      if (sc) chips.appendChild(sc);
+      if (mc) chips.appendChild(mc);
+      who.appendChild(chips);
       if (row.me) who.appendChild(el("span", "badge", T("You", "Kamu")));
       var n = el("div", "num");
       n.setAttribute("role", "text");
@@ -774,6 +828,11 @@
       if (r.team) nm.appendChild(el("span", "team", r.team));
       var rp = srcPill(r);
       if (rp) nm.appendChild(rp);
+      if (r.output) {
+        var rs = streakChip(r), rm = moveChip(r);
+        if (rs) nm.appendChild(rs);
+        if (rm) nm.appendChild(rm);
+      }
       if (r.me) nm.appendChild(el("span", "badge", T("You", "Kamu")));
       mid.appendChild(nm);
       var meta = el("div", "meta");
@@ -1139,7 +1198,7 @@
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) {
         if (id !== detailId) return;
-        var sig = JSON.stringify([d.period, d.output, d.input, d.cache_read, d.sessions, d.rank, d.series, d.models, d.avatar]);
+        var sig = JSON.stringify([d.period, d.output, d.input, d.cache_read, d.sessions, d.rank, d.move, d.streak, d.streak_today, d.series, d.models, d.avatar]);
         if (sig === detailSig) return;
         detailSig = sig;
         renderDetail(d, first);
@@ -1337,6 +1396,13 @@
     }
 
     var foot = [];
+    if (d.output && d.move) foot.push(d.move > 0
+      ? T("Up " + d.move + (d.move === 1 ? " place" : " places") + " since 24 hours ago", "Naik " + d.move + " peringkat dibanding 24 jam lalu")
+      : T("Down " + -d.move + (d.move === -1 ? " place" : " places") + " since 24 hours ago", "Turun " + -d.move + " peringkat dibanding 24 jam lalu"));
+    if (d.streak >= 1) foot.push(T("Streak: " + d.streak + (d.streak === 1 ? " day" : " days") + (d.streak_best > d.streak ? " (best " + d.streak_best + ")" : " (personal best)"),
+      "Streak " + d.streak + " hari" + (d.streak_best > d.streak ? " (terpanjang " + d.streak_best + ")" : " (rekor pribadi)")) +
+      (d.streak_today ? "" : T(", not yet today", ", hari ini belum")));
+    else if (d.streak_best >= 2) foot.push(T("Best streak " + d.streak_best + " days", "Streak terpanjang " + d.streak_best + " hari"));
     if (d.peak_hour != null && d.output) foot.push(T("Most active around ", "Paling sering pakai Claude sekitar jam ") + pad(d.peak_hour) + HM + "00–" + pad((d.peak_hour + 1) % 24) + HM + "00");
     if (d.active_seconds) foot.push(T("Recorded active time ", "Waktu aktif tercatat ") + duration(d.active_seconds));
     foot.push(ago(d.last_seen).replace(/^a/, "A"));

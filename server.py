@@ -420,6 +420,78 @@ def period_start(period):
     return ts - ts % 3600
 
 
+def previous_window(period, since):
+    """The same board as it stood 24 hours ago, as [start, end) in hour buckets (None: nothing
+    to compare, e.g. on the first day of the month)."""
+    now = int(time.time())
+    end = now - now % 3600 + 3600 - 86400
+    if period == "today":
+        start = int((datetime.fromtimestamp(since, TZ) - timedelta(days=1)).timestamp())
+    elif period in ("7d", "30d"):
+        start = since - 86400
+    elif period == "month":
+        start = since
+    else:
+        start = 0
+    return (start, end) if end > start else None
+
+
+def add_moves(rows, compared):
+    """Rank change against the board 24 hours ago, among the rows shown (so it follows the filter).
+    move > 0 is up; new = no output in the earlier window."""
+    earlier = sorted((r for r in rows if r["prev_output"] > 0), key=lambda r: -r["prev_output"])
+    prank, rank, last = {}, 0, None
+    for i, r in enumerate(earlier, 1):
+        if r["prev_output"] != last:
+            rank, last = i, r["prev_output"]
+        prank[r["id"]] = rank
+    for r in rows:
+        p = prank.get(r["id"])
+        live = compared and r["output"] > 0
+        r["move"] = p - r["rank"] if live and p else None
+        r["new"] = bool(live and not p)
+    return rows
+
+
+_STREAKS = {"at": 0.0, "data": {}}
+_STREAKS_LOCK = threading.Lock()
+
+
+def streaks():
+    """Days in a row with output, per person: current (alive while they used Claude today or
+    yesterday), their best, and whether today already counts. Recomputed at most once a minute."""
+    now = time.time()
+    with _STREAKS_LOCK:
+        if now - _STREAKS["at"] < 60:
+            return _STREAKS["data"]
+        with DB_LOCK:
+            hours = DB.execute(
+                "SELECT employee_id, hour FROM (" + ALL_USAGE + ") WHERE metric = 'claude_code.token.usage' "
+                "AND type = 'output' AND value > 0 AND hour >= ? GROUP BY employee_id, hour",
+                (int(now) - 400 * 86400,),
+            ).fetchall()
+        days = {}
+        for h in hours:
+            days.setdefault(h["employee_id"], set()).add(datetime.fromtimestamp(h["hour"], TZ).date())
+        today = datetime.now(TZ).date()
+        out = {}
+        for emp, ds in days.items():
+            d = today if today in ds else today - timedelta(days=1)
+            cur = 0
+            while d in ds:
+                cur += 1
+                d -= timedelta(days=1)
+            best = run = 0
+            prev = None
+            for x in sorted(ds):
+                run = run + 1 if prev is not None and (x - prev).days == 1 else 1
+                best = max(best, run)
+                prev = x
+            out[emp] = {"streak": cur, "best": best, "today": today in ds}
+        _STREAKS["at"], _STREAKS["data"] = now, out
+        return out
+
+
 ALL_USAGE = (
     "SELECT employee_id, hour, metric, type, model, value FROM usage_hourly "
     "UNION ALL SELECT employee_id, hour, metric, type, model, value FROM usage_backfill"
@@ -468,6 +540,7 @@ def leaderboard(period, me_id=None, source="all"):
         rows.append(r)
     if source != "all":
         rank_rows(rows)
+        add_moves(rows, data["compared"])
         totals = {k: sum(x[k] for x in rows) for k in TOTAL_KEYS}
         totals["cost"] = round(totals["cost"], 4)
         return dict(data, rows=rows, totals=totals, source=source)
@@ -577,6 +650,14 @@ def _leaderboard(period):
             "GROUP BY employee_id, model",
             (since,),
         ).fetchall()
+        window = previous_window(period, since)
+        prev_out = {}
+        if window:
+            prev_out = {r["employee_id"]: r["v"] for r in DB.execute(
+                "SELECT employee_id, SUM(value) AS v FROM (" + ALL_USAGE + ") "
+                "WHERE metric='claude_code.token.usage' AND type='output' AND hour >= ? AND hour < ? "
+                "GROUP BY employee_id", window)}
+    streak = streaks()
     top_model = {}
     for m in models:
         cur = top_model.get(m["employee_id"])
@@ -596,12 +677,17 @@ def _leaderboard(period):
             "active_seconds": int(r["active_seconds"]),
             "requests": int(r["requests"]),
             "router": bool(r["router"]),
+            "prev_output": int(prev_out.get(r["id"], 0)),
+            "streak": (streak.get(r["id"]) or {}).get("streak", 0),
+            "streak_best": (streak.get(r["id"]) or {}).get("best", 0),
+            "streak_today": bool((streak.get(r["id"]) or {}).get("today")),
             "top_model": (top_model.get(r["id"]) or ("", 0))[0],
             "last_seen": r["last_seen"],
             "avatar": avatar_url(r),
             "id": r["id"],
         })
     rank_rows(out)
+    add_moves(out, bool(window))
     totals = {k: sum(x[k] for x in out) for k in TOTAL_KEYS}
     return {
         "period": period,
@@ -610,6 +696,7 @@ def _leaderboard(period):
         "tz": CFG["LB_TZ"],
         "totals": totals,
         "has_router": any(x["router"] for x in out),
+        "compared": bool(window),
         "rows": out,
     }
 
