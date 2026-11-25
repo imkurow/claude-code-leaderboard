@@ -135,6 +135,12 @@ def connect(cfg):
     if "avatar_ext" not in cols:
         conn.execute("ALTER TABLE employees ADD COLUMN avatar_ext TEXT")
         conn.execute("ALTER TABLE employees ADD COLUMN avatar_ver INTEGER")
+    if "harness" not in cols:
+        # what the person works with; anything but Claude Code is read by the sync script
+        conn.execute("ALTER TABLE employees ADD COLUMN harness TEXT NOT NULL DEFAULT 'claude-code'")
+        for kind in ("9router", "jrouter"):
+            conn.execute("UPDATE employees SET harness = ? WHERE id IN (SELECT employee_id FROM backfill_runs WHERE machine LIKE ?)",
+                         (kind, kind + "-%"))
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS employees_email ON employees(email COLLATE NOCASE) WHERE email IS NOT NULL")
     return conn
 
@@ -152,6 +158,12 @@ def new_token():
     return "lb_" + secrets.token_urlsafe(24)
 
 
+# Harnesses a participant can use. Claude Code sends OpenTelemetry; the others are read by
+# static/router-sync.js on the person's machine (--kind=<id>).
+HARNESSES = ("claude-code", "9router", "jrouter", "hermes", "openrouter")
+HARNESS_NAMES = {"claude-code": "Claude Code", "9router": "9router", "jrouter": "JRouter", "hermes": "Hermes", "openrouter": "OpenRouter"}
+
+
 def install_commands(cfg, token, url=None):
     """The install one-liners for a token (they carry the Access service-token headers):
     sh (macOS/Linux), ps (Windows), router / router_ps for a 9router machine, jrouter / jrouter_ps for JRouter."""
@@ -167,6 +179,11 @@ def install_commands(cfg, token, url=None):
         "router_ps": "$env:LB_TOKEN='%s'; $env:LB_9ROUTER='1'; irm %s/install.ps1%s | iex" % (token, url, ps_hdr),
         "jrouter": "curl -fsSL %s%s/install.sh | bash -s -- %s --jrouter" % (sh_hdr, url, token),
         "jrouter_ps": "$env:LB_TOKEN='%s'; $env:LB_JROUTER='1'; irm %s/install.ps1%s | iex" % (token, url, ps_hdr),
+        # one pair per harness: harness:<id> (macOS / Linux) and harness:<id>:ps (Windows)
+        **{("harness:%s" % h): ("curl -fsSL %s%s/install.sh | bash -s -- %s" % (sh_hdr, url, token)) + ("" if h == "claude-code" else " --" + h)
+           for h in HARNESSES},
+        **{("harness:%s:ps" % h): ("$env:LB_TOKEN='%s'; " % token) + ("" if h == "claude-code" else "$env:LB_HARNESS='%s'; " % h)
+           + ("irm %s/install.ps1%s | iex" % (url, ps_hdr)) for h in HARNESSES},
         "ps": "$env:LB_TOKEN='%s'; irm %s/install.ps1%s | iex" % (token, url, ps_hdr),
     }
 

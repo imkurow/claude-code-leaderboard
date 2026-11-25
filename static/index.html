@@ -617,6 +617,8 @@
         <button type="button" data-s="claude">Claude Code</button>
         <button type="button" data-s="9router" hidden>9router</button>
         <button type="button" data-s="jrouter" hidden>JRouter</button>
+        <button type="button" data-s="hermes" hidden>Hermes</button>
+        <button type="button" data-s="openrouter" hidden>OpenRouter</button>
       </div>
     </div>
   </header>
@@ -626,7 +628,7 @@
 
   <p class="note">
     <span id="updated"></span>
-    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <span id="srcNote" hidden>⟦For 9router and JRouter users, tokens and costs come from the router's own log.‖Untuk pengguna 9router dan JRouter, token dan biaya diambil dari log router-nya.⟧</span> <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
+    <span>⟦Costs are estimated by Claude Code at API prices, not subscription bills.‖Biaya dihitung Claude Code dengan harga API, bukan tagihan langganan.⟧ <span id="srcNote" hidden>⟦For people on another harness (9router, JRouter, Hermes, OpenRouter), tokens and costs come from that harness's own records; OpenRouter's arrive a day later.‖Untuk yang pakai harness lain (9router, JRouter, Hermes, OpenRouter), token dan biaya diambil dari catatan harness itu sendiri; data OpenRouter masuk sehari kemudian.⟧</span> <a href="/join">⟦How to join‖Cara ikut⟧</a></span>
   </p>
 </div>
 
@@ -699,7 +701,7 @@
   try { period = localStorage.getItem("lb_period") || "7d"; } catch (e) {}
   var source = "all";
   try { source = localStorage.getItem("lb_source") || "all"; } catch (e) {}
-  if (["all", "claude", "9router", "jrouter"].indexOf(source) < 0) source = "all";
+  if (["all", "claude", "9router", "jrouter", "hermes", "openrouter"].indexOf(source) < 0) source = "all";
   var me = null;          // { email, participant }
   var lastData = null;
   var shownNums = {};     // name -> figure last shown on the podium (rolls again only when it changes)
@@ -758,7 +760,8 @@
   }
   function modelName(m) {
     if (!m) return "";
-    if (!/^claude-/.test(m)) return m;   // other providers' models (through a router) keep their own names
+    m = m.replace(/^anthropic\//, "");   // "anthropic/claude-opus-5-5" through a router or Hermes
+    if (!/^claude-/.test(m)) return m;   // other providers' models keep their own names
     m = m.replace(/^claude-/, "").replace(/\[.*\]$/, "").replace(/-\d{8}$/, "");
     var parts = m.split("-"), fam = parts.shift() || "";
     return fam.charAt(0).toUpperCase() + fam.slice(1) + (parts.length ? " " + parts.join(".") : "");
@@ -1086,7 +1089,7 @@
     return sec;
   }
   var showAllBadges = false;
-  var ROUTER_NAME = { "9router": "9router", jrouter: "JRouter" };
+  var ROUTER_NAME = { "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter" };
   function routerNames(row) { return (row && row.router ? row.router.split(",") : []).map(function (k) { return ROUTER_NAME[k] || k; }); }
   function srcPill(row) { var n = routerNames(row); return n.length ? el("span", "src", n.join(" + ")) : null; }
   function activity(r) {
@@ -1297,7 +1300,7 @@
     countUp(total, lastData && lastData.period === data.period && lastData.source === data.source ? lastData.totals.output : 0, data.totals.output, 900, 0);
     var acts = [];
     if (data.totals.sessions || !data.totals.requests) acts.push(num(data.totals.sessions) + T(" sessions", " sesi"));
-    if (data.totals.requests) acts.push(num(data.totals.requests) + T(" router requests", " request router"));
+    if (data.totals.requests) acts.push(num(data.totals.requests) + T(" requests from other harnesses", " request dari harness lain"));
     var fine = el("span", "fine",
       acts.join(T(" and ", " dan ")) + (data.totals.cost ? T(", about " + usd(data.totals.cost) + " at API prices", ", estimasi " + usd(data.totals.cost) + " dengan harga API") : "") + ".");
     lede.appendChild(fine);
@@ -1310,7 +1313,7 @@
     if (srcs.hidden === !!data.has_router || srcs.dataset.kinds !== kinds) {
       srcs.hidden = !data.has_router;
       srcs.dataset.kinds = kinds;
-      srcs.querySelectorAll("[data-s=\"9router\"], [data-s=\"jrouter\"]").forEach(function (b) { b.hidden = (data.routers || []).indexOf(b.dataset.s) < 0; });
+      srcs.querySelectorAll("[data-s]:not([data-s=\"all\"]):not([data-s=\"claude\"])").forEach(function (b) { b.hidden = (data.routers || []).indexOf(b.dataset.s) < 0; });
       moveThumb(srcs);
     }
     $("srcNote").hidden = !data.has_router;
@@ -1836,7 +1839,8 @@
     if (d.active_seconds) foot.push(T("Recorded active time ", "Waktu aktif tercatat ") + duration(d.active_seconds));
     foot.push(ago(d.last_seen).replace(/^a/, "A"));
     if (d.created_at) foot.push(T("Joined ", "Ikut sejak ") + fmtDate(d.created_at, d.tz, { day: "numeric", month: "long", year: "numeric" }));
-    if (d.router) foot.push(T("Usage read from the " + routerNames(d).join(" and ") + " log every minute", "Pemakaian dibaca dari log " + routerNames(d).join(" dan ") + " tiap menit"));
+    if (d.router) foot.push(T("Usage read from " + routerNames(d).join(" and ") + (d.router.indexOf("openrouter") >= 0 ? " (OpenRouter per day, a day late)" : " every minute"),
+      "Pemakaian dibaca dari " + routerNames(d).join(" dan ") + (d.router.indexOf("openrouter") >= 0 ? " (OpenRouter per hari, telat sehari)" : " tiap menit")));
     frag.appendChild(el("p", "dt-foot", foot.join(". ") + "."));
 
     if (!d.output) frag.insertBefore(el("p", "dt-empty", T("No output tokens ", "Belum ada output token ") + PERIOD_CAP[d.period] + T(". Try a longer period.", ". Coba pilih periode yang lebih panjang.")), facts);

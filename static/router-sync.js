@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 /*
-  Claude Code Leaderboard: send 9router or JRouter usage to the leaderboard (Windows, macOS, Linux).
+  Claude Code Leaderboard: send 9router, JRouter, Hermes or OpenRouter usage to the leaderboard
+  (Windows, macOS, Linux).
+
+  --kind=hermes reads Hermes Agent's state.db (session_model_usage) in HERMES_HOME (~/.hermes,
+  %LOCALAPPDATA%\hermes on Windows). --kind=openrouter asks OpenRouter's activity API with the
+  person's management key, which stays on this machine; OpenRouter reports whole UTC days only,
+  so its usage shows up the day after. Everything below about the usage log is 9router / JRouter.
 
   JRouter is a fork of 9router with the same usage log (usageHistory in <data dir>/db/data.sqlite);
   only the data folder differs (~/.9router or ~/.jrouter, %APPDATA%\9router or %APPDATA%\jrouter).
@@ -27,7 +33,8 @@ const HERE = __dirname;
 const DAYS = 90;
 const RESEND = 1800;
 const KIND = ((process.argv.find(a => a.startsWith('--kind=')) || '--kind=9router').slice(7) || '9router').toLowerCase();
-const NAME = KIND === 'jrouter' ? 'JRouter' : '9router';
+const NAMES = { '9router': '9router', jrouter: 'JRouter', hermes: 'Hermes', openrouter: 'OpenRouter' };
+const NAME = NAMES[KIND] || KIND;
 const FORCE = process.argv.includes('--force');
 const DRY = process.argv.includes('--dry-run');
 const LOUD = FORCE || DRY || process.stdout.isTTY;
@@ -38,11 +45,17 @@ function report(msg, failed) {
 }
 
 function settings() {
-  if (!/^(9router|jrouter)$/.test(KIND)) throw new Error('unknown --kind ' + KIND + ' (9router or jrouter)');
+  if (!NAMES[KIND]) throw new Error('unknown --kind ' + KIND + ' (' + Object.keys(NAMES).join(', ') + ')');
   return JSON.parse(fs.readFileSync(path.join(HERE, KIND + '.json'), 'utf8'));
 }
 
 function defaultDataDir() {
+  if (KIND === 'hermes') {
+    if (process.env.HERMES_HOME) return process.env.HERMES_HOME;
+    return process.platform === 'win32'
+      ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'hermes')
+      : path.join(os.homedir(), '.hermes');
+  }
   if (process.env.DATA_DIR) return process.env.DATA_DIR;
   return process.platform === 'win32'
     ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), KIND)
@@ -92,7 +105,101 @@ function toTs(v) {
 }
 const num = v => { const f = Number(v || 0); return f > 0 && Number.isFinite(f) ? f : 0; };
 
+// <kind>-<16 hex>: the computer, its user and the file, or an explicit seed (OpenRouter's key)
+function machineId(file, seed) {
+  let user = '';
+  try { user = os.userInfo().username; } catch (e) { user = process.env.USER || process.env.USERNAME || ''; }
+  return KIND + '-' + crypto.createHash('sha256').update(seed || (os.hostname() + '|' + user + '|' + file)).digest('hex').slice(0, 16);
+}
+
+function bucket(agg, ts, model, inp, out, cacheRead, cacheWrite, cost, requests) {
+  const hour = Math.floor(ts) - (Math.floor(ts) % 3600);
+  model = String(model || 'unknown').slice(0, 80);
+  const k = hour + '|' + model;
+  let a = agg.get(k);
+  if (!a) agg.set(k, a = { hour, model, input: 0, output: 0, cache_read: 0, cache_creation: 0, cost: 0, requests: 0 });
+  a.input += Math.round(inp); a.output += Math.round(out);
+  a.cache_read += Math.round(cacheRead); a.cache_creation += Math.round(cacheWrite);
+  a.cost = Math.round((a.cost + cost) * 1e6) / 1e6;
+  a.requests += Math.round(requests);
+}
+
+function finish(agg, first, last, machine, count) {
+  const now = Math.floor(Date.now() / 1000);
+  const rows = [...agg.values()].sort((a, b) => a.hour - b.hour || (a.model < b.model ? -1 : 1));
+  return {
+    payload: {
+      machine,
+      from: first != null ? Math.floor(first) - (Math.floor(first) % 3600) : now - (now % 3600),
+      last_request: last != null ? Math.floor(last) : null,
+      rows,
+    },
+    count,
+  };
+}
+
+// Hermes Agent: per session and model, counters that grow while the session runs. They are
+// counted in the hour the session last used that model.
+function collectHermes(cfg) {
+  const dataDir = cfg.dataDir || defaultDataDir();
+  const file = cfg.db || path.join(dataDir, 'state.db');
+  if (!fs.existsSync(file)) throw new Error('Hermes state.db not found at ' + file);
+  const db = openDb(file, dataDir);
+  try {
+    const cols = new Set(db.all('PRAGMA table_info(session_model_usage)').map(r => r.name));
+    for (const c of ['model', 'input_tokens', 'output_tokens', 'last_seen']) {
+      if (!cols.has(c)) throw new Error(cols.size ? 'session_model_usage has an unknown layout; this Hermes version is not supported yet' : 'no session_model_usage table in ' + file);
+    }
+    const has = c => cols.has(c) ? c : '0';
+    const since = Date.now() / 1000 - DAYS * 86400;
+    const agg = new Map();
+    let first = null, last = null, n = 0;
+    const sql = 'SELECT model, ' + has('api_call_count') + ' AS calls, input_tokens, output_tokens, ' + has('cache_read_tokens') + ' AS cr, ' +
+      has('cache_write_tokens') + ' AS cw, ' + has('estimated_cost_usd') + ' AS est, ' + has('actual_cost_usd') + ' AS act, last_seen FROM session_model_usage WHERE last_seen >= ?';
+    for (const r of db.all(sql, since)) {
+      const ts = toTs(r.last_seen);
+      if (ts == null || ts < since) continue;
+      const cost = num(r.act) || num(r.est);
+      bucket(agg, ts, r.model, num(r.input_tokens), num(r.output_tokens), num(r.cr), num(r.cw), cost, num(r.calls) || 1);
+      first = first == null ? ts : Math.min(first, ts);
+      last = last == null ? ts : Math.max(last, ts);
+      n += num(r.calls) || 1;
+    }
+    return finish(agg, first, last, machineId(file), n);
+  } finally {
+    db.close();
+  }
+}
+
+// OpenRouter: daily totals per model for the last 30 completed UTC days (activity API, management key).
+async function collectOpenRouter(cfg) {
+  if (!cfg.apiKey) throw new Error('no OpenRouter management key in ' + KIND + '.json');
+  const res = await fetch('https://openrouter.ai/api/v1/activity', {
+    headers: { Authorization: 'Bearer ' + cfg.apiKey, 'User-Agent': 'claude-leaderboard-openrouter-sync' }, signal: AbortSignal.timeout(30000),
+  });
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) throw new Error('OpenRouter refused the key (HTTP ' + res.status + '). The activity API needs a management key.');
+  if (!res.ok) throw new Error('OpenRouter answered HTTP ' + res.status + ': ' + text.slice(0, 200));
+  const data = (JSON.parse(text || '{}').data) || [];
+  const agg = new Map();
+  let first = null, last = null, n = 0;
+  for (const r of data) {
+    const ts = Date.parse(String(r.date || '').slice(0, 10) + 'T00:00:00Z') / 1000;
+    if (!ts) continue;
+    const prompt = num(r.prompt_tokens), cached = num(r.cached_tokens);
+    bucket(agg, ts, r.model || r.model_permaslug, Math.max(0, prompt - cached), num(r.completion_tokens), Math.min(cached, prompt || cached), 0,
+      num(r.usage), num(r.requests));
+    first = first == null ? ts : Math.min(first, ts);
+    last = last == null ? ts + 86399 : Math.max(last, ts + 86399);
+    n += num(r.requests);
+  }
+  // the same account counts once, whichever computer runs this
+  return finish(agg, first, last, machineId(null, crypto.createHash('sha256').update(cfg.apiKey).digest('hex')), n);
+}
+
 function collect(cfg) {
+  if (KIND === 'hermes') return collectHermes(cfg);
+  if (KIND === 'openrouter') return collectOpenRouter(cfg);
   const dataDir = cfg.dataDir || defaultDataDir();
   const file = cfg.db || path.join(dataDir, 'db', 'data.sqlite');
   if (!fs.existsSync(file)) throw new Error(NAME + ' database not found at ' + file);
@@ -200,7 +307,7 @@ function lock() {
 async function main() {
   if (typeof fetch !== 'function') throw new Error('Node.js 18 or newer is needed (this is ' + process.version + ')');
   const cfg = settings();
-  const { payload, count } = collect(cfg);
+  const { payload, count } = await collect(cfg);
   const output = payload.rows.reduce((s, r) => s + r.output, 0);
   if (DRY) {
     report('dry run: ' + count + ' requests, ' + output.toLocaleString('en-US') + ' output tokens in ' + payload.rows.length + ' hourly rows (machine ' + payload.machine + '). Nothing sent.');

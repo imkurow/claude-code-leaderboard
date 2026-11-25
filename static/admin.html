@@ -124,10 +124,12 @@
   .card { margin-top: 28px; background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; }
   .card > h2, .list-head h2 { margin: 0; font: 500 21px/1.2 var(--display); letter-spacing: -0.01em; }
   .add { padding: 20px 22px 22px; }
-  .add-grid { margin-top: 14px; display: grid; grid-template-columns: 1.2fr 1fr 1.4fr auto; gap: 12px; align-items: end; }
+  .add-grid { margin-top: 14px; display: grid; grid-template-columns: 1.15fr 1fr 0.9fr 1.3fr auto; gap: 12px; align-items: end; }
+  select { font: inherit; color: var(--ink); appearance: auto; }
+  .harness-note { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; color: var(--ink-2); background: color-mix(in oklab, var(--signal) 8%, transparent); }
   label.f { display: grid; gap: 5px; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
   label.f .opt { font-weight: 400; color: var(--ink-3); }
-  input[type="text"], input[type="email"], input[type="search"] {
+  input[type="text"], input[type="email"], input[type="search"], select {
     width: 100%; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--rule); background: var(--fog);
   }
   input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
@@ -266,6 +268,14 @@
     <form id="addForm" class="add-grid" autocomplete="off">
       <label class="f">⟦Name‖Nama⟧ <input type="text" name="name" required maxlength="60" placeholder="⟦Name on the leaderboard‖Nama di leaderboard⟧"></label>
       <label class="f">⟦Team‖Tim⟧ <input type="text" name="team" maxlength="40" list="teams" placeholder="⟦For example Engineering‖Misalnya Developer⟧"></label>
+      <label class="f" title="⟦What this person works with. It decides which install command they get.‖Yang dipakai orang ini. Ini menentukan perintah install yang dia dapat.⟧">Harness
+        <select name="harness">
+          <option value="claude-code">Claude Code</option>
+          <option value="9router">9router</option>
+          <option value="jrouter">JRouter</option>
+          <option value="hermes">Hermes</option>
+          <option value="openrouter">OpenRouter</option>
+        </select></label>
       <label class="f f-email"><span>⟦Login email‖Email login⟧ <span class="opt">⟦(optional)‖(opsional)⟧</span></span>
         <input type="email" name="email" maxlength="120" placeholder="name@example.com" title="⟦The email they sign in with, so they can add a photo‖Email login peserta, supaya dia bisa pasang foto⟧"></label>
       <button class="btn" type="submit">⟦Add participant‖Tambah peserta⟧</button>
@@ -296,28 +306,14 @@
     <div class="dlg-head"><h2 id="tokTitle"></h2></div>
     <p>⟦Send this in a private chat, not a group. It contains a personal token, so anyone holding it can send data as this participant.‖Kirim lewat chat pribadi, jangan di grup. Isinya token pribadi, jadi siapa pun yang memegangnya bisa mengirim data atas nama peserta ini.⟧</p>
     <div class="cmd">
-      <div class="cmd-head"><span>macOS / Linux</span><button class="btn ghost small" type="button" data-copy="sh">⟦Copy‖Salin⟧</button></div>
+      <div class="cmd-head"><span><b class="hname">Claude Code</b> ⟦on‖di⟧ macOS / Linux</span><button class="btn ghost small" type="button" data-copy="sh">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdSh"></pre>
     </div>
     <div class="cmd">
-      <div class="cmd-head"><span>Windows (PowerShell)</span><button class="btn ghost small" type="button" data-copy="ps">⟦Copy‖Salin⟧</button></div>
+      <div class="cmd-head"><span><b class="hname">Claude Code</b> ⟦on‖di⟧ Windows (PowerShell)</span><button class="btn ghost small" type="button" data-copy="ps">⟦Copy‖Salin⟧</button></div>
       <pre id="cmdPs"></pre>
     </div>
-    <div class="router-pick">
-      <span>⟦Uses a router instead of plain Claude Code?‖Pakai router, bukan Claude Code biasa?⟧</span>
-      <div class="seg" role="group" aria-label="Router">
-        <button type="button" data-router="9router" aria-pressed="true">9router</button>
-        <button type="button" data-router="jrouter" aria-pressed="false">JRouter</button>
-      </div>
-    </div>
-    <div class="cmd">
-      <div class="cmd-head"><span><b class="rname">9router</b> ⟦on macOS / Linux‖di macOS / Linux⟧</span><button class="btn ghost small" type="button" data-copy="router">⟦Copy‖Salin⟧</button></div>
-      <pre id="cmdRouter"></pre>
-    </div>
-    <div class="cmd">
-      <div class="cmd-head"><span><b class="rname">9router</b> ⟦on Windows (PowerShell)‖di Windows (PowerShell)⟧</span><button class="btn ghost small" type="button" data-copy="router_ps">⟦Copy‖Salin⟧</button></div>
-      <pre id="cmdRouterPs"></pre>
-    </div>
+    <p class="harness-note" id="harnessNote" hidden></p>
     <div class="warn">⟦These commands are shown only now. If they get lost, create a new token from the participant's menu.‖Perintah ini cuma muncul sekarang. Kalau hilang, buat token baru dari menu peserta.⟧</div>
     <div class="row-actions">
       <button class="btn ghost" type="button" data-copy="msg">⟦Copy full message‖Salin pesan lengkap⟧</button>
@@ -452,7 +448,9 @@
       who.appendChild(avatar(p.name, p.avatar));
       var t = el("div"); t.style.minWidth = "0";
       var nmv = el("div", "nm", p.name);
-      if (p.router) p.router.split(",").forEach(function (k) { nmv.appendChild(el("span", "pill src", k === "jrouter" ? "JRouter" : "9router")); });
+      var hs = (p.harness && p.harness !== "claude-code" ? [p.harness] : []);
+      (p.router ? p.router.split(",") : []).forEach(function (k) { if (k && hs.indexOf(k) < 0) hs.push(k); });
+      hs.forEach(function (k) { nmv.appendChild(el("span", "pill src", HARNESS_NAME[k] || k)); });
       t.appendChild(nmv);
       t.appendChild(el("div", "em", p.email || T("No login email yet", "Email belum terhubung")));
       who.appendChild(t); td.appendChild(who); tr.appendChild(td);
@@ -490,7 +488,7 @@
     var f = e.target, btn = f.querySelector("button");
     $("addErr").textContent = "";
     btn.disabled = true;
-    api("POST", "/api/admin/participants", { name: f.elements["name"].value, team: f.elements["team"].value, email: f.elements["email"].value })
+    api("POST", "/api/admin/participants", { name: f.elements["name"].value, team: f.elements["team"].value, email: f.elements["email"].value, harness: f.elements["harness"].value })
       .then(function (j) { f.reset(); showCommands(j, T("Install commands for ", "Perintah install untuk ") + j.name); return load(); })
       .catch(function (err) { $("addErr").textContent = err.message; })
       .then(function () { btn.disabled = false; });
@@ -498,46 +496,49 @@
 
   // ---------- install commands ----------
   var tokenDlg = $("tokenDlg");
+  var HARNESS_NAME = { "claude-code": "Claude Code", "9router": "9router", jrouter: "JRouter", hermes: "Hermes", openrouter: "OpenRouter" };
+  function harnessOf(j) { return j && HARNESS_NAME[j.harness] ? j.harness : "claude-code"; }
+  function hkey(j, k) { return "harness:" + harnessOf(j) + (k === "ps" ? ":ps" : ""); }
+  function harnessNote(h) {
+    if (h === "claude-code") return "";
+    if (h === "openrouter") return T("Run it on any computer with Node.js 18+. It asks for an OpenRouter management key (openrouter.ai/settings/management-keys), which stays on that computer. OpenRouter reports whole days, so usage shows up the day after.",
+      "Jalankan di komputer mana saja yang punya Node.js 18+. Perintah ini meminta management key OpenRouter (openrouter.ai/settings/management-keys), yang tetap di komputer itu. OpenRouter melaporkan per hari, jadi pemakaian baru muncul besoknya.");
+    return T("Run it on the machine where " + HARNESS_NAME[h] + " runs, as the same user. It reads " + HARNESS_NAME[h] + "'s own usage log every minute.",
+      "Jalankan di mesin tempat " + HARNESS_NAME[h] + " berjalan, dengan user yang sama. Perintah ini membaca log pemakaian " + HARNESS_NAME[h] + " tiap menit.");
+  }
   function showCommands(j, title) {
     lastCmd = j;
+    var h = harnessOf(j);
     $("tokTitle").textContent = title;
-    $("cmdSh").textContent = j.commands.sh;
-    $("cmdPs").textContent = j.commands.ps;
-    showRouter();
+    $("cmdSh").textContent = j.commands[hkey(j, "sh")];
+    $("cmdPs").textContent = j.commands[hkey(j, "ps")];
+    document.querySelectorAll(".hname").forEach(function (n) { n.textContent = HARNESS_NAME[h]; });
+    var note = harnessNote(h);
+    $("harnessNote").textContent = note;
+    $("harnessNote").hidden = !note;
     tokenDlg.showModal();
   }
-  // which router the two router commands are for
-  var routerKind = "9router";
-  function rkey(k) { return routerKind === "jrouter" ? (k === "router" ? "jrouter" : k === "router_ps" ? "jrouter_ps" : k) : k; }
-  function showRouter() {
-    if (!lastCmd) return;
-    $("cmdRouter").textContent = lastCmd.commands[rkey("router")];
-    $("cmdRouterPs").textContent = lastCmd.commands[rkey("router_ps")];
-    document.querySelectorAll(".rname").forEach(function (n) { n.textContent = routerKind === "jrouter" ? "JRouter" : "9router"; });
-    document.querySelectorAll("[data-router]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.router === routerKind)); });
-  }
-  document.querySelectorAll("[data-router]").forEach(function (b) {
-    b.addEventListener("click", function () { routerKind = b.dataset.router; showRouter(); });
-  });
   function message(j) {
-    var cmds = "macOS / Linux:\n" + j.commands.sh + "\n\nWindows (PowerShell):\n" + j.commands.ps + "\n\n" +
-      T("If you use 9router or JRouter instead, run the matching command once on the machine where it runs (as the same user):\n\n",
-        "Kalau kamu pakai 9router atau JRouter, jalankan perintah yang sesuai sekali di mesin tempat router itu berjalan (dengan user yang sama):\n\n") +
-      "9router, macOS / Linux:\n" + j.commands.router + "\n\n9router, Windows (PowerShell):\n" + j.commands.router_ps + "\n\n" +
-      "JRouter, macOS / Linux:\n" + j.commands.jrouter + "\n\nJRouter, Windows (PowerShell):\n" + j.commands.jrouter_ps + "\n\n";
-    return T(
+    var h = harnessOf(j), name = HARNESS_NAME[h];
+    var cmds = "macOS / Linux:\n" + j.commands[hkey(j, "sh")] + "\n\nWindows (PowerShell):\n" + j.commands[hkey(j, "ps")] + "\n\n";
+    if (h === "claude-code") return T(
       "Hi " + j.name + ", here is how to join " + TITLE + ". Run this once in a terminal on the computer where you use Claude Code.\n\n" + cmds +
       "When it finishes, close and reopen Claude Code. Leaderboard: " + location.origin + "\n" +
       "This command contains your personal token, so please don't share it.",
       "Halo " + j.name + ", ini perintah untuk ikut " + TITLE + ". Jalankan sekali di terminal laptop yang kamu pakai untuk Claude Code.\n\n" + cmds +
       "Setelah selesai, tutup lalu buka lagi Claude Code. Leaderboard: " + location.origin + "\n" +
       "Perintah ini berisi token pribadi kamu, jadi jangan dibagikan ke orang lain.");
+    return T(
+      "Hi " + j.name + ", here is how to join " + TITLE + " with " + name + ". " + harnessNote(h) + "\n\n" + cmds +
+      "Leaderboard: " + location.origin + "\nThis command contains your personal token, so please don't share it.",
+      "Halo " + j.name + ", ini perintah untuk ikut " + TITLE + " dengan " + name + ". " + harnessNote(h) + "\n\n" + cmds +
+      "Leaderboard: " + location.origin + "\nPerintah ini berisi token pribadi kamu, jadi jangan dibagikan ke orang lain.");
   }
   tokenDlg.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-copy]");
     if (!b || !lastCmd) return;
     var k = b.dataset.copy;
-    copyText(k === "msg" ? message(lastCmd) : lastCmd.commands[rkey(k)]).then(function () {
+    copyText(k === "msg" ? message(lastCmd) : lastCmd.commands[hkey(lastCmd, k)]).then(function () {
       toast(k === "msg" ? T("Full message copied", "Pesan lengkap disalin") : T("Command copied", "Perintah disalin"));
     });
   });
@@ -591,6 +592,12 @@
     var grid = el("div", "form-grid");
     grid.appendChild(field(T("Name", "Nama"), "name", p.name));
     grid.appendChild(field(T("Team", "Tim"), "team", p.team));
+    var hl = el("label", "f");
+    hl.appendChild(document.createTextNode("Harness"));
+    var hsel = el("select"); hsel.name = "harness";
+    Object.keys(HARNESS_NAME).forEach(function (k) { var o = el("option", "", HARNESS_NAME[k]); o.value = k; if (k === (p.harness || "claude-code")) o.selected = true; hsel.appendChild(o); });
+    hl.appendChild(hsel);
+    grid.appendChild(hl);
     grid.appendChild(field(T("Login email", "Email login"), "email", p.email, "email", "wide"));
     var chk = el("label", "check wide");
     var cb = el("input"); cb.type = "checkbox"; cb.name = "active"; cb.checked = p.active;
@@ -610,7 +617,8 @@
       e.preventDefault();
       ferr.textContent = ""; save.disabled = true;
       api("POST", "/api/admin/participants/" + p.id + "/update", {
-        name: form.elements["name"].value, team: form.elements["team"].value, email: form.elements["email"].value, active: form.elements["active"].checked
+        name: form.elements["name"].value, team: form.elements["team"].value, email: form.elements["email"].value, active: form.elements["active"].checked,
+        harness: form.elements["harness"].value
       }).then(function () { toast(T("Changes saved", "Perubahan disimpan")); return load(); })
         .then(renderEdit)
         .catch(function (err) { ferr.textContent = err.message; save.disabled = false; });
@@ -642,7 +650,7 @@
       var ul = el("ul", "machines");
       p.machines.forEach(function (m) {
         var li = el("li"), info = el("div");
-        var rk = m.machine.indexOf("9router-") === 0 ? "9router" : m.machine.indexOf("jrouter-") === 0 ? "JRouter" : "";
+        var rk = HARNESS_NAME[m.machine.split("-")[0]] && m.machine.split("-")[0] !== "claude" ? HARNESS_NAME[m.machine.split("-")[0]] : "";
         var r9 = !!rk;
         info.appendChild(el("div", "code", r9 ? rk + " " + m.machine.slice(8, 16) : T("Computer ", "Laptop ") + m.machine.slice(0, 8)));
         info.appendChild(el("div", "meta", r9

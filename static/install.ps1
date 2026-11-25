@@ -4,6 +4,7 @@
 #   ⟦Remove‖Hapus⟧  : $env:LB_UNINSTALL='1'; ⟦then the same‖lalu perintah⟧ irm ... | iex ⟦command‖yang sama⟧
 #   9router : $env:LB_9ROUTER='1' ⟦before the command, on the Windows PC that runs 9router (it sets up a sync instead of Claude Code telemetry)‖sebelum perintahnya, di PC Windows yang menjalankan 9router (memasang sinkron, bukan telemetry Claude Code)⟧
 #   JRouter : $env:LB_JROUTER='1' ⟦the same for JRouter‖sama, untuk JRouter⟧
+#   ⟦Any harness‖Harness lain⟧: $env:LB_HARNESS='9router' | 'jrouter' | 'hermes' | 'openrouter'   (OpenRouter ⟦asks for a management key‖meminta management key⟧)
 #
 # ⟦What changes: the "env" block in %USERPROFILE%\.claude\settings.json (a backup is made first).‖Yang diubah: blok "env" di %USERPROFILE%\.claude\settings.json (backup dibuat dulu).⟧
 # ⟦What Claude Code sends: metric numbers only. Prompt contents, code, and files are NOT sent.‖Yang dikirim Claude Code: angka metrik saja. Isi prompt, kode, dan file TIDAK ikut terkirim.⟧
@@ -14,7 +15,8 @@
   if ($CfId.StartsWith('__')) { $CfId = '' }
   if ($CfSecret.StartsWith('__')) { $CfSecret = '' }
   $Uninstall = ($env:LB_UNINSTALL -eq '1')
-  $Router = if ($env:LB_JROUTER -eq '1') { 'jrouter' } elseif ($env:LB_9ROUTER -eq '1') { '9router' } else { '' }
+  $Router = if ($env:LB_HARNESS -and $env:LB_HARNESS -ne 'claude-code') { "$env:LB_HARNESS".ToLower() } elseif ($env:LB_JROUTER -eq '1') { 'jrouter' } elseif ($env:LB_9ROUTER -eq '1') { '9router' } else { '' }
+  if ($Router -and @('9router', 'jrouter', 'hermes', 'openrouter') -notcontains $Router) { Write-Host "⟦Unknown harness‖Harness tidak dikenal⟧: $Router" -ForegroundColor Red; return }
   $Token = "$env:LB_TOKEN"
   $Dir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $HOME '.claude' }
   $Path = Join-Path $Dir 'settings.json'
@@ -47,7 +49,7 @@
   # script; both routers run on Node, so Node is there.
   # ---------------------------------------------------------------------------
   if ($Router) {
-    $RName = if ($Router -eq 'jrouter') { 'JRouter' } else { '9router' }
+    $RName = @{ '9router' = '9router'; 'jrouter' = 'JRouter'; 'hermes' = 'Hermes'; 'openrouter' = 'OpenRouter' }[$Router]
     $RDir = Join-Path $env:LOCALAPPDATA 'claude-leaderboard'
     $RTask = "ClaudeLeaderboard$Router"
     $RScript = Join-Path $RDir 'router-sync.js'
@@ -58,11 +60,13 @@
       Remove-Item -Force -ErrorAction SilentlyContinue $RFiles
       if (-not (Get-ChildItem -Path $RDir -Filter '*.json' -ErrorAction SilentlyContinue)) { Remove-Item -Force -ErrorAction SilentlyContinue $RScript }
       Write-Host "$RName ⟦sync removed. Data already on the leaderboard stays.‖sinkron dihapus. Data yang sudah ada di leaderboard tetap.⟧"
-      Remove-Item Env:LB_TOKEN, Env:LB_UNINSTALL, Env:LB_9ROUTER, Env:LB_JROUTER -ErrorAction SilentlyContinue
+      Remove-Item Env:LB_TOKEN, Env:LB_UNINSTALL, Env:LB_9ROUTER, Env:LB_JROUTER, Env:LB_HARNESS -ErrorAction SilentlyContinue
       return
     }
+    $HermesHome = if ($env:HERMES_HOME) { $env:HERMES_HOME } else { Join-Path $env:LOCALAPPDATA 'hermes' }
     $Node = $env:LB_NODE
     if (-not $Node) { $cmd = Get-Command node.exe -ErrorAction SilentlyContinue; if ($cmd) { $Node = $cmd.Source } }
+    if (-not $Node -and $Router -eq 'hermes' -and (Test-Path (Join-Path $HermesHome 'node\node.exe'))) { $Node = Join-Path $HermesHome 'node\node.exe' }
     if (-not $Node) {
       $proc = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match $Router } | Select-Object -First 1
       if ($proc) { $Node = $proc.ExecutablePath }
@@ -70,9 +74,23 @@
     if (-not $Node -or -not (Test-Path $Node)) {
       Write-Host "⟦Node.js was not found. Point to the node.exe that runs‖Node.js tidak ditemukan. Tunjukkan dulu node.exe yang menjalankan⟧ ${RName}: `$env:LB_NODE='C:\path\node.exe'" -ForegroundColor Red; return
     }
-    $RData = if ($env:LB_ROUTER_DIR) { $env:LB_ROUTER_DIR } elseif ($env:LB_9R_DIR) { $env:LB_9R_DIR } elseif ($env:DATA_DIR -and $env:DATA_DIR -notmatch '^/') { $env:DATA_DIR } else { Join-Path $env:APPDATA $Router }
-    $RDb = if ($env:LB_ROUTER_DB) { $env:LB_ROUTER_DB } elseif ($env:LB_9R_DB) { $env:LB_9R_DB } else { Join-Path $RData 'db\data.sqlite' }
-    if (-not (Test-Path $RDb)) {
+    $RKey = ''
+    if ($Router -eq 'hermes') {
+      $RData = if ($env:LB_ROUTER_DIR) { $env:LB_ROUTER_DIR } else { $HermesHome }
+      $RDb = if ($env:LB_ROUTER_DB) { $env:LB_ROUTER_DB } else { Join-Path $RData 'state.db' }
+    } elseif ($Router -eq 'openrouter') {
+      $RData = ''; $RDb = ''
+      $RKey = "$env:LB_OPENROUTER_KEY"
+      if (-not $RKey) {
+        $sec = Read-Host -AsSecureString '⟦OpenRouter management key (openrouter.ai/settings/management-keys; it stays on this PC)‖Management key OpenRouter (openrouter.ai/settings/management-keys; tetap di PC ini)⟧'
+        $RKey = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+      }
+      if (-not $RKey) { Write-Host '⟦An OpenRouter management key is needed.‖Butuh management key OpenRouter.⟧' -ForegroundColor Red; return }
+    } else {
+      $RData = if ($env:LB_ROUTER_DIR) { $env:LB_ROUTER_DIR } elseif ($env:LB_9R_DIR) { $env:LB_9R_DIR } elseif ($env:DATA_DIR -and $env:DATA_DIR -notmatch '^/') { $env:DATA_DIR } else { Join-Path $env:APPDATA $Router }
+      $RDb = if ($env:LB_ROUTER_DB) { $env:LB_ROUTER_DB } elseif ($env:LB_9R_DB) { $env:LB_9R_DB } else { Join-Path $RData 'db\data.sqlite' }
+    }
+    if ($Router -ne 'openrouter' -and -not (Test-Path $RDb)) {
       Write-Host "$RName ⟦database was not found at‖database tidak ditemukan di⟧ $RDb. ⟦Run this as the Windows user that runs it, or set‖Jalankan sebagai user Windows yang menjalankannya, atau set⟧ `$env:LB_ROUTER_DB='C:\path\data.sqlite'" -ForegroundColor Red; return
     }
     New-Item -ItemType Directory -Force -Path $RDir | Out-Null
@@ -82,7 +100,9 @@
       Write-Host "⟦Could not download the router sync from the server.‖Gagal mengunduh sinkron router dari server.⟧ ($($_.Exception.Message))" -ForegroundColor Red; return
     }
     $keys = if ($env:LB_ROUTER_KEYS) { $env:LB_ROUTER_KEYS } else { "$env:LB_9R_KEYS" }
-    $cfg = [ordered]@{ url = '__LB_URL__'; token = $Token; cfId = $CfId; cfSecret = $CfSecret; db = $RDb; dataDir = $RData; keys = $keys }
+    $cfg = [ordered]@{ url = '__LB_URL__'; token = $Token; cfId = $CfId; cfSecret = $CfSecret }
+    if ($RDb) { $cfg.db = $RDb; $cfg.dataDir = $RData; $cfg.keys = $keys }
+    if ($RKey) { $cfg.apiKey = $RKey }
     [IO.File]::WriteAllText((Join-Path $RDir "$Router.json"), ($cfg | ConvertTo-Json))
     if ($Router -eq '9router') {
       # an earlier 9router sync: same task name and machine id, so it is replaced and nothing counts twice
@@ -90,7 +110,7 @@
     }
     Write-Host -NoNewline "⟦Sending‖Kirim pemakaian⟧ $RName ⟦usage (up to 90 days)... ‖(maks. 90 hari)... ⟧"
     & $Node --no-warnings $RScript "--kind=$Router" --force
-    if ($LASTEXITCODE -ne 0) { Write-Host '⟦failed, see the message above.‖gagal, lihat pesan di atas.⟧' -ForegroundColor Red; return }
+    if ($LASTEXITCODE -ne 0) { Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $RDir "$Router.json"); Write-Host '⟦failed, see the message above.‖gagal, lihat pesan di atas.⟧' -ForegroundColor Red; return }
     # wscript runs node without flashing a console window every minute
     $q = '"'
     [IO.File]::WriteAllText($RVbs, 'CreateObject("WScript.Shell").Run ' + $q + $q + $q + $Node + $q + $q + ' --no-warnings ' + $q + $q + $RScript + $q + $q + ' --kind=' + $Router + $q + ', 0, False' + "`r`n")
@@ -100,7 +120,7 @@
     Register-ScheduledTask -TaskName $RTask -Action $action -Trigger $trigger -Settings $settings -Force `
       -Description "__LB_TITLE__: send $RName usage every minute" | Out-Null
     Write-Host "⟦Done.‖Selesai.⟧ $RName ⟦usage now reaches‖sekarang masuk ke⟧ __LB_URL__ ⟦every minute (Task Scheduler: $RTask).‖tiap menit (Task Scheduler: $RTask).⟧"
-    Remove-Item Env:LB_TOKEN, Env:LB_9ROUTER, Env:LB_JROUTER -ErrorAction SilentlyContinue
+    Remove-Item Env:LB_TOKEN, Env:LB_9ROUTER, Env:LB_JROUTER, Env:LB_HARNESS, Env:LB_OPENROUTER_KEY -ErrorAction SilentlyContinue
     return
   }
 

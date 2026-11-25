@@ -11,7 +11,7 @@ A small, self-hosted leaderboard of who writes the most with [Claude Code](https
 - **Rank changes and streaks.** Arrows show who moved up or down against 24 hours earlier, and a flame counts days in a row.
 - **Detail card per person.** Click anyone to see output over time, models used, cache reads and writes, sessions, active days and estimated API cost.
 - **30 days of history on day one.** The installer also reads the local Claude Code transcripts, so the board isn't empty the day you start.
-- **9router and JRouter users too.** People who use [9router](https://github.com/decolua/9router) or its fork [JRouter](https://github.com/Synthever/JRouter) on Windows, macOS or Linux join with the same token. Their usage is read from the router's own log every minute and marked with a "9router" or "JRouter" label, and the board can be filtered by Claude Code, 9router or JRouter.
+- **Other harnesses too.** Besides Claude Code, people can join with [9router](https://github.com/decolua/9router), its fork [JRouter](https://github.com/Synthever/JRouter), [Hermes Agent](https://github.com/NousResearch/hermes-agent) or [OpenRouter](https://openrouter.ai), on Windows, macOS or Linux. The admin picks the harness when adding someone and gets the matching install command; usage is read from that harness's own records, labelled, and the board can be filtered by harness.
 - **Admin page.** Add people and copy a ready-made install message for each. You can also rename people, rotate tokens, remove one computer's history or a photo, and delete people.
 - **Profile photos.** Each person uploads their own, with a crop and zoom step.
 - **Light and dark themes, two languages.** English and Bahasa Indonesia, switched with a button on every page.
@@ -94,23 +94,27 @@ Running it again with `--uninstall` (bash) or `$env:LB_UNINSTALL='1'` (PowerShel
 
 To add a photo, a person clicks "Add photo" on the board and pastes their token once.
 
-### People who use 9router or JRouter
+### People on another harness (9router, JRouter, Hermes, OpenRouter)
 
-9router and its fork JRouter keep their own usage log (the same table), so for their users the leaderboard reads that log instead of Claude Code's telemetry. Run the router command from the admin page once on the machine where the router runs, as the user that runs it:
+When adding someone, pick their harness in the admin form; the install message then carries the matching command:
 
 ```bash
 # macOS / Linux
-curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --9router    # or --jrouter
+curl -fsSL https://leaderboard.example.com/install.sh | bash -s -- lb_xxxxxxxx --hermes     # --9router, --jrouter, --hermes or --openrouter
 # Windows (PowerShell)
-$env:LB_TOKEN='lb_xxxxxxxx'; $env:LB_9ROUTER='1'; irm https://leaderboard.example.com/install.ps1 | iex    # or $env:LB_JROUTER='1'
+$env:LB_TOKEN='lb_xxxxxxxx'; $env:LB_HARNESS='hermes'; irm https://leaderboard.example.com/install.ps1 | iex
 ```
 
-- **What it installs.** A small Node.js script (`router-sync.js`, fetched from your server) plus its settings, scheduled every minute: launchd on macOS, cron on Linux, Task Scheduler on Windows. Both routers run on Node, so nothing else is needed; the installer finds the `node` that runs the router if it is not on `PATH` (or set `LB_NODE`). It reads SQLite with `node:sqlite` (Node 22.5+) or the `better-sqlite3` copy in the router's runtime folder, and changes nothing in the router. One machine can run both.
+- **9router and JRouter** (a 9router fork) keep the same usage log in `~/.9router` or `~/.jrouter` (`%APPDATA%` on Windows). Run the command on the machine where the router runs, as its user.
+- **Hermes Agent** keeps per-session, per-model token counts in `state.db` under `HERMES_HOME` (`~/.hermes`, or `%LOCALAPPDATA%\hermes` on Windows). Run the command on the machine where Hermes runs; the installer uses the Node.js that Hermes ships if none is on `PATH`.
+- **OpenRouter** has no local log, so the sync asks OpenRouter's [activity API](https://openrouter.ai/docs/api/api-reference/analytics/get-user-activity) with the person's **management key**. The installer asks for the key (or takes `LB_OPENROUTER_KEY`) and keeps it on that computer only; the leaderboard server never sees it. The API reports whole UTC days for the last 30 days, so OpenRouter usage appears the day after. Any computer with Node.js 18+ will do, and running it on two computers does not count twice.
+
+- **What it installs.** A small Node.js script (`router-sync.js`, fetched from your server) plus its settings, scheduled every minute: launchd on macOS, cron on Linux, Task Scheduler on Windows. The installer finds the `node` the harness runs on if it is not on `PATH` (or set `LB_NODE`). It reads SQLite with `node:sqlite` (Node 22.5+) or the router's own `better-sqlite3`, and changes nothing in the harness. One machine can run several.
 - **What it sends.** It reads the router's database read-only (`~/.9router/db/data.sqlite` or `~/.jrouter/db/data.sqlite`; `%APPDATA%\9router` or `%APPDATA%\jrouter` on Windows; or under `DATA_DIR`) and sends hourly totals per model: input, output and cache tokens, 9router's cost estimate and the request count. Prompts and responses are never read. The first run sends up to 90 days of history.
 - **Every model counts.** The routers can send work to Claude, GPT, Gemini, Qwen and others, and all of them count toward the person's total. The detail card shows the split per model.
 - **On the board** these people get a "9router" or "JRouter" label and a request count instead of sessions. A filter (Everyone, Claude Code, 9router, JRouter) appears once someone sends router data, with a button for each router in use, and ranks follow the filter.
 - **Options.** If the database is somewhere else, set `LB_ROUTER_DB` to its path. If several people share one router, set `LB_ROUTER_KEYS=name1,name2` (the router's API key names) so each person only sends their own keys. On macOS and Linux put them before `bash`; on Windows set them as `$env:` variables first.
-- **Removing it.** Run the command with `--uninstall --9router` (or `--jrouter`) on macOS and Linux, or with `$env:LB_UNINSTALL='1'` added on Windows. Usage already on the board stays.
+- **Removing it.** Run the command with `--uninstall` plus the harness flag (for example `--uninstall --hermes`) on macOS and Linux, or with `$env:LB_UNINSTALL='1'` added on Windows. Usage already on the board stays.
 - **Counting twice.** If the same requests also go through Claude Code with telemetry installed, they count twice. Use one or the other for that person.
 
 ## Configuration

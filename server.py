@@ -4,8 +4,8 @@
 One process, standard library only:
   POST /v1/metrics        OTLP/HTTP JSON receiver (Claude Code telemetry), auth by x-lb-token
   GET|POST /v1/metrics/backfill   history from local transcripts (window, then upload)
-  POST /v1/metrics/9router        hourly totals read from a 9router or JRouter usage log (replaces that machine's rows;
-                                  /v1/metrics/jrouter is the same)
+  POST /v1/metrics/<harness>      hourly totals from router-sync.js (9router, jrouter, hermes, openrouter); replaces
+                                  that machine's rows from the earliest hour sent
   GET  /v1/metrics/router-sync.js the sync script the installers set up on a 9router or JRouter machine
   GET  /                  leaderboard page
   GET  /api/leaderboard   leaderboard data (?period=today|7d|30d|month|all&source=all|claude|9router|jrouter)
@@ -41,6 +41,7 @@ from zoneinfo import ZoneInfo
 from accessauth import AccessVerifier
 import achievements
 from collections import defaultdict
+from lbcommon import HARNESSES, HARNESS_NAMES
 from lbcommon import BASE, connect, delete_employee, hash_token, install_commands, load_config, new_token
 
 CFG = load_config()
@@ -268,11 +269,16 @@ def as_count(v, cap):
     return float(v)
 
 
-ROUTER_KINDS = ("9router", "jrouter")   # 9router and its fork JRouter keep the same usage log
+# Harnesses whose usage the sync script reads on the person's machine (9router and its fork
+# JRouter share one usage log; Hermes keeps its own; OpenRouter is read from its activity API).
+ROUTER_KINDS = ("9router", "jrouter", "hermes", "openrouter")
+
+
+SYNC_PATHS = tuple("/v1/metrics/" + k for k in ROUTER_KINDS)   # where router-sync.js posts (all the same handler)
 
 
 def router_kind(machine):
-    """9router or jrouter for a router machine id ("9router-<hash>"), else None."""
+    """The harness of a synced machine id ("9router-<hash>", "hermes-<hash>", ...), else None."""
     return next((k for k in ROUTER_KINDS if machine.startswith(k + "-")), None)
 ROUTER_FIELDS = dict(BACKFILL_FIELDS, cost=("", 5_000), requests=("", 1_000_000))
 
@@ -784,15 +790,15 @@ def _leaderboard(period):
               COALESCE(SUM(CASE WHEN u.metric='claude_code.session.count' THEN u.value END),0) AS sessions,
               COALESCE(SUM(CASE WHEN u.metric='claude_code.active_time.total' THEN u.value END),0) AS active_seconds,
               COALESCE(SUM(CASE WHEN u.metric='router.request.count' THEN u.value END),0) AS requests,
-              (SELECT GROUP_CONCAT(DISTINCT CASE WHEN r.machine LIKE '9router-%' THEN '9router'
-                                                 WHEN r.machine LIKE 'jrouter-%' THEN 'jrouter' END)
+              e.harness,
+              (SELECT GROUP_CONCAT(DISTINCT CASE {kinds} END)
                  FROM backfill_runs r WHERE r.employee_id = e.id) AS router
             FROM employees e
             LEFT JOIN ({all_usage}) u ON u.employee_id = e.id AND u.hour >= ?
             WHERE e.active = 1
             GROUP BY e.id
             ORDER BY output DESC, e.name COLLATE NOCASE ASC
-            """.format(all_usage=ALL_USAGE),
+            """.format(all_usage=ALL_USAGE, kinds=" ".join("WHEN r.machine LIKE '%s-%%' THEN '%s'" % (k, k) for k in ROUTER_KINDS)),
             (since,),
         ).fetchall()
         models = DB.execute(
@@ -827,7 +833,11 @@ def _leaderboard(period):
             "sessions": int(r["sessions"]),
             "active_seconds": int(r["active_seconds"]),
             "requests": int(r["requests"]),
-            "router": ",".join(sorted((r["router"] or "").split(","))).strip(","),   # "", "9router", "jrouter" or both
+            # the harnesses this person's usage comes from besides Claude Code: what the admin picked,
+            # plus any synced machine ("", "9router", "hermes", "9router,jrouter", ...)
+            "router": ",".join(sorted({k for k in (r["router"] or "").split(",") if k}
+                                      | ({r["harness"]} if r["harness"] in ROUTER_KINDS else set()))),
+            "harness": r["harness"],
             "prev_output": int(prev_out.get(r["id"], 0)),
             "streak": (streak.get(r["id"]) or {}).get("streak", 0),
             "streak_best": (streak.get(r["id"]) or {}).get("best", 0),
@@ -940,8 +950,9 @@ def admin_list():
     teams = sorted({r["team"] for r in rows if r["team"]}, key=str.lower)
     return {
         "teams": teams,
+        "harnesses": [{"id": h, "name": HARNESS_NAMES[h]} for h in HARNESSES],
         "participants": [{
-            "id": r["id"], "name": r["name"], "team": r["team"], "email": r["email"], "active": bool(r["active"]),
+            "id": r["id"], "name": r["name"], "team": r["team"], "email": r["email"], "active": bool(r["active"]), "harness": r["harness"],
             "created_at": r["created_at"], "last_seen": r["last_seen"], "first_otel_at": r["first_otel_at"],
             "avatar": avatar_url(r), "output": int(totals.get(r["id"], 0)), "machines": machines.get(r["id"], []),
             "router": ",".join(sorted({router_kind(m["machine"]) for m in machines.get(r["id"], []) if router_kind(m["machine"])})),
@@ -974,6 +985,11 @@ def _clean_fields(body, partial):
         out["email"] = email
     if "active" in body:
         out["active"] = 1 if body.get("active") else 0
+    if "harness" in body or not partial:
+        harness = str(body.get("harness") or "claude-code")
+        if harness not in HARNESSES:
+            raise AdminError(400, T("Pick a harness from the list.", "Pilih harness dari daftar."))
+        out["harness"] = harness
     return out
 
 
@@ -988,12 +1004,12 @@ def admin_action(actor, method, parts, body, base_url):
             if f.get("email") and DB.execute("SELECT 1 FROM employees WHERE email = ? COLLATE NOCASE", (f["email"],)).fetchone():
                 raise AdminError(409, T("%s is already used by another participant.", "Email %s sudah dipakai peserta lain.") % f["email"])
             cur = DB.execute(
-                "INSERT INTO employees(name, team, token_hash, created_at, email) VALUES (?,?,?,?,?)",
-                (f["name"], f.get("team", ""), hash_token(token), int(time.time()), f.get("email")),
+                "INSERT INTO employees(name, team, token_hash, created_at, email, harness) VALUES (?,?,?,?,?,?)",
+                (f["name"], f.get("team", ""), hash_token(token), int(time.time()), f.get("email"), f["harness"]),
             )
             new_id = cur.lastrowid
-        log("admin %s: added %s (%s)" % (actor, f["name"], new_id))
-        return {"id": new_id, "name": f["name"], "token": token, "commands": install_commands(CFG, token, base_url)}
+        log("admin %s: added %s (%s, %s)" % (actor, f["name"], new_id, f["harness"]))
+        return {"id": new_id, "name": f["name"], "harness": f["harness"], "token": token, "commands": install_commands(CFG, token, base_url)}
 
     if len(parts) < 3 or parts[0] != "participants" or not parts[1].isdigit() or method != "POST":
         raise AdminError(404, "not found")
@@ -1023,7 +1039,7 @@ def admin_action(actor, method, parts, body, base_url):
         with DB_LOCK:
             DB.execute("UPDATE employees SET token_hash = ? WHERE id = ?", (hash_token(token), pid))
         log("admin %s: new token for %s (%s)" % (actor, row["name"], pid))
-        return {"id": pid, "name": row["name"], "token": token, "commands": install_commands(CFG, token, base_url)}
+        return {"id": pid, "name": row["name"], "harness": row["harness"], "token": token, "commands": install_commands(CFG, token, base_url)}
 
     if action == "avatar-delete" and len(parts) == 3:
         with DB_LOCK:
@@ -1395,7 +1411,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:
                 log("POST %s failed: %r" % (path, exc))
                 return self.send_json(500, {"error": T("Could not save. Try again.", "Gagal menyimpan, coba lagi.")})
-        if path not in ("/v1/metrics", "/v1/metrics/backfill", "/v1/metrics/9router", "/v1/metrics/jrouter"):
+        if path not in ("/v1/metrics", "/v1/metrics/backfill") and path not in SYNC_PATHS:
             return self.send(404, "not found\n", "text/plain")
         token = self.headers.get("x-lb-token") or ""
         auth = self.headers.get("Authorization") or ""
@@ -1426,7 +1442,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(body or b"{}")
         except (OSError, ValueError, zlib.error):
             return self.send_json(400, {"error": "bad json"})
-        if path in ("/v1/metrics/9router", "/v1/metrics/jrouter"):
+        if path in SYNC_PATHS:
             try:
                 result = store_router(employee_id, payload if isinstance(payload, dict) else {})
             except ValueError as exc:
