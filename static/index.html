@@ -467,6 +467,10 @@
   .season-banner strong { display: block; font: 500 17px/1.25 var(--display); }
   .season-banner span { font-size: 13px; color: var(--ink-2); }
   .season-banner .chip { white-space: nowrap; }
+  @media (max-width: 520px) {
+    .season-banner { grid-template-columns: auto minmax(0, 1fr); }
+    .season-banner .chip { grid-column: 1 / -1; justify-self: start; }
+  }
   .rar { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 999px; vertical-align: 2px; font: 700 10px/1.7 var(--text); letter-spacing: .05em; text-transform: uppercase; }
   .rar.r0 { color: var(--ink-2); border: 1px dashed var(--ink-3); }
   .rar.r1 { color: #fff; background: linear-gradient(90deg, #B8860B, #E0B547); }
@@ -717,7 +721,16 @@
   }
 
   @media (max-width: 640px) {
-    .wrap { padding-top: 28px; }
+    .wrap { padding-top: 20px; }
+    /* buttons get their own row above the title, so a long board name has the full width */
+    .top { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .top .tools { order: -1; justify-content: flex-end; flex-wrap: wrap; }
+    .top h1 { max-width: none; overflow-wrap: anywhere; }
+    .lede { font-size: 16px; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .periods { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+    .periods::-webkit-scrollbar { display: none; }
+    .periods button { flex: 1 0 auto; padding: 7px 6px; font-size: 13.5px; white-space: nowrap; }
     .me-chip { padding-right: 4px; }
     .me-chip .label { display: none; }
     .stage { margin-top: 28px; padding: 40px 10px 0; border-radius: 18px 18px 0 0; }
@@ -744,6 +757,14 @@
     .row .av { --size: 34px; }
     .row .num { font-size: 16px; }
     .row .team { display: block; margin-left: 0; font-size: 13px; }
+  }
+  @media (max-width: 359px) {
+    /* the smallest phones: the five buttons still fit on one row */
+    .top .tools { gap: 6px; }
+    .me-chip.admin-link { height: 36px; padding: 0 12px; }
+    .theme-btn { width: 36px; height: 36px; }
+    .me-chip .av { width: 28px; height: 28px; }
+    .periods button { padding: 7px 5px; font-size: 13px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }

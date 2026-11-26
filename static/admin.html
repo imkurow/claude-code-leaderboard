@@ -241,6 +241,9 @@
     .add-grid, .form-grid { grid-template-columns: 1fr; }
     .col-out { display: none; }
     .who .em { max-width: 18ch; }
+    /* buttons above the heading, so the title and summary use the full width */
+    .top { grid-template-columns: minmax(0, 1fr); }
+    .top .tools { order: -1; justify-content: flex-end; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>

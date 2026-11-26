@@ -329,6 +329,16 @@
 }
 @media (min-width: 640px) and (max-width: 1023px) { #setup:not(.is-live) .mo-pc__visual--lit { padding: 121px 32px; background: var(--ground-bg); justify-content: center; overflow: hidden; max-width: 520px; } }
 @media (prefers-reduced-motion: reduce) { .lb-live b::after { animation: none; opacity: 0; } }
+/* with motion off the two language faces would sit on top of each other: show the Indonesian one */
+@media (prefers-reduced-motion: reduce) { .lb-face--id { animation: none; opacity: 1; } .lb-face--en { display: none; } }
+
+/* ---------- phone: sections as tall as their content, no screen-high holes ---------- */
+@media (max-width: 639px) {
+  main > :is(section, .section):not(.hero, .section--hero), footer.closing,
+  main > #setup[data-moment="pinned-chapters"][data-moment]:not(.is-live) { min-height: 0; }
+  :root { --padt: 64px; --padb: 32px; }
+  main > :is(section, .section).g2m > :is(.wrap, .container), footer.closing.g2m > .wrap { grid-template-rows: auto auto; row-gap: 56px; }
+}
 
 /* ---------- tablet (640-1023): no holes, sections that fit their screens ---------- */
 @media (min-width: 640px) and (max-width: 1023px) {
